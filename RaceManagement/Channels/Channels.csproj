@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Counters\" />
+    <Folder Include="Math\" />
+    <Folder Include="Tables\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="UnitsNet" Version="6.0.0-pre019" />
+  </ItemGroup>
+
+</Project>
