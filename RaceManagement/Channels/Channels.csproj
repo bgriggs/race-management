@@ -4,15 +4,17 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <UserSecretsId>49624437-640d-4b91-bacc-1f67d93002e8</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
     <Folder Include="Counters\" />
     <Folder Include="Math\" />
-    <Folder Include="Tables\" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="6.0.1" />
     <PackageReference Include="UnitsNet" Version="6.0.0-pre019" />
   </ItemGroup>
 
