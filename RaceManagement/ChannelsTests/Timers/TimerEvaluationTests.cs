@@ -1,0 +1,654 @@
+﻿using System.Globalization;
+using Channels;
+using Channels.Logic;
+using Channels.Timers;
+
+namespace ChannelsTests.Timers;
+
+[TestClass]
+public class TimerEvaluationTests
+{
+    // -------------------------------------------------------------------------
+    // Fakes
+    // -------------------------------------------------------------------------
+
+    private sealed class FakeTimerRepository : ITimerRepository
+    {
+        private readonly List<TimerParameters> parameters = [];
+        private readonly Dictionary<int, TimerState> states = [];
+
+        public void AddTimer(TimerParameters p) => parameters.Add(p);
+
+        public void SetState(TimerState state) => states[state.Id] = state;
+
+        public TimerState? GetState(int id) =>
+            states.TryGetValue(id, out var s) ? s : null;
+
+        public Task<IEnumerable<TimerParameters>> GetTimersAsync() =>
+            Task.FromResult(parameters.AsEnumerable());
+
+        public Task SaveTimersAsync(IEnumerable<TimerParameters> timers)
+        {
+            parameters.Clear();
+            parameters.AddRange(timers);
+            return Task.CompletedTask;
+        }
+
+        public Task<TimerState> GetTimerStateAsync(int timerId)
+        {
+            states.TryGetValue(timerId, out var state);
+            state ??= new TimerState { Id = timerId };
+            return Task.FromResult(state);
+        }
+
+        public Task SetTimerStateAsync(TimerState timerState)
+        {
+            states[timerState.Id] = timerState;
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeChannelRepository : IChannelRepository
+    {
+        private readonly Dictionary<int, ChannelValue> channels = [];
+
+        public void Set(int id, string value) =>
+            channels[id] = new ChannelValue { Id = id, Value = value };
+
+        public ChannelValue Get(int id) => channels[id];
+
+        public Task<ChannelValue> GetChannelValueAsync(int channelId) =>
+            Task.FromResult(channels.TryGetValue(channelId, out var v) ? v : new ChannelValue { Id = channelId });
+
+        public Task SetChannelValueAsync(ChannelValue ch)
+        {
+            channels[ch.Id] = ch;
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeChannelDefinitionRepository : IChannelDefinitionRepository
+    {
+        private readonly Dictionary<int, ChannelDefinition> defs = [];
+
+        public void Set(int id) =>
+            defs[id] = new ChannelDefinition { Id = id };
+
+        public Task<ChannelDefinition> GetChannelDefinitionAsync(int channelId) =>
+            Task.FromResult(defs.TryGetValue(channelId, out var d) ? d : new ChannelDefinition { Id = channelId });
+    }
+
+    private sealed class FakeStatementRepository : IStatementRepository
+    {
+        private readonly Dictionary<int, Statements> statements = [];
+
+        public void Set(Statements s) => statements[s.Id] = s;
+
+        public Task<Statements> GetStatementsAsync(int statementId) =>
+            Task.FromResult(statements.TryGetValue(statementId, out var s)
+                ? s
+                : new Statements { Id = statementId });
+
+        public Task SetStatementsAsync(Statements s)
+        {
+            statements[s.Id] = s;
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeTimeProvider : TimeProvider
+    {
+        private DateTimeOffset current;
+
+        public FakeTimeProvider(DateTimeOffset start) => current = start;
+
+        public override DateTimeOffset GetUtcNow() => current;
+
+        public void Advance(TimeSpan amount) => current = current.Add(amount);
+    }
+
+    // -------------------------------------------------------------------------
+    // Setup
+    // -------------------------------------------------------------------------
+
+    private FakeTimerRepository timerRepo = null!;
+    private FakeChannelRepository channelRepo = null!;
+    private FakeChannelDefinitionRepository channelDefRepo = null!;
+    private FakeStatementRepository statementRepo = null!;
+    private FakeTimeProvider timeProvider = null!;
+
+    [TestInitialize]
+    public void Setup()
+    {
+        timerRepo = new FakeTimerRepository();
+        channelRepo = new FakeChannelRepository();
+        channelDefRepo = new FakeChannelDefinitionRepository();
+        statementRepo = new FakeStatementRepository();
+        timeProvider = new FakeTimeProvider(new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero));
+    }
+
+    private TimerEvaluation CreateEvaluation() =>
+        new(timerRepo, channelRepo, channelDefRepo, statementRepo, timeProvider);
+
+    // Always-true / always-false statements for controlling start/stop conditions.
+    private static Statements AlwaysTrueStatement(int id) =>
+        new() { Id = id, ActivateComparisons = [[new Comparison { ComparisonId = id, ChannelId = 99, Logic = LogicType.True }]] };
+
+    private static Statements AlwaysFalseStatement(int id) =>
+        new() { Id = id, ActivateComparisons = [[new Comparison { ComparisonId = id, ChannelId = 99, Logic = LogicType.False }]] };
+
+    // A basic count-up timer with no limits.
+    private static TimerParameters BasicTimer(int id = 1, int outputChId = 10, int startStmtId = 1, int stopStmtId = 2) =>
+        new() { Id = id, OutputChId = outputChId, StartStatementId = startStmtId, StopStatementId = stopStmtId };
+
+    // Pre-seed a timer state where the start edge will fire on the next true evaluation.
+    private void SetReadyToStart(int timerId = 1) =>
+        timerRepo.SetState(new TimerState { Id = timerId, PreviousStartResult = false, PreviousStopResult = true });
+
+    // Pre-seed a running timer state. stopEdgeReady=true means the next true stop evaluation fires the edge.
+    private void SetRunning(int timerId, double startValue, bool stopEdgeReady = false) =>
+        timerRepo.SetState(new TimerState
+        {
+            Id = timerId,
+            Started = timeProvider.GetUtcNow(),
+            StartValue = startValue,
+            PreviousStartResult = true,
+            PreviousStopResult = !stopEdgeReady,
+        });
+
+    private double ParseOutput(int channelId) =>
+        double.Parse(channelRepo.Get(channelId).Value, CultureInfo.InvariantCulture);
+
+    // -------------------------------------------------------------------------
+    // Edge detection — start
+    // -------------------------------------------------------------------------
+
+    [TestMethod]
+    public async Task DefaultInitialState_StartConditionTrue_NoEdgeFires_TimerDoesNotStart()
+    {
+        // PreviousStartResult defaults to true → true→true is NOT a false→true edge.
+        timerRepo.AddTimer(BasicTimer());
+        statementRepo.Set(AlwaysTrueStatement(1));
+        statementRepo.Set(AlwaysFalseStatement(2));
+
+        await CreateEvaluation().UpdateTimersAsync();
+
+        Assert.IsNull(timerRepo.GetState(1)?.Started);
+    }
+
+    [TestMethod]
+    public async Task StartEdge_StartsTimer()
+    {
+        timerRepo.AddTimer(BasicTimer());
+        statementRepo.Set(AlwaysTrueStatement(1));
+        statementRepo.Set(AlwaysFalseStatement(2));
+        SetReadyToStart();
+
+        await CreateEvaluation().UpdateTimersAsync();
+
+        Assert.IsNotNull(timerRepo.GetState(1)?.Started);
+    }
+
+    [TestMethod]
+    public async Task StartEdge_ConditionStaysTrue_DoesNotRestartTimer()
+    {
+        // Once started, a sustained true start condition must NOT restart the timer.
+        timerRepo.AddTimer(BasicTimer());
+        statementRepo.Set(AlwaysTrueStatement(1));
+        statementRepo.Set(AlwaysFalseStatement(2));
+        SetReadyToStart();
+
+        var evaluation = CreateEvaluation();
+        await evaluation.UpdateTimersAsync();  // edge fires, timer starts
+
+        var startedAt = timerRepo.GetState(1)!.Started;
+
+        timeProvider.Advance(TimeSpan.FromSeconds(5));
+        await evaluation.UpdateTimersAsync();  // start stays true → no edge (true→true)
+
+        Assert.AreEqual(startedAt, timerRepo.GetState(1)!.Started);  // same start time
+    }
+
+    [TestMethod]
+    public async Task StartEdge_AfterBeingFalse_RefiresEdge()
+    {
+        // Start → stop → start again should work (false→true fires again after going false).
+        timerRepo.AddTimer(BasicTimer());
+        statementRepo.Set(AlwaysTrueStatement(1));
+        statementRepo.Set(AlwaysTrueStatement(2));  // stop always fires edge when ready
+        SetReadyToStart();
+
+        var evaluation = CreateEvaluation();
+        await evaluation.UpdateTimersAsync();  // timer starts
+
+        // Make stop edge fire to stop the timer
+        timerRepo.SetState(new TimerState
+        {
+            Id = 1,
+            Started = timerRepo.GetState(1)!.Started,
+            StartValue = timerRepo.GetState(1)!.StartValue,
+            PreviousStartResult = true,
+            PreviousStopResult = false,  // ready for stop edge
+        });
+        await evaluation.UpdateTimersAsync();  // timer stops
+
+        Assert.IsNull(timerRepo.GetState(1)!.Started);
+
+        // Mark start as ready again (PreviousStartResult = false)
+        timerRepo.SetState(new TimerState { Id = 1, PreviousStartResult = false, PreviousStopResult = true });
+        await evaluation.UpdateTimersAsync();  // start fires again
+
+        Assert.IsNotNull(timerRepo.GetState(1)!.Started);
+    }
+
+    // -------------------------------------------------------------------------
+    // Start value
+    // -------------------------------------------------------------------------
+
+    [TestMethod]
+    public async Task StartEdge_EnableStartSeconds_SetsOutputAndStartValueToStartSeconds()
+    {
+        var timer = BasicTimer();
+        timer.EnableStartSeconds = true;
+        timer.StartSeconds = 30;
+        timerRepo.AddTimer(timer);
+        statementRepo.Set(AlwaysTrueStatement(1));
+        statementRepo.Set(AlwaysFalseStatement(2));
+        SetReadyToStart();
+
+        await CreateEvaluation().UpdateTimersAsync();
+
+        Assert.AreEqual(30.0, ParseOutput(10), 0.001);
+        Assert.AreEqual(30.0, timerRepo.GetState(1)!.StartValue, 0.001);
+    }
+
+    [TestMethod]
+    public async Task StartEdge_NoEnableStartSeconds_ResumesFromCurrentChannelValue()
+    {
+        channelRepo.Set(10, "15");
+        timerRepo.AddTimer(BasicTimer());
+        statementRepo.Set(AlwaysTrueStatement(1));
+        statementRepo.Set(AlwaysFalseStatement(2));
+        SetReadyToStart();
+
+        await CreateEvaluation().UpdateTimersAsync();
+
+        Assert.AreEqual(15.0, timerRepo.GetState(1)!.StartValue, 0.001);
+        Assert.AreEqual(15.0, ParseOutput(10), 0.001);
+    }
+
+    [TestMethod]
+    public async Task StartEdge_NoEnableStartSeconds_UnparsableChannelValue_DefaultsToZero()
+    {
+        channelRepo.Set(10, "");
+        timerRepo.AddTimer(BasicTimer());
+        statementRepo.Set(AlwaysTrueStatement(1));
+        statementRepo.Set(AlwaysFalseStatement(2));
+        SetReadyToStart();
+
+        await CreateEvaluation().UpdateTimersAsync();
+
+        Assert.AreEqual(0.0, timerRepo.GetState(1)!.StartValue, 0.001);
+    }
+
+    // -------------------------------------------------------------------------
+    // Count direction
+    // -------------------------------------------------------------------------
+
+    [TestMethod]
+    public async Task CountUp_OutputIncreasesOverTime()
+    {
+        timerRepo.AddTimer(BasicTimer());
+        statementRepo.Set(AlwaysFalseStatement(1));
+        statementRepo.Set(AlwaysFalseStatement(2));
+        SetRunning(timerId: 1, startValue: 0);
+
+        timeProvider.Advance(TimeSpan.FromSeconds(10));
+        await CreateEvaluation().UpdateTimersAsync();
+
+        Assert.AreEqual(10.0, ParseOutput(10), 0.001);
+    }
+
+    [TestMethod]
+    public async Task CountDown_OutputDecreasesOverTime()
+    {
+        var timer = BasicTimer();
+        timer.CountDown = true;
+        timerRepo.AddTimer(timer);
+        statementRepo.Set(AlwaysFalseStatement(1));
+        statementRepo.Set(AlwaysFalseStatement(2));
+        SetRunning(timerId: 1, startValue: 20);
+
+        timeProvider.Advance(TimeSpan.FromSeconds(7));
+        await CreateEvaluation().UpdateTimersAsync();
+
+        Assert.AreEqual(13.0, ParseOutput(10), 0.001);
+    }
+
+    [TestMethod]
+    public async Task CountUp_StartsFromNonZeroStartValue_CountsUpFromThere()
+    {
+        var timer = BasicTimer();
+        timer.EnableStartSeconds = true;
+        timer.StartSeconds = 50;
+        timerRepo.AddTimer(timer);
+        statementRepo.Set(AlwaysTrueStatement(1));
+        statementRepo.Set(AlwaysFalseStatement(2));
+        SetReadyToStart();
+
+        var evaluation = CreateEvaluation();
+        await evaluation.UpdateTimersAsync();       // starts at 50
+
+        timeProvider.Advance(TimeSpan.FromSeconds(5));
+        await evaluation.UpdateTimersAsync();       // 50 + 5
+
+        Assert.AreEqual(55.0, ParseOutput(10), 0.001);
+    }
+
+    // -------------------------------------------------------------------------
+    // Stop edge
+    // -------------------------------------------------------------------------
+
+    [TestMethod]
+    public async Task StopEdge_StopsTimer()
+    {
+        timerRepo.AddTimer(BasicTimer());
+        statementRepo.Set(AlwaysFalseStatement(1));
+        statementRepo.Set(AlwaysTrueStatement(2));
+        SetRunning(timerId: 1, startValue: 0, stopEdgeReady: true);
+
+        await CreateEvaluation().UpdateTimersAsync();
+
+        Assert.IsNull(timerRepo.GetState(1)!.Started);
+    }
+
+    [TestMethod]
+    public async Task StopEdge_EnableStopSeconds_SetsOutputToStopSeconds()
+    {
+        var timer = BasicTimer();
+        timer.EnableStopSeconds = true;
+        timer.StopSeconds = 99;
+        timerRepo.AddTimer(timer);
+        statementRepo.Set(AlwaysFalseStatement(1));
+        statementRepo.Set(AlwaysTrueStatement(2));
+        SetRunning(timerId: 1, startValue: 0, stopEdgeReady: true);
+
+        timeProvider.Advance(TimeSpan.FromSeconds(5));
+        await CreateEvaluation().UpdateTimersAsync();
+
+        Assert.AreEqual("99", channelRepo.Get(10).Value);
+    }
+
+    [TestMethod]
+    public async Task StopEdge_NoEnableStopSeconds_FreezesAtCalculatedValue()
+    {
+        timerRepo.AddTimer(BasicTimer());
+        statementRepo.Set(AlwaysFalseStatement(1));
+        statementRepo.Set(AlwaysTrueStatement(2));
+        SetRunning(timerId: 1, startValue: 0, stopEdgeReady: true);
+
+        timeProvider.Advance(TimeSpan.FromSeconds(7));
+        await CreateEvaluation().UpdateTimersAsync();
+
+        Assert.AreEqual(7.0, ParseOutput(10), 0.001);
+        Assert.IsNull(timerRepo.GetState(1)!.Started);
+    }
+
+    [TestMethod]
+    public async Task StopConditionTrue_NoPreviousEdge_TimerContinuesRunning()
+    {
+        // Stop condition is true, but PreviousStopResult=true → true→true is NOT a false→true edge.
+        timerRepo.AddTimer(BasicTimer());
+        statementRepo.Set(AlwaysFalseStatement(1));
+        statementRepo.Set(AlwaysTrueStatement(2));
+        SetRunning(timerId: 1, startValue: 0, stopEdgeReady: false);  // no edge
+
+        timeProvider.Advance(TimeSpan.FromSeconds(5));
+        await CreateEvaluation().UpdateTimersAsync();
+
+        Assert.IsNotNull(timerRepo.GetState(1)!.Started);
+        Assert.AreEqual(5.0, ParseOutput(10), 0.001);
+    }
+
+    // -------------------------------------------------------------------------
+    // Limits — count up
+    // -------------------------------------------------------------------------
+
+    [TestMethod]
+    public async Task CountUp_NoLimit_CountsIndefinitely()
+    {
+        timerRepo.AddTimer(BasicTimer());  // RolloverSeconds = 0
+        statementRepo.Set(AlwaysFalseStatement(1));
+        statementRepo.Set(AlwaysFalseStatement(2));
+        SetRunning(timerId: 1, startValue: 0);
+
+        timeProvider.Advance(TimeSpan.FromSeconds(1000));
+        await CreateEvaluation().UpdateTimersAsync();
+
+        Assert.IsNotNull(timerRepo.GetState(1)!.Started);  // still running
+        Assert.AreEqual(1000.0, ParseOutput(10), 0.001);
+    }
+
+    [TestMethod]
+    public async Task CountUp_ValueExactlyAtLimit_NotExceeded_ContinuesRunning()
+    {
+        // The spec says it exceeds at "10.000001", so exactly 10 does NOT trigger rollover.
+        var timer = BasicTimer();
+        timer.RolloverSeconds = 10;
+        timer.EnableRollover = false;
+        timerRepo.AddTimer(timer);
+        statementRepo.Set(AlwaysFalseStatement(1));
+        statementRepo.Set(AlwaysFalseStatement(2));
+        SetRunning(timerId: 1, startValue: 0);
+
+        timeProvider.Advance(TimeSpan.FromSeconds(10));
+        await CreateEvaluation().UpdateTimersAsync();
+
+        Assert.AreEqual(10.0, ParseOutput(10), 0.001);
+        Assert.IsNotNull(timerRepo.GetState(1)!.Started);  // still running
+    }
+
+    [TestMethod]
+    public async Task CountUp_LimitExceeded_NoRollover_ClampsToLimitAndStops()
+    {
+        var timer = BasicTimer();
+        timer.RolloverSeconds = 10;
+        timer.EnableRollover = false;
+        timerRepo.AddTimer(timer);
+        statementRepo.Set(AlwaysFalseStatement(1));
+        statementRepo.Set(AlwaysFalseStatement(2));
+        SetRunning(timerId: 1, startValue: 0);
+
+        timeProvider.Advance(TimeSpan.FromSeconds(15));
+        await CreateEvaluation().UpdateTimersAsync();
+
+        Assert.AreEqual(10.0, ParseOutput(10), 0.001);
+        Assert.IsNull(timerRepo.GetState(1)!.Started);  // stopped
+    }
+
+    [TestMethod]
+    public async Task CountUp_LimitExceeded_RolloverEnabled_WrapsAroundAndContinues()
+    {
+        var timer = BasicTimer();
+        timer.RolloverSeconds = 10;
+        timer.EnableRollover = true;
+        timerRepo.AddTimer(timer);
+        statementRepo.Set(AlwaysFalseStatement(1));
+        statementRepo.Set(AlwaysFalseStatement(2));
+        SetRunning(timerId: 1, startValue: 0);
+
+        timeProvider.Advance(TimeSpan.FromSeconds(13));  // 13 % 10 = 3
+        await CreateEvaluation().UpdateTimersAsync();
+
+        Assert.AreEqual(3.0, ParseOutput(10), 0.001);
+        Assert.IsNotNull(timerRepo.GetState(1)!.Started);  // still running
+    }
+
+    [TestMethod]
+    public async Task CountUp_LimitExceeded_RolloverEnabled_MultipleWraps_CorrectValue()
+    {
+        var timer = BasicTimer();
+        timer.RolloverSeconds = 10;
+        timer.EnableRollover = true;
+        timerRepo.AddTimer(timer);
+        statementRepo.Set(AlwaysFalseStatement(1));
+        statementRepo.Set(AlwaysFalseStatement(2));
+        SetRunning(timerId: 1, startValue: 0);
+
+        timeProvider.Advance(TimeSpan.FromSeconds(27));  // 27 % 10 = 7
+        await CreateEvaluation().UpdateTimersAsync();
+
+        Assert.AreEqual(7.0, ParseOutput(10), 0.001);
+    }
+
+    // -------------------------------------------------------------------------
+    // Limits — count down
+    // -------------------------------------------------------------------------
+
+    [TestMethod]
+    public async Task CountDown_NoLimit_CountsBelowZeroIndefinitely()
+    {
+        var timer = BasicTimer();
+        timer.CountDown = true;
+        timerRepo.AddTimer(timer);  // RolloverSeconds = 0
+        statementRepo.Set(AlwaysFalseStatement(1));
+        statementRepo.Set(AlwaysFalseStatement(2));
+        SetRunning(timerId: 1, startValue: 5);
+
+        timeProvider.Advance(TimeSpan.FromSeconds(20));
+        await CreateEvaluation().UpdateTimersAsync();
+
+        Assert.AreEqual(-15.0, ParseOutput(10), 0.001);
+        Assert.IsNotNull(timerRepo.GetState(1)!.Started);  // still running
+    }
+
+    [TestMethod]
+    public async Task CountDown_BelowZero_NoRollover_ClampsToZeroAndStops()
+    {
+        var timer = BasicTimer();
+        timer.CountDown = true;
+        timer.RolloverSeconds = 10;
+        timer.EnableRollover = false;
+        timerRepo.AddTimer(timer);
+        statementRepo.Set(AlwaysFalseStatement(1));
+        statementRepo.Set(AlwaysFalseStatement(2));
+        SetRunning(timerId: 1, startValue: 5);
+
+        timeProvider.Advance(TimeSpan.FromSeconds(8));  // 5 - 8 = -3 → clamp to 0
+        await CreateEvaluation().UpdateTimersAsync();
+
+        Assert.AreEqual(0.0, ParseOutput(10), 0.001);
+        Assert.IsNull(timerRepo.GetState(1)!.Started);  // stopped
+    }
+
+    [TestMethod]
+    public async Task CountDown_BelowZero_RolloverEnabled_WrapsToHighLimitAndContinues()
+    {
+        var timer = BasicTimer();
+        timer.CountDown = true;
+        timer.RolloverSeconds = 10;
+        timer.EnableRollover = true;
+        timerRepo.AddTimer(timer);
+        statementRepo.Set(AlwaysFalseStatement(1));
+        statementRepo.Set(AlwaysFalseStatement(2));
+        SetRunning(timerId: 1, startValue: 3);
+
+        // 3 - 5 = -2 → positive modulo: ((-2 % 10) + 10) % 10 = 8
+        timeProvider.Advance(TimeSpan.FromSeconds(5));
+        await CreateEvaluation().UpdateTimersAsync();
+
+        Assert.AreEqual(8.0, ParseOutput(10), 0.001);
+        Assert.IsNotNull(timerRepo.GetState(1)!.Started);  // still running
+    }
+
+    [TestMethod]
+    public async Task CountDown_BelowZero_RolloverEnabled_MultipleWraps_CorrectValue()
+    {
+        var timer = BasicTimer();
+        timer.CountDown = true;
+        timer.RolloverSeconds = 10;
+        timer.EnableRollover = true;
+        timerRepo.AddTimer(timer);
+        statementRepo.Set(AlwaysFalseStatement(1));
+        statementRepo.Set(AlwaysFalseStatement(2));
+        SetRunning(timerId: 1, startValue: 3);
+
+        // 3 - 25 = -22 → ((-22 % 10) + 10) % 10 = ((-2) + 10) % 10 = 8
+        timeProvider.Advance(TimeSpan.FromSeconds(25));
+        await CreateEvaluation().UpdateTimersAsync();
+
+        Assert.AreEqual(8.0, ParseOutput(10), 0.001);
+    }
+
+    // -------------------------------------------------------------------------
+    // Multiple timers
+    // -------------------------------------------------------------------------
+
+    [TestMethod]
+    public async Task MultipleTimers_EachUpdatedIndependently()
+    {
+        var timer1 = new TimerParameters { Id = 1, OutputChId = 10, StartStatementId = 1, StopStatementId = 2 };
+        var timer2 = new TimerParameters { Id = 2, OutputChId = 20, StartStatementId = 3, StopStatementId = 4, CountDown = true };
+        timerRepo.AddTimer(timer1);
+        timerRepo.AddTimer(timer2);
+
+        statementRepo.Set(AlwaysFalseStatement(1));
+        statementRepo.Set(AlwaysFalseStatement(2));
+        statementRepo.Set(AlwaysFalseStatement(3));
+        statementRepo.Set(AlwaysFalseStatement(4));
+
+        SetRunning(timerId: 1, startValue: 0);
+        timerRepo.SetState(new TimerState { Id = 2, Started = timeProvider.GetUtcNow(), StartValue = 100, PreviousStartResult = true, PreviousStopResult = true });
+
+        timeProvider.Advance(TimeSpan.FromSeconds(5));
+        await CreateEvaluation().UpdateTimersAsync();
+
+        Assert.AreEqual(5.0, ParseOutput(10), 0.001);    // timer 1: 0 + 5
+        Assert.AreEqual(95.0, ParseOutput(20), 0.001);   // timer 2: 100 - 5
+    }
+
+    [TestMethod]
+    public async Task MultipleTimers_OneStops_OtherContinues()
+    {
+        var timer1 = new TimerParameters { Id = 1, OutputChId = 10, StartStatementId = 1, StopStatementId = 2 };
+        var timer2 = new TimerParameters { Id = 2, OutputChId = 20, StartStatementId = 3, StopStatementId = 4 };
+        timerRepo.AddTimer(timer1);
+        timerRepo.AddTimer(timer2);
+
+        statementRepo.Set(AlwaysFalseStatement(1));
+        statementRepo.Set(AlwaysTrueStatement(2));   // timer 1 stop edge will fire
+        statementRepo.Set(AlwaysFalseStatement(3));
+        statementRepo.Set(AlwaysFalseStatement(4));  // timer 2 keeps running
+
+        SetRunning(timerId: 1, startValue: 0, stopEdgeReady: true);
+        SetRunning(timerId: 2, startValue: 0, stopEdgeReady: false);
+
+        timeProvider.Advance(TimeSpan.FromSeconds(5));
+        await CreateEvaluation().UpdateTimersAsync();
+
+        Assert.IsNull(timerRepo.GetState(1)!.Started);    // timer 1 stopped
+        Assert.IsNotNull(timerRepo.GetState(2)!.Started); // timer 2 still running
+        Assert.AreEqual(5.0, ParseOutput(20), 0.001);
+    }
+
+    // -------------------------------------------------------------------------
+    // State persistence
+    // -------------------------------------------------------------------------
+
+    [TestMethod]
+    public async Task TimerNotRunning_NoEdge_StateStillPersisted()
+    {
+        // Even when nothing happens, PreviousStartResult / PreviousStopResult must be saved.
+        timerRepo.AddTimer(BasicTimer());
+        statementRepo.Set(AlwaysTrueStatement(1));   // start stays true
+        statementRepo.Set(AlwaysFalseStatement(2));
+
+        // Default state: PreviousStartResult=true, so start=true doesn't fire.
+        await CreateEvaluation().UpdateTimersAsync();
+
+        var state = timerRepo.GetState(1)!;
+        Assert.IsTrue(state.PreviousStartResult);   // persisted as true
+        Assert.IsFalse(state.PreviousStopResult);   // persisted as false
+    }
+}
+

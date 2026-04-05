@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Channels.Timers;
 
-internal interface ITimerRepository
+public interface ITimerRepository
 {
     public Task<IEnumerable<TimerParameters>> GetTimersAsync();
     public Task SaveTimersAsync(IEnumerable<TimerParameters> timers);
