@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using UnitsNet;
 
 namespace Channels;
 
@@ -35,5 +36,25 @@ public class ChannelValue
             _ = sb.Append('0');
         }
         return sb.ToString();
+    }
+
+    public IQuantity? GetOutputQuantity(ChannelDefinition definition)
+    {
+        if (!double.TryParse(Value, out double v))
+            return null;
+
+        if (string.IsNullOrEmpty(definition.BaseUnitType))
+            return null;
+
+        // Create the quantity expressed in its stored base unit.
+        IQuantity baseQuantity = Quantity.FromUnitAbbreviation(v, definition.BaseUnitType);
+
+        // If no output unit is configured, or it matches the base unit, return as-is.
+        if (string.IsNullOrEmpty(definition.OutputUnitType) || definition.OutputUnitType == definition.BaseUnitType)
+            return baseQuantity;
+
+        // Resolve the target unit enum from its abbreviation and convert.
+        IQuantity targetReference = Quantity.FromUnitAbbreviation(0, definition.OutputUnitType);
+        return baseQuantity.ToUnit(targetReference.Unit);
     }
 }

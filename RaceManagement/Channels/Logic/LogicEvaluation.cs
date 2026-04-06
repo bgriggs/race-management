@@ -186,7 +186,7 @@ public class LogicEvaluation
                 $"Comparison {comparison.ComparisonId} (ChangedBy) requires either a static threshold or a comparison channel.");
         }
 
-        return Math.Abs(currentValue - previousValue) >= threshold;
+        return System.Math.Abs(currentValue - previousValue) >= threshold;
     }
 
     /// <summary>
