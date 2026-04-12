@@ -7,76 +7,17 @@ namespace ChannelsTests.Counters;
 public class CounterEvaluationTests
 {
     // -------------------------------------------------------------------------
-    // Fakes
-    // -------------------------------------------------------------------------
-
-    private sealed class FakeCounterRepository : ICounterRepository
-    {
-        private readonly List<CounterDefinition> definitions = [];
-        private readonly Dictionary<int, CounterState> states = [];
-
-        public void Add(CounterDefinition definition) => definitions.Add(definition);
-
-        public void SetState(CounterState s) => states[s.Id] = s;
-
-        public CounterState? GetState(int id) =>
-            states.TryGetValue(id, out var s) ? s : null;
-
-        public Task<int> SaveCounterDefinitionAsync(CounterDefinition definition)
-        {
-            definitions.Add(definition);
-            return Task.FromResult(definition.Id);
-        }
-
-        public Task<List<CounterDefinition>> GetCounterDefinitionsAsync() =>
-            Task.FromResult(new List<CounterDefinition>(definitions));
-
-        public Task<CounterState> GetCounterStateAsync(int counterId)
-        {
-            states.TryGetValue(counterId, out var state);
-            state ??= new CounterState { Id = counterId };
-            return Task.FromResult(state);
-        }
-
-        public Task SetCounterStateAsync(CounterState counterState)
-        {
-            states[counterState.Id] = counterState;
-            return Task.CompletedTask;
-        }
-    }
-
-    private sealed class FakeChannelRepository : IChannelRepository
-    {
-        private readonly Dictionary<int, ChannelValue> channels = [];
-
-        public void Set(int id, string value) =>
-            channels[id] = new ChannelValue { Id = id, Value = value };
-
-        public ChannelValue Get(int id) =>
-            channels.TryGetValue(id, out var v) ? v : new ChannelValue { Id = id };
-
-        public Task<ChannelValue> GetChannelValueAsync(int channelId) =>
-            Task.FromResult(channels.TryGetValue(channelId, out var v) ? v : new ChannelValue { Id = channelId });
-
-        public Task SetChannelValueAsync(ChannelValue ch)
-        {
-            channels[ch.Id] = ch;
-            return Task.CompletedTask;
-        }
-    }
-
-    // -------------------------------------------------------------------------
     // Setup
     // -------------------------------------------------------------------------
 
-    private FakeCounterRepository counterRepo = null!;
-    private FakeChannelRepository channelRepo = null!;
+    private CounterMemoryRepository counterRepo = null!;
+    private ChannelMemoryRepository channelRepo = null!;
 
     [TestInitialize]
     public void Setup()
     {
-        counterRepo = new FakeCounterRepository();
-        channelRepo = new FakeChannelRepository();
+        counterRepo = new CounterMemoryRepository();
+        channelRepo = new ChannelMemoryRepository();
     }
 
     private CounterEvaluation CreateEvaluation() =>

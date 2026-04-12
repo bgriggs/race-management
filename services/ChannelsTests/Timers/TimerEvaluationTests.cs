@@ -12,90 +12,6 @@ public class TimerEvaluationTests
     // Fakes
     // -------------------------------------------------------------------------
 
-    private sealed class FakeTimerRepository : ITimerRepository
-    {
-        private readonly List<TimerDefinition> definitions = [];
-        private readonly Dictionary<int, TimerState> states = [];
-
-        public void AddTimer(TimerDefinition definition) => definitions.Add(definition);
-
-        public void SetState(TimerState state) => states[state.Id] = state;
-
-        public TimerState? GetState(int id) =>
-            states.TryGetValue(id, out var s) ? s : null;
-
-        public Task<IEnumerable<TimerDefinition>> GetTimerDefinitionsAsync() =>
-            Task.FromResult(definitions.AsEnumerable());
-
-        public Task SaveTimerDefinitionsAsync(IEnumerable<TimerDefinition> definitions)
-        {
-            this.definitions.Clear();
-            this.definitions.AddRange(definitions);
-            return Task.CompletedTask;
-        }
-
-        public Task<TimerState> GetTimerStateAsync(int timerId)
-        {
-            states.TryGetValue(timerId, out var state);
-            state ??= new TimerState { Id = timerId };
-            return Task.FromResult(state);
-        }
-
-        public Task SetTimerStateAsync(TimerState timerState)
-        {
-            states[timerState.Id] = timerState;
-            return Task.CompletedTask;
-        }
-    }
-
-    private sealed class FakeChannelRepository : IChannelRepository
-    {
-        private readonly Dictionary<int, ChannelValue> channels = [];
-
-        public void Set(int id, string value) =>
-            channels[id] = new ChannelValue { Id = id, Value = value };
-
-        public ChannelValue Get(int id) => channels[id];
-
-        public Task<ChannelValue> GetChannelValueAsync(int channelId) =>
-            Task.FromResult(channels.TryGetValue(channelId, out var v) ? v : new ChannelValue { Id = channelId });
-
-        public Task SetChannelValueAsync(ChannelValue ch)
-        {
-            channels[ch.Id] = ch;
-            return Task.CompletedTask;
-        }
-    }
-
-    private sealed class FakeChannelDefinitionRepository : IChannelDefinitionRepository
-    {
-        private readonly Dictionary<int, ChannelDefinition> defs = [];
-
-        public void Set(int id) =>
-            defs[id] = new ChannelDefinition { Id = id };
-
-        public Task<ChannelDefinition> GetChannelDefinitionAsync(int channelId) =>
-            Task.FromResult(defs.TryGetValue(channelId, out var d) ? d : new ChannelDefinition { Id = channelId });
-    }
-
-    private sealed class FakeStatementRepository : IStatementRepository
-    {
-        private readonly Dictionary<int, StatementDefinition> statementDefinitions = [];
-
-        public void Set(StatementDefinition definition) => statementDefinitions[definition.Id] = definition;
-
-        public Task<StatementDefinition> GetStatementDefinitionAsync(int statementId) =>
-            Task.FromResult(statementDefinitions.TryGetValue(statementId, out var definition)
-                ? definition
-                : new StatementDefinition { Id = statementId });
-
-        public Task SetStatementDefinitionAsync(StatementDefinition definition)
-        {
-            statementDefinitions[definition.Id] = definition;
-            return Task.CompletedTask;
-        }
-    }
-
     private sealed class FakeTimeProvider : TimeProvider
     {
         private DateTimeOffset current;
@@ -111,19 +27,19 @@ public class TimerEvaluationTests
     // Setup
     // -------------------------------------------------------------------------
 
-    private FakeTimerRepository timerRepo = null!;
-    private FakeChannelRepository channelRepo = null!;
-    private FakeChannelDefinitionRepository channelDefRepo = null!;
-    private FakeStatementRepository statementRepo = null!;
+    private TimerMemoryRepository timerRepo = null!;
+    private ChannelMemoryRepository channelRepo = null!;
+    private ChannelDefinitionMemoryRepository channelDefRepo = null!;
+    private StatementMemoryRepository statementRepo = null!;
     private FakeTimeProvider timeProvider = null!;
 
     [TestInitialize]
     public void Setup()
     {
-        timerRepo = new FakeTimerRepository();
-        channelRepo = new FakeChannelRepository();
-        channelDefRepo = new FakeChannelDefinitionRepository();
-        statementRepo = new FakeStatementRepository();
+        timerRepo = new TimerMemoryRepository();
+        channelRepo = new ChannelMemoryRepository();
+        channelDefRepo = new ChannelDefinitionMemoryRepository();
+        statementRepo = new StatementMemoryRepository();
         timeProvider = new FakeTimeProvider(new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero));
     }
 

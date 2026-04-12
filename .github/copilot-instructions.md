@@ -47,6 +47,10 @@ Reserved channels are well-known by the application and can be shared across car
 - Saved behavior/configuration classes should use the suffix **'Definition'**.
 - Runtime/status classes should use the suffix **'State'**.
 
+### Channel Repository Abstraction Guidelines
+
+When evolving Channels repository abstractions, keep implementation changes within the Channels project and tests, not service-tier implementations.
+
 ## Configuration UI
 
 A laptop-based configuration tool (Angular frontend + locally installed C# backend service) for setting up the in-car application. Configuration includes channels, math, login, logging, and CAN Bus communications. Configuration is exchanged with the device over Ethernet. A copy is saved to the cloud; multiple versions can exist but only one is active on the car at a time.

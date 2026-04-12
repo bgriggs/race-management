@@ -1,6 +1,8 @@
-﻿namespace Channels.Math;
+﻿using Channels.Repositories;
 
-public interface IMathRepository
+namespace Channels.Math;
+
+public interface IMathRepository : IDefinitionSetRepository<MathDefinition>
 {
     public Task<IEnumerable<MathDefinition>> GetDefinitionsAsync();
 }

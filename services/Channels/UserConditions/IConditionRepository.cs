@@ -1,6 +1,8 @@
-﻿namespace Channels.UserConditions;
+﻿using Channels.Repositories;
 
-public interface IConditionRepository
+namespace Channels.UserConditions;
+
+public interface IConditionRepository : IMutableDefinitionSetRepository<ConditionDefinition>, IStateRepository<int, ConditionState>
 {
     public Task<IEnumerable<ConditionDefinition>> GetConditionDefinitionsAsync();
     public Task SaveConditionDefinitionsAsync(IEnumerable<ConditionDefinition> conditions);

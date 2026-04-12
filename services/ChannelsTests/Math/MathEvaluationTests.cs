@@ -7,63 +7,19 @@ namespace ChannelsTests.Math;
 public class MathEvaluationTests
 {
     // -------------------------------------------------------------------------
-    // Fakes
-    // -------------------------------------------------------------------------
-
-    private sealed class FakeMathRepository : IMathRepository
-    {
-        private readonly List<MathDefinition> definitions = [];
-
-        public void Add(MathDefinition definition) => definitions.Add(definition);
-
-        public Task<IEnumerable<MathDefinition>> GetDefinitionsAsync() =>
-            Task.FromResult(definitions.AsEnumerable());
-    }
-
-    private sealed class FakeChannelRepository : IChannelRepository
-    {
-        private readonly Dictionary<int, ChannelValue> channels = [];
-
-        public void Set(int id, string value) =>
-            channels[id] = new ChannelValue { Id = id, Value = value };
-
-        public ChannelValue Get(int id) =>
-            channels.TryGetValue(id, out var v) ? v : new ChannelValue { Id = id };
-
-        public Task<ChannelValue> GetChannelValueAsync(int channelId) =>
-            Task.FromResult(channels.TryGetValue(channelId, out var v) ? v : new ChannelValue { Id = channelId });
-
-        public Task SetChannelValueAsync(ChannelValue ch)
-        {
-            channels[ch.Id] = ch;
-            return Task.CompletedTask;
-        }
-    }
-
-    private sealed class FakeChannelDefinitionRepository : IChannelDefinitionRepository
-    {
-        private readonly Dictionary<int, ChannelDefinition> defs = [];
-
-        public void Set(ChannelDefinition def) => defs[def.Id] = def;
-
-        public Task<ChannelDefinition> GetChannelDefinitionAsync(int channelId) =>
-            Task.FromResult(defs.TryGetValue(channelId, out var d) ? d : new ChannelDefinition { Id = channelId });
-    }
-
-    // -------------------------------------------------------------------------
     // Setup
     // -------------------------------------------------------------------------
 
-    private FakeMathRepository mathRepo = null!;
-    private FakeChannelRepository channelRepo = null!;
-    private FakeChannelDefinitionRepository channelDefRepo = null!;
+    private MathMemoryRepository mathRepo = null!;
+    private ChannelMemoryRepository channelRepo = null!;
+    private ChannelDefinitionMemoryRepository channelDefRepo = null!;
 
     [TestInitialize]
     public void Setup()
     {
-        mathRepo = new FakeMathRepository();
-        channelRepo = new FakeChannelRepository();
-        channelDefRepo = new FakeChannelDefinitionRepository();
+        mathRepo = new MathMemoryRepository();
+        channelRepo = new ChannelMemoryRepository();
+        channelDefRepo = new ChannelDefinitionMemoryRepository();
     }
 
     private MathEvaluation CreateEvaluation() =>

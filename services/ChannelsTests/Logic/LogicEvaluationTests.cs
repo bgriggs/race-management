@@ -6,54 +6,6 @@ namespace ChannelsTests.Logic;
 [TestClass]
 public class LogicEvaluationTests
 {
-    // -------------------------------------------------------------------------
-    // Fakes
-    // -------------------------------------------------------------------------
-
-    private sealed class FakeChannelRepository : IChannelRepository
-    {
-        private readonly Dictionary<int, ChannelValue> channels = [];
-
-        public void Set(int id, string value) =>
-            channels[id] = new ChannelValue { Id = id, Value = value };
-
-        public Task<ChannelValue> GetChannelValueAsync(int channelId) =>
-            Task.FromResult(channels[channelId]);
-
-        public Task SetChannelValueAsync(ChannelValue ch)
-        {
-            channels[ch.Id] = ch;
-            return Task.CompletedTask;
-        }
-    }
-
-    private sealed class FakeChannelDefinitionRepository : IChannelDefinitionRepository
-    {
-        private readonly Dictionary<int, ChannelDefinition> defs = [];
-
-        public void Set(int id, string baseUnit = "") =>
-            defs[id] = new ChannelDefinition { Id = id, BaseUnitType = baseUnit };
-
-        public Task<ChannelDefinition> GetChannelDefinitionAsync(int channelId) =>
-            Task.FromResult(defs[channelId]);
-    }
-
-    private sealed class FakeStatementRepository : IStatementRepository
-    {
-        private StatementDefinition? statementDefinition;
-
-        public void Set(StatementDefinition definition) => statementDefinition = definition;
-
-        public Task<StatementDefinition> GetStatementDefinitionAsync(int statementId) =>
-            Task.FromResult(statementDefinition ?? new StatementDefinition { Id = statementId });
-
-        public Task SetStatementDefinitionAsync(StatementDefinition definition)
-        {
-            statementDefinition = definition;
-            return Task.CompletedTask;
-        }
-    }
-
     private sealed class FakeTimeProvider : TimeProvider
     {
         private DateTimeOffset current;
@@ -69,17 +21,17 @@ public class LogicEvaluationTests
     // Setup
     // -------------------------------------------------------------------------
 
-    private FakeChannelRepository channelRepo = null!;
-    private FakeChannelDefinitionRepository channelDefRepo = null!;
-    private FakeStatementRepository statementRepo = null!;
+    private ChannelMemoryRepository channelRepo = null!;
+    private ChannelDefinitionMemoryRepository channelDefRepo = null!;
+    private StatementMemoryRepository statementRepo = null!;
     private FakeTimeProvider timeProvider = null!;
 
     [TestInitialize]
     public void Setup()
     {
-        channelRepo = new FakeChannelRepository();
-        channelDefRepo = new FakeChannelDefinitionRepository();
-        statementRepo = new FakeStatementRepository();
+        channelRepo = new ChannelMemoryRepository();
+        channelDefRepo = new ChannelDefinitionMemoryRepository();
+        statementRepo = new StatementMemoryRepository();
         timeProvider = new FakeTimeProvider(new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero));
     }
 
@@ -90,7 +42,7 @@ public class LogicEvaluationTests
     private void SetupChannel(int id, string value, string unit = "")
     {
         channelRepo.Set(id, value);
-        channelDefRepo.Set(id, unit);
+        channelDefRepo.Set(new ChannelDefinition { Id = id, BaseUnitType = unit });
     }
 
     // Creates a comparison against a static value.

@@ -1,6 +1,8 @@
-﻿namespace Channels.Tables;
+﻿using Channels.Repositories;
 
-public interface ITableRepository
+namespace Channels.Tables;
+
+public interface ITableRepository : IDefinitionSetRepository<TableMapping>
 {
     public Task<IEnumerable<TableMapping>> GetMappingsAsync();
 }

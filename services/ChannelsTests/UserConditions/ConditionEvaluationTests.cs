@@ -8,100 +8,21 @@ namespace ChannelsTests.UserConditions;
 public class ConditionEvaluationTests
 {
     // -------------------------------------------------------------------------
-    // Fakes
-    // -------------------------------------------------------------------------
-
-    private sealed class FakeConditionRepository : IConditionRepository
-    {
-        private readonly List<ConditionDefinition> definitions = [];
-        private readonly Dictionary<int, ConditionState> states = [];
-
-        public void Add(ConditionDefinition def) => definitions.Add(def);
-
-        public ConditionState? GetState(int id) =>
-            states.TryGetValue(id, out var s) ? s : null;
-
-        public Task<IEnumerable<ConditionDefinition>> GetConditionDefinitionsAsync() =>
-            Task.FromResult(definitions.AsEnumerable());
-
-        public Task SaveConditionDefinitionsAsync(IEnumerable<ConditionDefinition> conditions)
-        {
-            definitions.Clear();
-            definitions.AddRange(conditions);
-            return Task.CompletedTask;
-        }
-
-        public Task<ConditionState> GetConditionStateAsync(int conditionId)
-        {
-            states.TryGetValue(conditionId, out var state);
-            state ??= new ConditionState { ConditionId = conditionId };
-            return Task.FromResult(state);
-        }
-
-        public Task SetConditionStateAsync(ConditionState conditionState)
-        {
-            states[conditionState.ConditionId] = conditionState;
-            return Task.CompletedTask;
-        }
-    }
-
-    private sealed class FakeChannelRepository : IChannelRepository
-    {
-        private readonly Dictionary<int, ChannelValue> channels = [];
-
-        public bool HasChannel(int id) => channels.ContainsKey(id);
-
-        public ChannelValue Get(int id) =>
-            channels.TryGetValue(id, out var v) ? v : new ChannelValue { Id = id };
-
-        public Task<ChannelValue> GetChannelValueAsync(int channelId) =>
-            Task.FromResult(channels.TryGetValue(channelId, out var v) ? v : new ChannelValue { Id = channelId });
-
-        public Task SetChannelValueAsync(ChannelValue ch)
-        {
-            channels[ch.Id] = ch;
-            return Task.CompletedTask;
-        }
-    }
-
-    private sealed class FakeChannelDefinitionRepository : IChannelDefinitionRepository
-    {
-        public Task<ChannelDefinition> GetChannelDefinitionAsync(int channelId) =>
-            Task.FromResult(new ChannelDefinition { Id = channelId });
-    }
-
-    private sealed class FakeStatementRepository : IStatementRepository
-    {
-        private readonly Dictionary<int, StatementDefinition> statementDefinitions = [];
-
-        public void Add(StatementDefinition definition) => statementDefinitions[definition.Id] = definition;
-
-        public Task<StatementDefinition> GetStatementDefinitionAsync(int statementId) =>
-            Task.FromResult(statementDefinitions.TryGetValue(statementId, out var definition) ? definition : new StatementDefinition { Id = statementId });
-
-        public Task SetStatementDefinitionAsync(StatementDefinition definition)
-        {
-            statementDefinitions[definition.Id] = definition;
-            return Task.CompletedTask;
-        }
-    }
-
-    // -------------------------------------------------------------------------
     // Setup
     // -------------------------------------------------------------------------
 
-    private FakeConditionRepository conditionRepo = null!;
-    private FakeChannelRepository channelRepo = null!;
-    private FakeChannelDefinitionRepository channelDefRepo = null!;
-    private FakeStatementRepository statementRepo = null!;
+    private ConditionMemoryRepository conditionRepo = null!;
+    private ChannelMemoryRepository channelRepo = null!;
+    private ChannelDefinitionMemoryRepository channelDefRepo = null!;
+    private StatementMemoryRepository statementRepo = null!;
 
     [TestInitialize]
     public void Setup()
     {
-        conditionRepo = new FakeConditionRepository();
-        channelRepo = new FakeChannelRepository();
-        channelDefRepo = new FakeChannelDefinitionRepository();
-        statementRepo = new FakeStatementRepository();
+        conditionRepo = new ConditionMemoryRepository();
+        channelRepo = new ChannelMemoryRepository();
+        channelDefRepo = new ChannelDefinitionMemoryRepository();
+        statementRepo = new StatementMemoryRepository();
     }
 
     private ConditionEvaluation CreateEvaluation() =>
