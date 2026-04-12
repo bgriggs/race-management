@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Channels.Logic;
+﻿namespace Channels.Logic;
 
 public class StatementMemoryRepository : IStatementRepository
 {

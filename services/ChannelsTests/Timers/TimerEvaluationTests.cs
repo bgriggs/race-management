@@ -48,10 +48,10 @@ public class TimerEvaluationTests
 
     // Always-true / always-false statements for controlling start/stop conditions.
     private static StatementDefinition AlwaysTrueStatement(int id) =>
-        new() { Id = id, ActivateComparisons = [[new ComparisonDefinition { ComparisonId = id, ChannelId = 99, Logic = LogicType.True }]] };
+        new() { Id = id, ActivateComparisons = [[new ComparisonDefinition { Id = id, ChannelId = 99, Logic = LogicType.True }]] };
 
     private static StatementDefinition AlwaysFalseStatement(int id) =>
-        new() { Id = id, ActivateComparisons = [[new ComparisonDefinition { ComparisonId = id, ChannelId = 99, Logic = LogicType.False }]] };
+        new() { Id = id, ActivateComparisons = [[new ComparisonDefinition { Id = id, ChannelId = 99, Logic = LogicType.False }]] };
 
     // A basic count-up timer with no limits.
     private static TimerDefinition BasicTimer(int id = 1, int outputChId = 10, int startStmtId = 1, int stopStmtId = 2) =>

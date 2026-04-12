@@ -1,4 +1,4 @@
-﻿using Channels;
+using Channels;
 using Channels.Tables;
 
 namespace ChannelsTests.Tables;
@@ -49,7 +49,7 @@ public class TableEvaluationTests
         channelDefRepo.Set(StringDef(1));
         channelDefRepo.Set(StringDef(2));
 
-        var mapping = new TableMapping { InputChannel = 1, OutputChannel = 2, IgnoreCase = false };
+        var mapping = new TableDefinition { InputChannel = 1, OutputChannel = 2, IgnoreCase = false };
         mapping.Mapping.Add(("park", "P"));
         mapping.Mapping.Add(("reverse", "R"));
         mapping.Mapping.Add(("neutral", "N"));
@@ -67,7 +67,7 @@ public class TableEvaluationTests
         channelDefRepo.Set(StringDef(1));
         channelDefRepo.Set(StringDef(2));
 
-        var mapping = new TableMapping { InputChannel = 1, OutputChannel = 2, IgnoreCase = false };
+        var mapping = new TableDefinition { InputChannel = 1, OutputChannel = 2, IgnoreCase = false };
         mapping.Mapping.Add(("park", "P"));
         tableRepo.Add(mapping);
 
@@ -83,7 +83,7 @@ public class TableEvaluationTests
         channelDefRepo.Set(StringDef(1));
         channelDefRepo.Set(StringDef(2));
 
-        var mapping = new TableMapping { InputChannel = 1, OutputChannel = 2, IgnoreCase = true };
+        var mapping = new TableDefinition { InputChannel = 1, OutputChannel = 2, IgnoreCase = true };
         mapping.Mapping.Add(("park", "P"));
         tableRepo.Add(mapping);
 
@@ -99,7 +99,7 @@ public class TableEvaluationTests
         channelDefRepo.Set(StringDef(1));
         channelDefRepo.Set(StringDef(2));
 
-        var mapping = new TableMapping { InputChannel = 1, OutputChannel = 2, IgnoreCase = true };
+        var mapping = new TableDefinition { InputChannel = 1, OutputChannel = 2, IgnoreCase = true };
         mapping.Mapping.Add(("PARK", "P"));
         tableRepo.Add(mapping);
 
@@ -115,7 +115,7 @@ public class TableEvaluationTests
         channelDefRepo.Set(StringDef(1));
         channelDefRepo.Set(StringDef(2));
 
-        tableRepo.Add(new TableMapping { InputChannel = 1, OutputChannel = 2 });
+        tableRepo.Add(new TableDefinition { InputChannel = 1, OutputChannel = 2 });
 
         await CreateEvaluation().EvaluateAsync();
 
@@ -129,7 +129,7 @@ public class TableEvaluationTests
         channelDefRepo.Set(StringDef(1));
         channelDefRepo.Set(StringDef(2));
 
-        var mapping = new TableMapping { InputChannel = 1, OutputChannel = 2, IgnoreCase = true };
+        var mapping = new TableDefinition { InputChannel = 1, OutputChannel = 2, IgnoreCase = true };
         mapping.Mapping.Add(("park", "FIRST"));
         mapping.Mapping.Add(("park", "SECOND"));
         tableRepo.Add(mapping);
@@ -146,7 +146,7 @@ public class TableEvaluationTests
         channelDefRepo.Set(StringDef(1));
         channelDefRepo.Set(StringDef(2));
 
-        var mapping = new TableMapping { InputChannel = 1, OutputChannel = 2 };
+        var mapping = new TableDefinition { InputChannel = 1, OutputChannel = 2 };
         mapping.Mapping.Add(("park", "P"));
         mapping.Mapping.Add(("reverse", "R"));
         mapping.Mapping.Add(("neutral", "N"));
@@ -169,7 +169,7 @@ public class TableEvaluationTests
         channelDefRepo.Set(IntDef(1));
         channelDefRepo.Set(StringDef(2));
 
-        var mapping = new TableMapping { InputChannel = 1, OutputChannel = 2 };
+        var mapping = new TableDefinition { InputChannel = 1, OutputChannel = 2 };
         mapping.Mapping.Add(("1", "one"));
         mapping.Mapping.Add(("2", "two"));
         mapping.Mapping.Add(("3", "three"));
@@ -187,7 +187,7 @@ public class TableEvaluationTests
         channelDefRepo.Set(IntDef(1));
         channelDefRepo.Set(StringDef(2));
 
-        var mapping = new TableMapping { InputChannel = 1, OutputChannel = 2 };
+        var mapping = new TableDefinition { InputChannel = 1, OutputChannel = 2 };
         mapping.Mapping.Add(("1", "one"));
         mapping.Mapping.Add(("2", "two"));
         tableRepo.Add(mapping);
@@ -204,7 +204,7 @@ public class TableEvaluationTests
         channelDefRepo.Set(IntDef(1));
         channelDefRepo.Set(StringDef(2));
 
-        var mapping = new TableMapping { InputChannel = 1, OutputChannel = 2 };
+        var mapping = new TableDefinition { InputChannel = 1, OutputChannel = 2 };
         mapping.Mapping.Add(("1", "FIRST"));
         mapping.Mapping.Add(("1", "SECOND"));
         tableRepo.Add(mapping);
@@ -221,7 +221,7 @@ public class TableEvaluationTests
         channelDefRepo.Set(IntDef(1));
         channelDefRepo.Set(StringDef(2));
 
-        var mapping = new TableMapping { InputChannel = 1, OutputChannel = 2 };
+        var mapping = new TableDefinition { InputChannel = 1, OutputChannel = 2 };
         mapping.Mapping.Add(("-1", "minus one"));
         tableRepo.Add(mapping);
 
@@ -241,7 +241,7 @@ public class TableEvaluationTests
         channelDefRepo.Set(DoubleDef(1));
         channelDefRepo.Set(DoubleDef(2));
 
-        var mapping = new TableMapping { InputChannel = 1, OutputChannel = 2, InterpolationType = InterpolationType.Linear };
+        var mapping = new TableDefinition { InputChannel = 1, OutputChannel = 2, InterpolationType = InterpolationType.Linear };
         mapping.Mapping.Add(("0", "0"));
         mapping.Mapping.Add(("10", "200"));
         tableRepo.Add(mapping);
@@ -258,7 +258,7 @@ public class TableEvaluationTests
         channelDefRepo.Set(DoubleDef(1));
         channelDefRepo.Set(DoubleDef(2));
 
-        var mapping = new TableMapping { InputChannel = 1, OutputChannel = 2, InterpolationType = InterpolationType.Linear };
+        var mapping = new TableDefinition { InputChannel = 1, OutputChannel = 2, InterpolationType = InterpolationType.Linear };
         mapping.Mapping.Add(("0", "0"));
         mapping.Mapping.Add(("10", "200"));
         tableRepo.Add(mapping);
@@ -275,7 +275,7 @@ public class TableEvaluationTests
         channelDefRepo.Set(DoubleDef(1));
         channelDefRepo.Set(DoubleDef(2));
 
-        var mapping = new TableMapping { InputChannel = 1, OutputChannel = 2, InterpolationType = InterpolationType.Linear };
+        var mapping = new TableDefinition { InputChannel = 1, OutputChannel = 2, InterpolationType = InterpolationType.Linear };
         mapping.Mapping.Add(("0", "0"));
         mapping.Mapping.Add(("10", "200"));
         tableRepo.Add(mapping);
@@ -293,7 +293,7 @@ public class TableEvaluationTests
         channelDefRepo.Set(DoubleDef(1));
         channelDefRepo.Set(DoubleDef(2));
 
-        var mapping = new TableMapping { InputChannel = 1, OutputChannel = 2, InterpolationType = InterpolationType.Linear };
+        var mapping = new TableDefinition { InputChannel = 1, OutputChannel = 2, InterpolationType = InterpolationType.Linear };
         mapping.Mapping.Add(("0", "0"));
         mapping.Mapping.Add(("8", "80"));
         tableRepo.Add(mapping);
@@ -314,7 +314,7 @@ public class TableEvaluationTests
         channelDefRepo.Set(DoubleDef(1));
         channelDefRepo.Set(DoubleDef(2));
 
-        var mapping = new TableMapping { InputChannel = 1, OutputChannel = 2, InterpolationType = InterpolationType.CubicSpline };
+        var mapping = new TableDefinition { InputChannel = 1, OutputChannel = 2, InterpolationType = InterpolationType.CubicSpline };
         mapping.Mapping.Add(("0", "0"));
         mapping.Mapping.Add(("5", "50"));
         mapping.Mapping.Add(("10", "100"));
@@ -333,7 +333,7 @@ public class TableEvaluationTests
         channelDefRepo.Set(DoubleDef(1));
         channelDefRepo.Set(DoubleDef(2));
 
-        var mapping = new TableMapping { InputChannel = 1, OutputChannel = 2, InterpolationType = InterpolationType.CubicSpline };
+        var mapping = new TableDefinition { InputChannel = 1, OutputChannel = 2, InterpolationType = InterpolationType.CubicSpline };
         mapping.Mapping.Add(("0", "0"));
         mapping.Mapping.Add(("5", "50"));
         mapping.Mapping.Add(("10", "100"));
@@ -355,7 +355,7 @@ public class TableEvaluationTests
         channelDefRepo.Set(DoubleDef(1));
         channelDefRepo.Set(DoubleDef(2));
 
-        var mapping = new TableMapping { InputChannel = 1, OutputChannel = 2, InterpolationType = InterpolationType.Polynomial };
+        var mapping = new TableDefinition { InputChannel = 1, OutputChannel = 2, InterpolationType = InterpolationType.Polynomial };
         mapping.Mapping.Add(("0", "0"));
         mapping.Mapping.Add(("5", "50"));
         mapping.Mapping.Add(("10", "100"));
@@ -375,7 +375,7 @@ public class TableEvaluationTests
         channelDefRepo.Set(DoubleDef(1));
         channelDefRepo.Set(DoubleDef(2));
 
-        var mapping = new TableMapping { InputChannel = 1, OutputChannel = 2, InterpolationType = InterpolationType.Polynomial };
+        var mapping = new TableDefinition { InputChannel = 1, OutputChannel = 2, InterpolationType = InterpolationType.Polynomial };
         mapping.Mapping.Add(("0", "0"));
         mapping.Mapping.Add(("5", "50"));
         mapping.Mapping.Add(("10", "100"));
@@ -397,7 +397,7 @@ public class TableEvaluationTests
         channelDefRepo.Set(DoubleDef(1));
         channelDefRepo.Set(DoubleDef(2, decimalPlaces: 2));
 
-        var mapping = new TableMapping { InputChannel = 1, OutputChannel = 2, InterpolationType = InterpolationType.Linear };
+        var mapping = new TableDefinition { InputChannel = 1, OutputChannel = 2, InterpolationType = InterpolationType.Linear };
         mapping.Mapping.Add(("0", "0"));
         mapping.Mapping.Add(("10", "200"));
         tableRepo.Add(mapping);
@@ -417,7 +417,7 @@ public class TableEvaluationTests
         channelDefRepo.Set(DoubleDef(1));
         channelDefRepo.Set(DoubleDef(2, decimalPlaces: 0));
 
-        var mapping = new TableMapping { InputChannel = 1, OutputChannel = 2, InterpolationType = InterpolationType.Linear };
+        var mapping = new TableDefinition { InputChannel = 1, OutputChannel = 2, InterpolationType = InterpolationType.Linear };
         mapping.Mapping.Add(("0", "0"));
         mapping.Mapping.Add(("10", "200"));
         tableRepo.Add(mapping);
@@ -441,11 +441,11 @@ public class TableEvaluationTests
         channelDefRepo.Set(IntDef(3));
         channelDefRepo.Set(StringDef(4));
 
-        var m1 = new TableMapping { InputChannel = 1, OutputChannel = 2 };
+        var m1 = new TableDefinition { InputChannel = 1, OutputChannel = 2 };
         m1.Mapping.Add(("park", "P"));
         tableRepo.Add(m1);
 
-        var m2 = new TableMapping { InputChannel = 3, OutputChannel = 4 };
+        var m2 = new TableDefinition { InputChannel = 3, OutputChannel = 4 };
         m2.Mapping.Add(("1", "one"));
         m2.Mapping.Add(("2", "two"));
         tableRepo.Add(m2);
@@ -466,12 +466,12 @@ public class TableEvaluationTests
         channelDefRepo.Set(DoubleDef(3));
         channelDefRepo.Set(DoubleDef(4));
 
-        var m1 = new TableMapping { InputChannel = 1, OutputChannel = 2 };
+        var m1 = new TableDefinition { InputChannel = 1, OutputChannel = 2 };
         m1.Mapping.Add(("park", "P"));
         m1.Mapping.Add(("reverse", "R"));
         tableRepo.Add(m1);
 
-        var m2 = new TableMapping { InputChannel = 3, OutputChannel = 4, InterpolationType = InterpolationType.Linear };
+        var m2 = new TableDefinition { InputChannel = 3, OutputChannel = 4, InterpolationType = InterpolationType.Linear };
         m2.Mapping.Add(("0", "0"));
         m2.Mapping.Add(("10", "100"));
         tableRepo.Add(m2);
@@ -492,4 +492,5 @@ public class TableEvaluationTests
         Assert.AreEqual("original", channelRepo.Get(10).Value);
     }
 }
+
 

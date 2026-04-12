@@ -49,7 +49,7 @@ public class LogicEvaluationTests
     private static ComparisonDefinition StaticComparison(int channelId, LogicType logic, string staticValue, int comparisonId = 1) =>
         new()
         {
-            ComparisonId = comparisonId,
+            Id = comparisonId,
             ChannelId = channelId,
             Logic = logic,
             UseStaticComparison = true,
@@ -60,7 +60,7 @@ public class LogicEvaluationTests
     private static ComparisonDefinition ChannelComparison(int channelId, LogicType logic, int compareChannelId, int comparisonId = 1) =>
         new()
         {
-            ComparisonId = comparisonId,
+            Id = comparisonId,
             ChannelId = channelId,
             Logic = logic,
             UseStaticComparison = false,
@@ -79,7 +79,7 @@ public class LogicEvaluationTests
     public async Task LogicTrue_ReturnsTrue()
     {
         SetupChannel(1, "0");
-        SetStatement(new ComparisonDefinition { ComparisonId = 1, ChannelId = 1, Logic = LogicType.True });
+        SetStatement(new ComparisonDefinition { Id = 1, ChannelId = 1, Logic = LogicType.True });
 
         bool result = await CreateEvaluation().EvaluateAsync(1);
 
@@ -90,7 +90,7 @@ public class LogicEvaluationTests
     public async Task LogicFalse_ReturnsFalse()
     {
         SetupChannel(1, "0");
-        SetStatement(new ComparisonDefinition { ComparisonId = 1, ChannelId = 1, Logic = LogicType.False });
+        SetStatement(new ComparisonDefinition { Id = 1, ChannelId = 1, Logic = LogicType.False });
 
         bool result = await CreateEvaluation().EvaluateAsync(1);
 
@@ -631,7 +631,7 @@ public class LogicEvaluationTests
     public async Task Updated_FirstEvaluation_ReturnsFalse()
     {
         SetupChannel(1, "100");
-        SetStatement(new ComparisonDefinition { ComparisonId = 1, ChannelId = 1, Logic = LogicType.Updated });
+        SetStatement(new ComparisonDefinition { Id = 1, ChannelId = 1, Logic = LogicType.Updated });
 
         Assert.IsFalse(await CreateEvaluation().EvaluateAsync(1));
     }
@@ -640,7 +640,7 @@ public class LogicEvaluationTests
     public async Task Updated_ValueUnchanged_ReturnsFalse()
     {
         SetupChannel(1, "100");
-        SetStatement(new ComparisonDefinition { ComparisonId = 1, ChannelId = 1, Logic = LogicType.Updated });
+        SetStatement(new ComparisonDefinition { Id = 1, ChannelId = 1, Logic = LogicType.Updated });
 
         var evaluation = CreateEvaluation();
         await evaluation.EvaluateAsync(1);  // records initial value
@@ -652,7 +652,7 @@ public class LogicEvaluationTests
     public async Task Updated_ValueChanged_ReturnsTrue()
     {
         SetupChannel(1, "100");
-        SetStatement(new ComparisonDefinition { ComparisonId = 1, ChannelId = 1, Logic = LogicType.Updated });
+        SetStatement(new ComparisonDefinition { Id = 1, ChannelId = 1, Logic = LogicType.Updated });
 
         var evaluation = CreateEvaluation();
         await evaluation.EvaluateAsync(1);  // records initial value
@@ -665,7 +665,7 @@ public class LogicEvaluationTests
     public async Task Updated_ValueChangedThenRestored_DetectsEachChange()
     {
         SetupChannel(1, "100");
-        SetStatement(new ComparisonDefinition { ComparisonId = 1, ChannelId = 1, Logic = LogicType.Updated });
+        SetStatement(new ComparisonDefinition { Id = 1, ChannelId = 1, Logic = LogicType.Updated });
 
         var evaluation = CreateEvaluation();
         await evaluation.EvaluateAsync(1);  // records 100
@@ -752,7 +752,7 @@ public class LogicEvaluationTests
         SetupChannel(2, "10", "");   // threshold channel
         var comparison = new ComparisonDefinition
         {
-            ComparisonId = 1,
+            Id = 1,
             ChannelId = 1,
             Logic = LogicType.ChangedBy,
             UseStaticComparison = false,
@@ -780,7 +780,7 @@ public class LogicEvaluationTests
             Id = 1,
             ActivateComparisons =
             [[
-                new ComparisonDefinition { ComparisonId = 1, ChannelId = 1, Logic = LogicType.GreaterThan, UseStaticComparison = false },
+                new ComparisonDefinition { Id = 1, ChannelId = 1, Logic = LogicType.GreaterThan, UseStaticComparison = false },
             ]],
         });
 
@@ -797,7 +797,7 @@ public class LogicEvaluationTests
             Id = 1,
             ActivateComparisons =
             [[
-                new ComparisonDefinition { ComparisonId = 1, ChannelId = 1, Logic = LogicType.ChangedBy, UseStaticComparison = false },
+                new ComparisonDefinition { Id = 1, ChannelId = 1, Logic = LogicType.ChangedBy, UseStaticComparison = false },
             ]],
         });
 

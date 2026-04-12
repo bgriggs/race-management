@@ -5,7 +5,7 @@
 /// </summary>
 internal class ComparisonState
 {
-    public int ComparisonId { get; set; }
+    public int Id { get; set; }
 
     /// <summary>
     /// Is the statement active.

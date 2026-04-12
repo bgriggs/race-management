@@ -2,13 +2,14 @@ namespace Channels.Tables;
 
 public class TableMemoryRepository : ITableRepository
 {
-    private readonly List<TableMapping> mappings = [];
+    private readonly List<TableDefinition> mappings = [];
 
-    public void Add(TableMapping mapping) => mappings.Add(mapping);
+    public void Add(TableDefinition mapping) => mappings.Add(mapping);
 
-    public Task<IEnumerable<TableMapping>> GetMappingsAsync() =>
+    public Task<IEnumerable<TableDefinition>> GetMappingsAsync() =>
         Task.FromResult(mappings.AsEnumerable());
 
-    public Task<IEnumerable<TableMapping>> GetDefinitionsAsync() =>
+    public Task<IEnumerable<TableDefinition>> GetDefinitionsAsync() =>
         GetMappingsAsync();
 }
+

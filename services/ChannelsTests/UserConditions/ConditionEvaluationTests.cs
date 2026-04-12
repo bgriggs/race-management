@@ -29,10 +29,10 @@ public class ConditionEvaluationTests
         new(conditionRepo, channelRepo, channelDefRepo, statementRepo);
 
     private static StatementDefinition AlwaysTrueStatement(int id) =>
-        new() { Id = id, ActivateComparisons = [[new ComparisonDefinition { ComparisonId = id, ChannelId = 1, Logic = LogicType.True }]] };
+        new() { Id = id, ActivateComparisons = [[new ComparisonDefinition { Id = id, ChannelId = 1, Logic = LogicType.True }]] };
 
     private static StatementDefinition AlwaysFalseStatement(int id) =>
-        new() { Id = id, ActivateComparisons = [[new ComparisonDefinition { ComparisonId = id, ChannelId = 1, Logic = LogicType.False }]] };
+        new() { Id = id, ActivateComparisons = [[new ComparisonDefinition { Id = id, ChannelId = 1, Logic = LogicType.False }]] };
 
     private void AddCondition(int id, int outputChannelId, params StatementDefinition[] statementDefinitions)
     {

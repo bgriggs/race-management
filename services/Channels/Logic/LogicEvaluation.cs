@@ -3,33 +3,19 @@ using UnitsNet;
 
 namespace Channels.Logic;
 
-public class LogicEvaluation
+public class LogicEvaluation(
+    IChannelRepository channelRepository,
+    IChannelDefinitionRepository channelDefinitionRepository,
+    IStatementRepository statementRepository,
+    IStatementStateRepository? statementStateRepository = null,
+    IComparisonDurationRepository? comparisonDurationRepository = null,
+    IPreviousChannelValueRepository? previousChannelValueRepository = null,
+    TimeProvider? timeProvider = null)
 {
-    private readonly IChannelRepository channelRepository;
-    private readonly IStatementRepository statementRepository;
-    private readonly IChannelDefinitionRepository channelDefinitionRepository;
-    private readonly IStatementStateRepository statementStateRepository;
-    private readonly IComparisonDurationRepository comparisonDurationRepository;
-    private readonly IPreviousChannelValueRepository previousChannelValueRepository;
-    private readonly TimeProvider timeProvider;
-
-    public LogicEvaluation(
-        IChannelRepository channelRepository,
-        IChannelDefinitionRepository channelDefinitionRepository,
-        IStatementRepository statementRepository,
-        IStatementStateRepository? statementStateRepository = null,
-        IComparisonDurationRepository? comparisonDurationRepository = null,
-        IPreviousChannelValueRepository? previousChannelValueRepository = null,
-        TimeProvider? timeProvider = null)
-    {
-        this.channelRepository = channelRepository;
-        this.channelDefinitionRepository = channelDefinitionRepository;
-        this.statementRepository = statementRepository;
-        this.statementStateRepository = statementStateRepository ?? new StatementStateMemoryRepository();
-        this.comparisonDurationRepository = comparisonDurationRepository ?? new ComparisonDurationMemoryRepository();
-        this.previousChannelValueRepository = previousChannelValueRepository ?? new PreviousChannelValueMemoryRepository();
-        this.timeProvider = timeProvider ?? TimeProvider.System;
-    }
+    private readonly IStatementStateRepository statementStateRepository = statementStateRepository ?? new StatementStateMemoryRepository();
+    private readonly IComparisonDurationRepository comparisonDurationRepository = comparisonDurationRepository ?? new ComparisonDurationMemoryRepository();
+    private readonly IPreviousChannelValueRepository previousChannelValueRepository = previousChannelValueRepository ?? new PreviousChannelValueMemoryRepository();
+    private readonly TimeProvider timeProvider = timeProvider ?? TimeProvider.System;
 
     public async Task<bool> EvaluateAsync(int statementId)
     {
@@ -104,7 +90,7 @@ public class LogicEvaluation
         // The comparison must remain true for the specified duration before it is considered true.
         if (comparison.ForMs > 0)
         {
-            result = await EvaluateForDurationAsync(comparison.ComparisonId, result, comparison.ForMs);
+            result = await EvaluateForDurationAsync(comparison.Id, result, comparison.ForMs);
         }
 
         return comparison.ReverseResult ? !result : result;
@@ -133,7 +119,7 @@ public class LogicEvaluation
         else
         {
             throw new InvalidOperationException(
-                $"ComparisonDefinition {comparison.ComparisonId} requires either a static value or a comparison channel.");
+                $"ComparisonDefinition {comparison.Id} requires either a static value or a comparison channel.");
         }
 
         return Compare(leftValue, rightValue, comparison.Logic);
@@ -183,7 +169,7 @@ public class LogicEvaluation
         else
         {
             throw new InvalidOperationException(
-                $"ComparisonDefinition {comparison.ComparisonId} (ChangedBy) requires either a static threshold or a comparison channel.");
+                $"ComparisonDefinition {comparison.Id} (ChangedBy) requires either a static threshold or a comparison channel.");
         }
 
         return System.Math.Abs(currentValue - previousValue) >= threshold;

@@ -1,4 +1,4 @@
-﻿using Channels;
+using Channels;
 using Channels.Counters;
 using Channels.Math;
 using Channels.Tables;
@@ -26,8 +26,9 @@ public class CarConfiguration
     public List<ChannelDefinition> ChannelDefinitions { get; } = [];
     public List<CounterDefinition> CounterDefinitions { get; } = [];
     public List<MathDefinition> MathDefinitions { get; } = [];
-    public List<TableMapping> TableMappings { get; } = [];
+    public List<TableDefinition> TableMappings { get; } = [];
     public List<TimerDefinition> TimerDefinitions { get; } = [];
     public List<ConditionDefinition> UserConditions { get; } = [];
 
 }
+

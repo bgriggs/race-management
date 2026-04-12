@@ -1,6 +1,6 @@
-﻿namespace Channels.Tables;
+namespace Channels.Tables;
 
-public class TableMapping
+public class TableDefinition
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
