@@ -1,15 +1,7 @@
 ﻿namespace Channels.Counters;
 
-public class CounterEvaluation
+public class CounterEvaluation(ICounterRepository counterRepository, IChannelRepository channelRepository)
 {
-    private readonly ICounterRepository counterRepository;
-    private readonly IChannelRepository channelRepository;
-
-    public CounterEvaluation(ICounterRepository counterRepository, IChannelRepository channelRepository)
-    {
-        this.counterRepository = counterRepository;
-        this.channelRepository = channelRepository;
-    }
 
     /// <summary>
     /// Evaluate all counters: detect rising edges on up/down/reset channels and update counter values.

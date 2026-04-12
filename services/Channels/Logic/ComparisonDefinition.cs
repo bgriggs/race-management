@@ -2,7 +2,7 @@ namespace Channels.Logic;
 
 public class ComparisonDefinition
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public Guid ChannelId { get; set; }
     public LogicType Logic { get; set; }
     public bool UseStaticComparison { get; set; }

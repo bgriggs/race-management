@@ -8,6 +8,8 @@ public class LogicEvaluationTests
 {
     private static readonly Guid Ch1 = new("00000000-0000-0000-0000-000000000001");
     private static readonly Guid Ch2 = new("00000000-0000-0000-0000-000000000002");
+    private static readonly Guid Cmp1 = new("00000000-0000-0000-0000-000000001001");
+    private static readonly Guid Cmp2 = new("00000000-0000-0000-0000-000000001002");
 
     private sealed class FakeTimeProvider : TimeProvider
     {
@@ -49,10 +51,10 @@ public class LogicEvaluationTests
     }
 
     // Creates a comparison against a static value.
-    private static ComparisonDefinition StaticComparison(Guid channelId, LogicType logic, string staticValue, int comparisonId = 1) =>
+    private static ComparisonDefinition StaticComparison(Guid channelId, LogicType logic, string staticValue, Guid comparisonId = default) =>
         new()
         {
-            Id = comparisonId,
+            Id = comparisonId == default ? Cmp1 : comparisonId,
             ChannelId = channelId,
             Logic = logic,
             UseStaticComparison = true,
@@ -60,10 +62,10 @@ public class LogicEvaluationTests
         };
 
     // Creates a comparison against another channel.
-    private static ComparisonDefinition ChannelComparison(Guid channelId, LogicType logic, Guid compareChannelId, int comparisonId = 1) =>
+    private static ComparisonDefinition ChannelComparison(Guid channelId, LogicType logic, Guid compareChannelId, Guid comparisonId = default) =>
         new()
         {
-            Id = comparisonId,
+            Id = comparisonId == default ? Cmp1 : comparisonId,
             ChannelId = channelId,
             Logic = logic,
             UseStaticComparison = false,
@@ -72,7 +74,7 @@ public class LogicEvaluationTests
 
     // Wraps a single comparison in a single-group statement.
     private void SetStatement(ComparisonDefinition comparison) =>
-        statementRepo.Set(new StatementDefinition { Id = 1, ActivateComparisons = [[comparison]] });
+        statementRepo.Set(new StatementDefinition { Id = StatementId(1), ActivateComparisons = [[comparison]] });
 
     // -------------------------------------------------------------------------
     // LogicType.True / LogicType.False
@@ -82,7 +84,7 @@ public class LogicEvaluationTests
     public async Task LogicTrue_ReturnsTrue()
     {
         SetupChannel(Ch1, "0");
-        SetStatement(new ComparisonDefinition { Id = 1, ChannelId = Ch1, Logic = LogicType.True });
+        SetStatement(new ComparisonDefinition { Id = Cmp1, ChannelId = Ch1, Logic = LogicType.True });
 
         bool result = await CreateEvaluation().EvaluateAsync(1);
 
@@ -93,7 +95,7 @@ public class LogicEvaluationTests
     public async Task LogicFalse_ReturnsFalse()
     {
         SetupChannel(Ch1, "0");
-        SetStatement(new ComparisonDefinition { Id = 1, ChannelId = Ch1, Logic = LogicType.False });
+        SetStatement(new ComparisonDefinition { Id = Cmp1, ChannelId = Ch1, Logic = LogicType.False });
 
         bool result = await CreateEvaluation().EvaluateAsync(1);
 
@@ -247,7 +249,7 @@ public class LogicEvaluationTests
     {
         SetupChannel(Ch1, "100", "cm");
         SetupChannel(Ch2, "50", "cm");
-        statementRepo.Set(new StatementDefinition { Id = 1, ActivateComparisons = [[ChannelComparison(Ch1, LogicType.GreaterThan, Ch2)]] });
+        statementRepo.Set(new StatementDefinition { Id = StatementId(1), ActivateComparisons = [[ChannelComparison(Ch1, LogicType.GreaterThan, Ch2)]] });
 
         Assert.IsTrue(await CreateEvaluation().EvaluateAsync(1));
     }
@@ -258,7 +260,7 @@ public class LogicEvaluationTests
         // 1 km > 500 cm (= 5 m) → true
         SetupChannel(Ch1, "1", "km");
         SetupChannel(Ch2, "500", "cm");
-        statementRepo.Set(new StatementDefinition { Id = 1, ActivateComparisons = [[ChannelComparison(Ch1, LogicType.GreaterThan, Ch2)]] });
+        statementRepo.Set(new StatementDefinition { Id = StatementId(1), ActivateComparisons = [[ChannelComparison(Ch1, LogicType.GreaterThan, Ch2)]] });
 
         Assert.IsTrue(await CreateEvaluation().EvaluateAsync(1));
     }
@@ -269,7 +271,7 @@ public class LogicEvaluationTests
         // 100 cm < 1 km → GreaterThan is false
         SetupChannel(Ch1, "100", "cm");
         SetupChannel(Ch2, "1", "km");
-        statementRepo.Set(new StatementDefinition { Id = 1, ActivateComparisons = [[ChannelComparison(Ch1, LogicType.GreaterThan, Ch2)]] });
+        statementRepo.Set(new StatementDefinition { Id = StatementId(1), ActivateComparisons = [[ChannelComparison(Ch1, LogicType.GreaterThan, Ch2)]] });
 
         Assert.IsFalse(await CreateEvaluation().EvaluateAsync(1));
     }
@@ -279,7 +281,7 @@ public class LogicEvaluationTests
     {
         SetupChannel(Ch1, "5", "");
         SetupChannel(Ch2, "3", "");
-        statementRepo.Set(new StatementDefinition { Id = 1, ActivateComparisons = [[ChannelComparison(Ch1, LogicType.GreaterThan, Ch2)]] });
+        statementRepo.Set(new StatementDefinition { Id = StatementId(1), ActivateComparisons = [[ChannelComparison(Ch1, LogicType.GreaterThan, Ch2)]] });
 
         Assert.IsTrue(await CreateEvaluation().EvaluateAsync(1));
     }
@@ -289,7 +291,7 @@ public class LogicEvaluationTests
     {
         SetupChannel(Ch1, "100", "cm");  // Length
         SetupChannel(Ch2, "100", "kg");  // Mass
-        statementRepo.Set(new StatementDefinition { Id = 1, ActivateComparisons = [[ChannelComparison(Ch1, LogicType.GreaterThan, Ch2)]] });
+        statementRepo.Set(new StatementDefinition { Id = StatementId(1), ActivateComparisons = [[ChannelComparison(Ch1, LogicType.GreaterThan, Ch2)]] });
 
         await Assert.ThrowsAsync<IncompatibleUnitException>(
             () => CreateEvaluation().EvaluateAsync(1));
@@ -300,7 +302,7 @@ public class LogicEvaluationTests
     {
         SetupChannel(Ch1, "100", "m");
         SetupChannel(Ch2, "50", "");
-        statementRepo.Set(new StatementDefinition { Id = 1, ActivateComparisons = [[ChannelComparison(Ch1, LogicType.GreaterThan, Ch2)]] });
+        statementRepo.Set(new StatementDefinition { Id = StatementId(1), ActivateComparisons = [[ChannelComparison(Ch1, LogicType.GreaterThan, Ch2)]] });
 
         await Assert.ThrowsAsync<IncompatibleUnitException>(
             () => CreateEvaluation().EvaluateAsync(1));
@@ -326,11 +328,11 @@ public class LogicEvaluationTests
         SetupChannel(Ch2, "10");
         statementRepo.Set(new StatementDefinition
         {
-            Id = 1,
+            Id = StatementId(1),
             ActivateComparisons =
             [
-                [StaticComparison(Ch1, LogicType.GreaterThan, "5", comparisonId: 1)],  // false
-                [StaticComparison(Ch2, LogicType.GreaterThan, "5", comparisonId: 2)],  // true
+                [StaticComparison(Ch1, LogicType.GreaterThan, "5", comparisonId: Cmp1)],  // false
+                [StaticComparison(Ch2, LogicType.GreaterThan, "5", comparisonId: Cmp2)],  // true
             ],
         });
 
@@ -344,11 +346,11 @@ public class LogicEvaluationTests
         SetupChannel(Ch2, "4");
         statementRepo.Set(new StatementDefinition
         {
-            Id = 1,
+            Id = StatementId(1),
             ActivateComparisons =
             [
-                [StaticComparison(Ch1, LogicType.GreaterThan, "5", comparisonId: 1)],  // false
-                [StaticComparison(Ch2, LogicType.GreaterThan, "5", comparisonId: 2)],  // false
+                [StaticComparison(Ch1, LogicType.GreaterThan, "5", comparisonId: Cmp1)],  // false
+                [StaticComparison(Ch2, LogicType.GreaterThan, "5", comparisonId: Cmp2)],  // false
             ],
         });
 
@@ -362,11 +364,11 @@ public class LogicEvaluationTests
         SetupChannel(Ch2, "20");
         statementRepo.Set(new StatementDefinition
         {
-            Id = 1,
+            Id = StatementId(1),
             ActivateComparisons =
             [[
-                StaticComparison(Ch1, LogicType.GreaterThan, "5", comparisonId: 1),   // true
-                StaticComparison(Ch2, LogicType.GreaterThan, "15", comparisonId: 2),  // true
+                StaticComparison(Ch1, LogicType.GreaterThan, "5", comparisonId: Cmp1),   // true
+                StaticComparison(Ch2, LogicType.GreaterThan, "15", comparisonId: Cmp2),  // true
             ]],
         });
 
@@ -380,11 +382,11 @@ public class LogicEvaluationTests
         SetupChannel(Ch2, "3");
         statementRepo.Set(new StatementDefinition
         {
-            Id = 1,
+            Id = StatementId(1),
             ActivateComparisons =
             [[
-                StaticComparison(Ch1, LogicType.GreaterThan, "5", comparisonId: 1),  // true
-                StaticComparison(Ch2, LogicType.GreaterThan, "5", comparisonId: 2),  // false
+                StaticComparison(Ch1, LogicType.GreaterThan, "5", comparisonId: Cmp1),  // true
+                StaticComparison(Ch2, LogicType.GreaterThan, "5", comparisonId: Cmp2),  // false
             ]],
         });
 
@@ -397,11 +399,11 @@ public class LogicEvaluationTests
         SetupChannel(Ch1, "10");
         statementRepo.Set(new StatementDefinition
         {
-            Id = 1,
+            Id = StatementId(1),
             ActivateComparisons =
             [
                 [],  // empty — must be skipped, not treated as vacuous true
-                [StaticComparison(Ch1, LogicType.GreaterThan, "5", comparisonId: 1)],  // true
+                [StaticComparison(Ch1, LogicType.GreaterThan, "5", comparisonId: Cmp1)],  // true
             ],
         });
 
@@ -411,7 +413,7 @@ public class LogicEvaluationTests
     [TestMethod]
     public async Task NoGroups_ReturnsFalse()
     {
-        statementRepo.Set(new StatementDefinition { Id = 1, ActivateComparisons = [] });
+        statementRepo.Set(new StatementDefinition { Id = StatementId(1), ActivateComparisons = [] });
 
         Assert.IsFalse(await CreateEvaluation().EvaluateAsync(1));
     }
@@ -445,9 +447,9 @@ public class LogicEvaluationTests
         SetupChannel(Ch2, "10");
         statementRepo.Set(new StatementDefinition
         {
-            Id = 1,
-            ActivateComparisons   = [[StaticComparison(Ch1, LogicType.GreaterThan, "5", comparisonId: 1)]],
-            DeactivateComparisons = [[StaticComparison(Ch2, LogicType.GreaterThan, "5", comparisonId: 2)]],
+            Id = StatementId(1),
+            ActivateComparisons   = [[StaticComparison(Ch1, LogicType.GreaterThan, "5", comparisonId: Cmp1)]],
+            DeactivateComparisons = [[StaticComparison(Ch2, LogicType.GreaterThan, "5", comparisonId: Cmp2)]],
         });
 
         Assert.IsFalse(await CreateEvaluation().EvaluateAsync(1));
@@ -460,9 +462,9 @@ public class LogicEvaluationTests
         SetupChannel(Ch2, "3");
         statementRepo.Set(new StatementDefinition
         {
-            Id = 1,
-            ActivateComparisons   = [[StaticComparison(Ch1, LogicType.GreaterThan, "5", comparisonId: 1)]],
-            DeactivateComparisons = [[StaticComparison(Ch2, LogicType.GreaterThan, "5", comparisonId: 2)]],
+            Id = StatementId(1),
+            ActivateComparisons   = [[StaticComparison(Ch1, LogicType.GreaterThan, "5", comparisonId: Cmp1)]],
+            DeactivateComparisons = [[StaticComparison(Ch2, LogicType.GreaterThan, "5", comparisonId: Cmp2)]],
         });
 
         Assert.IsTrue(await CreateEvaluation().EvaluateAsync(1));
@@ -475,9 +477,9 @@ public class LogicEvaluationTests
         SetupChannel(Ch2, "3");
         statementRepo.Set(new StatementDefinition
         {
-            Id = 1,
-            ActivateComparisons   = [[StaticComparison(Ch1, LogicType.GreaterThan, "5", comparisonId: 1)]],
-            DeactivateComparisons = [[StaticComparison(Ch2, LogicType.GreaterThan, "5", comparisonId: 2)]],
+            Id = StatementId(1),
+            ActivateComparisons   = [[StaticComparison(Ch1, LogicType.GreaterThan, "5", comparisonId: Cmp1)]],
+            DeactivateComparisons = [[StaticComparison(Ch2, LogicType.GreaterThan, "5", comparisonId: Cmp2)]],
         });
 
         Assert.IsFalse(await CreateEvaluation().EvaluateAsync(1));
@@ -490,9 +492,9 @@ public class LogicEvaluationTests
         SetupChannel(Ch2, "3");
         statementRepo.Set(new StatementDefinition
         {
-            Id = 1,
-            ActivateComparisons   = [[StaticComparison(Ch1, LogicType.GreaterThan, "5", comparisonId: 1)]],
-            DeactivateComparisons = [[StaticComparison(Ch2, LogicType.GreaterThan, "5", comparisonId: 2)]],
+            Id = StatementId(1),
+            ActivateComparisons   = [[StaticComparison(Ch1, LogicType.GreaterThan, "5", comparisonId: Cmp1)]],
+            DeactivateComparisons = [[StaticComparison(Ch2, LogicType.GreaterThan, "5", comparisonId: Cmp2)]],
         });
 
         var evaluation = CreateEvaluation();
@@ -513,9 +515,9 @@ public class LogicEvaluationTests
         SetupChannel(Ch2, "3");
         statementRepo.Set(new StatementDefinition
         {
-            Id = 1,
-            ActivateComparisons   = [[StaticComparison(Ch1, LogicType.GreaterThan, "5", comparisonId: 1)]],
-            DeactivateComparisons = [[StaticComparison(Ch2, LogicType.GreaterThan, "5", comparisonId: 2)]],
+            Id = StatementId(1),
+            ActivateComparisons   = [[StaticComparison(Ch1, LogicType.GreaterThan, "5", comparisonId: Cmp1)]],
+            DeactivateComparisons = [[StaticComparison(Ch2, LogicType.GreaterThan, "5", comparisonId: Cmp2)]],
         });
 
         var evaluation = CreateEvaluation();
@@ -626,7 +628,7 @@ public class LogicEvaluationTests
     public async Task Updated_FirstEvaluation_ReturnsFalse()
     {
         SetupChannel(Ch1, "100");
-        SetStatement(new ComparisonDefinition { Id = 1, ChannelId = Ch1, Logic = LogicType.Updated });
+        SetStatement(new ComparisonDefinition { Id = Cmp1, ChannelId = Ch1, Logic = LogicType.Updated });
 
         Assert.IsFalse(await CreateEvaluation().EvaluateAsync(1));
     }
@@ -635,7 +637,7 @@ public class LogicEvaluationTests
     public async Task Updated_ValueUnchanged_ReturnsFalse()
     {
         SetupChannel(Ch1, "100");
-        SetStatement(new ComparisonDefinition { Id = 1, ChannelId = Ch1, Logic = LogicType.Updated });
+        SetStatement(new ComparisonDefinition { Id = Cmp1, ChannelId = Ch1, Logic = LogicType.Updated });
 
         var evaluation = CreateEvaluation();
         await evaluation.EvaluateAsync(1);
@@ -647,7 +649,7 @@ public class LogicEvaluationTests
     public async Task Updated_ValueChanged_ReturnsTrue()
     {
         SetupChannel(Ch1, "100");
-        SetStatement(new ComparisonDefinition { Id = 1, ChannelId = Ch1, Logic = LogicType.Updated });
+        SetStatement(new ComparisonDefinition { Id = Cmp1, ChannelId = Ch1, Logic = LogicType.Updated });
 
         var evaluation = CreateEvaluation();
         await evaluation.EvaluateAsync(1);
@@ -660,7 +662,7 @@ public class LogicEvaluationTests
     public async Task Updated_ValueChangedThenRestored_DetectsEachChange()
     {
         SetupChannel(Ch1, "100");
-        SetStatement(new ComparisonDefinition { Id = 1, ChannelId = Ch1, Logic = LogicType.Updated });
+        SetStatement(new ComparisonDefinition { Id = Cmp1, ChannelId = Ch1, Logic = LogicType.Updated });
 
         var evaluation = CreateEvaluation();
         await evaluation.EvaluateAsync(1);
@@ -747,7 +749,7 @@ public class LogicEvaluationTests
         SetupChannel(Ch2, "10", "");
         var comparison = new ComparisonDefinition
         {
-            Id = 1,
+            Id = Cmp1,
             ChannelId = Ch1,
             Logic = LogicType.ChangedBy,
             UseStaticComparison = false,
@@ -772,10 +774,10 @@ public class LogicEvaluationTests
         SetupChannel(Ch1, "10");
         statementRepo.Set(new StatementDefinition
         {
-            Id = 1,
+            Id = StatementId(1),
             ActivateComparisons =
             [[
-                new ComparisonDefinition { Id = 1, ChannelId = Ch1, Logic = LogicType.GreaterThan, UseStaticComparison = false },
+                new ComparisonDefinition { Id = Cmp1, ChannelId = Ch1, Logic = LogicType.GreaterThan, UseStaticComparison = false },
             ]],
         });
 
@@ -789,10 +791,10 @@ public class LogicEvaluationTests
         SetupChannel(Ch1, "100");
         statementRepo.Set(new StatementDefinition
         {
-            Id = 1,
+            Id = StatementId(1),
             ActivateComparisons =
             [[
-                new ComparisonDefinition { Id = 1, ChannelId = Ch1, Logic = LogicType.ChangedBy, UseStaticComparison = false },
+                new ComparisonDefinition { Id = Cmp1, ChannelId = Ch1, Logic = LogicType.ChangedBy, UseStaticComparison = false },
             ]],
         });
 
@@ -803,6 +805,8 @@ public class LogicEvaluationTests
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => evaluation.EvaluateAsync(1));
     }
+
+    private static Guid StatementId(int id) => new($"00000000-0000-0000-0001-{id:000000000000}");
 }
 
 

@@ -7,7 +7,7 @@ namespace Channels.Logic;
 public interface IStatementStateRepository
 {
     /// <summary>Returns the current state for the statement, or null if no state has been recorded.</summary>
-    Task<bool?> GetStateAsync(int statementId);
+    Task<bool?> GetStateAsync(Guid statementId);
 
-    Task SetStateAsync(int statementId, bool state);
+    Task SetStateAsync(Guid statementId, bool state);
 }

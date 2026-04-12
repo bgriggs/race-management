@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Channels.Timers;
+﻿namespace Channels.Timers;
 
 public class TimerDefinition
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public Guid OutputChId { get; set; }
-    public int StartStatementId { get; set; }
-    public int StopStatementId { get; set; }
+    public Guid StartStatementId { get; set; }
+    public Guid StopStatementId { get; set; }
     public bool CountDown { get; set; }
     public bool EnableRollover { get; set; }
     public int RolloverSeconds { get; set; }

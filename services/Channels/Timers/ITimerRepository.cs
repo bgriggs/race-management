@@ -2,10 +2,10 @@
 
 namespace Channels.Timers;
 
-public interface ITimerRepository : IMutableDefinitionSetRepository<TimerDefinition>, IStateRepository<int, TimerState>
+public interface ITimerRepository : IMutableDefinitionSetRepository<TimerDefinition>, IStateRepository<Guid, TimerState>
 {
     public Task<IEnumerable<TimerDefinition>> GetTimerDefinitionsAsync();
     public Task SaveTimerDefinitionsAsync(IEnumerable<TimerDefinition> definitions);
-    public Task<TimerState> GetTimerStateAsync(int timerId);
+    public Task<TimerState> GetTimerStateAsync(Guid timerId);
     public Task SetTimerStateAsync(TimerState timerState);
 }

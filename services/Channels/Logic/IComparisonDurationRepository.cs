@@ -7,10 +7,10 @@ namespace Channels.Logic;
 public interface IComparisonDurationRepository
 {
     /// <summary>Returns the time the comparison first became true, or null if it is not currently timing.</summary>
-    Task<DateTimeOffset?> GetStartTimeAsync(int comparisonId);
+    Task<DateTimeOffset?> GetStartTimeAsync(Guid comparisonId);
 
-    Task SetStartTimeAsync(int comparisonId, DateTimeOffset startTime);
+    Task SetStartTimeAsync(Guid comparisonId, DateTimeOffset startTime);
 
     /// <summary>Clears the start time when the comparison becomes false, resetting the duration timer.</summary>
-    Task RemoveStartTimeAsync(int comparisonId);
+    Task RemoveStartTimeAsync(Guid comparisonId);
 }

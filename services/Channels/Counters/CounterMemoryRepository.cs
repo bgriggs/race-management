@@ -3,16 +3,16 @@ namespace Channels.Counters;
 public class CounterMemoryRepository : ICounterRepository
 {
     private readonly List<CounterDefinition> definitions = [];
-    private readonly Dictionary<int, CounterState> states = [];
+    private readonly Dictionary<Guid, CounterState> states = [];
 
     public void Add(CounterDefinition definition) => definitions.Add(definition);
 
     public void SetState(CounterState state) => states[state.Id] = state;
 
-    public CounterState? GetState(int id) =>
+    public CounterState? GetState(Guid id) =>
         states.TryGetValue(id, out var state) ? state : null;
 
-    public Task<int> SaveCounterDefinitionAsync(CounterDefinition definition)
+    public Task<Guid> SaveCounterDefinitionAsync(CounterDefinition definition)
     {
         definitions.Add(definition);
         return Task.FromResult(definition.Id);
@@ -21,7 +21,7 @@ public class CounterMemoryRepository : ICounterRepository
     public Task<List<CounterDefinition>> GetCounterDefinitionsAsync() =>
         Task.FromResult(new List<CounterDefinition>(definitions));
 
-    public Task<CounterState> GetCounterStateAsync(int counterId)
+    public Task<CounterState> GetCounterStateAsync(Guid counterId)
     {
         states.TryGetValue(counterId, out var state);
         state ??= new CounterState { Id = counterId };
@@ -44,7 +44,7 @@ public class CounterMemoryRepository : ICounterRepository
         return Task.CompletedTask;
     }
 
-    public Task<CounterState> GetStateAsync(int id) =>
+    public Task<CounterState> GetStateAsync(Guid id) =>
         GetCounterStateAsync(id);
 
     public Task SetStateAsync(CounterState state) =>

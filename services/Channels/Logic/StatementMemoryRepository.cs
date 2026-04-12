@@ -2,13 +2,13 @@
 
 public class StatementMemoryRepository : IStatementRepository
 {
-    private readonly Dictionary<int, StatementDefinition> statementDefinitions = [];
+    private readonly Dictionary<Guid, StatementDefinition> statementDefinitions = [];
 
     public void Set(StatementDefinition definition) => statementDefinitions[definition.Id] = definition;
 
     public void Add(StatementDefinition definition) => statementDefinitions[definition.Id] = definition;
 
-    public Task<StatementDefinition> GetStatementDefinitionAsync(int statementId)
+    public Task<StatementDefinition> GetStatementDefinitionAsync(Guid statementId)
     {
         _ = statementDefinitions.TryGetValue(statementId, out StatementDefinition? definition);
         definition ??= new StatementDefinition { Id = statementId };
@@ -21,7 +21,7 @@ public class StatementMemoryRepository : IStatementRepository
         return Task.CompletedTask;
     }
 
-    public Task<StatementDefinition> GetDefinitionAsync(int id) =>
+    public Task<StatementDefinition> GetDefinitionAsync(Guid id) =>
         GetStatementDefinitionAsync(id);
 
     public Task SetDefinitionAsync(StatementDefinition definition) =>

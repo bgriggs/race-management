@@ -2,7 +2,7 @@
 
 public class TimerState
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
 
     /// <summary>
     /// The time the timer was started, or null if the timer is not running.

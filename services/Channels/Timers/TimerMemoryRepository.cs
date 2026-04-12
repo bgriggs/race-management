@@ -3,13 +3,13 @@
 public class TimerMemoryRepository : ITimerRepository
 {
     private readonly List<TimerDefinition> timerDefinitions = [];
-    private readonly Dictionary<int, TimerState> timerStates = [];
+    private readonly Dictionary<Guid, TimerState> timerStates = [];
 
     public void AddTimer(TimerDefinition definition) => timerDefinitions.Add(definition);
 
     public void SetState(TimerState state) => timerStates[state.Id] = state;
 
-    public TimerState? GetState(int id) =>
+    public TimerState? GetState(Guid id) =>
         timerStates.TryGetValue(id, out var state) ? state : null;
 
     public Task<IEnumerable<TimerDefinition>> GetTimerDefinitionsAsync()
@@ -24,7 +24,7 @@ public class TimerMemoryRepository : ITimerRepository
         return Task.CompletedTask;
     }
 
-    public Task<TimerState> GetTimerStateAsync(int timerId)
+    public Task<TimerState> GetTimerStateAsync(Guid timerId)
     {
         _ = timerStates.TryGetValue(timerId, out TimerState? state);
         state ??= new TimerState { Id = timerId };
@@ -43,7 +43,7 @@ public class TimerMemoryRepository : ITimerRepository
     public Task SaveDefinitionsAsync(IEnumerable<TimerDefinition> definitions) =>
         SaveTimerDefinitionsAsync(definitions);
 
-    public Task<TimerState> GetStateAsync(int id) =>
+    public Task<TimerState> GetStateAsync(Guid id) =>
         GetTimerStateAsync(id);
 
     public Task SetStateAsync(TimerState state) =>

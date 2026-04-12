@@ -7,7 +7,7 @@ namespace Channels.UserConditions;
 /// </summary>
 public class ConditionDefinition
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
 
     public List<StatementDefinition> Statements { get; } = [];
 

@@ -2,10 +2,10 @@ namespace Channels.Logic;
 
 public class ComparisonDurationMemoryRepository : IComparisonDurationRepository
 {
-    private readonly Dictionary<int, DateTimeOffset> startTimes = [];
+    private readonly Dictionary<Guid, DateTimeOffset> startTimes = [];
     private static readonly SemaphoreSlim startTimesLock = new(1);
 
-    public async Task<DateTimeOffset?> GetStartTimeAsync(int comparisonId)
+    public async Task<DateTimeOffset?> GetStartTimeAsync(Guid comparisonId)
     {
         await startTimesLock.WaitAsync();
         try
@@ -18,7 +18,7 @@ public class ComparisonDurationMemoryRepository : IComparisonDurationRepository
         }
     }
 
-    public async Task SetStartTimeAsync(int comparisonId, DateTimeOffset startTime)
+    public async Task SetStartTimeAsync(Guid comparisonId, DateTimeOffset startTime)
     {
         await startTimesLock.WaitAsync();
         try
@@ -31,7 +31,7 @@ public class ComparisonDurationMemoryRepository : IComparisonDurationRepository
         }
     }
 
-    public async Task RemoveStartTimeAsync(int comparisonId)
+    public async Task RemoveStartTimeAsync(Guid comparisonId)
     {
         await startTimesLock.WaitAsync();
         try

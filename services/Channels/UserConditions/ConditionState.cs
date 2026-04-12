@@ -2,6 +2,6 @@
 
 public class ConditionState
 {
-    public int ConditionId { get; set; }
+    public Guid Id { get; set; }
     public bool IsTrue { get; set; }
 }

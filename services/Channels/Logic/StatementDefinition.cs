@@ -5,7 +5,7 @@ namespace Channels.Logic;
 /// </summary>
 public class StatementDefinition
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
 
     /// <summary>
     /// Rows of comparisons that activate the statement when any comparison is true. This is a list of a list to support grouping comparisons together with AND logic.

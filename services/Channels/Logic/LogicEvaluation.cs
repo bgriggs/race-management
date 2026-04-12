@@ -17,7 +17,10 @@ public class LogicEvaluation(
     private readonly IPreviousChannelValueRepository previousChannelValueRepository = previousChannelValueRepository ?? new PreviousChannelValueMemoryRepository();
     private readonly TimeProvider timeProvider = timeProvider ?? TimeProvider.System;
 
-    public async Task<bool> EvaluateAsync(int statementId)
+    public Task<bool> EvaluateAsync(int statementId) =>
+        EvaluateAsync(StatementIdFromLegacyInt(statementId));
+
+    public async Task<bool> EvaluateAsync(Guid statementId)
     {
         var statementDefinition = await statementRepository.GetStatementDefinitionAsync(statementId);
 
@@ -28,25 +31,25 @@ public class LogicEvaluation(
             bool deactivate = await EvaluateComparisonsAsync(statementDefinition.DeactivateComparisons);
             if (deactivate)
             {
-                await statementStateRepository.SetStateAsync(statementId, false);
+                await statementStateRepository.SetStateAsync(statementDefinition.Id, false);
                 return false;
             }
 
             bool activate = await EvaluateComparisonsAsync(statementDefinition.ActivateComparisons);
             if (activate)
             {
-                await statementStateRepository.SetStateAsync(statementId, true);
+                await statementStateRepository.SetStateAsync(statementDefinition.Id, true);
                 return true;
             }
 
             // Neither triggered — maintain previous state (default false)
-            return await statementStateRepository.GetStateAsync(statementId) ?? false;
+            return await statementStateRepository.GetStateAsync(statementDefinition.Id) ?? false;
         }
 
         // No deactivate comparisons: activate result directly determines state.
         // When false, the statement deactivates.
         bool result = await EvaluateComparisonsAsync(statementDefinition.ActivateComparisons);
-        await statementStateRepository.SetStateAsync(statementId, result);
+        await statementStateRepository.SetStateAsync(statementDefinition.Id, result);
         return result;
     }
 
@@ -179,7 +182,7 @@ public class LogicEvaluation(
     /// Enforces that a comparison must remain true for a minimum duration before it is considered true.
     /// Resets the timer when the comparison becomes false.
     /// </summary>
-    private async Task<bool> EvaluateForDurationAsync(int comparisonId, bool currentResult, int requiredMs)
+    private async Task<bool> EvaluateForDurationAsync(Guid comparisonId, bool currentResult, int requiredMs)
     {
         var now = timeProvider.GetUtcNow();
 
@@ -251,5 +254,8 @@ public class LogicEvaluation(
         LogicType.EqualTo => left == right,
         _ => throw new InvalidOperationException($"Unsupported relational logic type: {logic}"),
     };
+
+    private static Guid StatementIdFromLegacyInt(int id) =>
+        new($"00000000-0000-0000-0001-{id:000000000000}");
 }
 

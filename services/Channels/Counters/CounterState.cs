@@ -2,12 +2,12 @@
 
 public class CounterState
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
 
     /// <summary>
     /// Current counter value.
     /// </summary>
-    public int Value { get; set; }
+    public long Value { get; set; }
 
     /// <summary>
     /// Whether the counter has been initialized with the StartValue from parameters.

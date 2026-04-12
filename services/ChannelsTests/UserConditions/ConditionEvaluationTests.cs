@@ -32,15 +32,19 @@ public class ConditionEvaluationTests
     private ConditionEvaluation CreateEvaluation() =>
         new(conditionRepo, channelRepo, channelDefRepo, statementRepo);
 
+    private static Guid ConditionId(int id) => new($"00000000-0000-0000-0004-{id:000000000000}");
+    private static Guid StatementId(int id) => new($"00000000-0000-0000-0001-{id:000000000000}");
+    private static Guid ComparisonId(int id) => new($"00000000-0000-0000-0000-{id:000000000000}");
+
     private static StatementDefinition AlwaysTrueStatement(int id) =>
-        new() { Id = id, ActivateComparisons = [[new ComparisonDefinition { Id = id, ChannelId = Ch1, Logic = LogicType.True }]] };
+        new() { Id = StatementId(id), ActivateComparisons = [[new ComparisonDefinition { Id = ComparisonId(id), ChannelId = Ch1, Logic = LogicType.True }]] };
 
     private static StatementDefinition AlwaysFalseStatement(int id) =>
-        new() { Id = id, ActivateComparisons = [[new ComparisonDefinition { Id = id, ChannelId = Ch1, Logic = LogicType.False }]] };
+        new() { Id = StatementId(id), ActivateComparisons = [[new ComparisonDefinition { Id = ComparisonId(id), ChannelId = Ch1, Logic = LogicType.False }]] };
 
     private void AddCondition(int id, Guid outputChannelId, params StatementDefinition[] statementDefinitions)
     {
-        var def = new ConditionDefinition { Id = id, OutputChannelId = outputChannelId };
+        var def = new ConditionDefinition { Id = ConditionId(id), OutputChannelId = outputChannelId };
         def.Statements.AddRange(statementDefinitions);
         conditionRepo.Add(def);
         foreach (var statementDefinition in statementDefinitions)
@@ -138,7 +142,7 @@ public class ConditionEvaluationTests
 
         await CreateEvaluation().UpdateAsync();
 
-        Assert.IsTrue(conditionRepo.GetState(1)!.IsTrue);
+        Assert.IsTrue(conditionRepo.GetState(ConditionId(1))!.IsTrue);
     }
 
     [TestMethod]
@@ -148,7 +152,7 @@ public class ConditionEvaluationTests
 
         await CreateEvaluation().UpdateAsync();
 
-        Assert.IsFalse(conditionRepo.GetState(1)!.IsTrue);
+        Assert.IsFalse(conditionRepo.GetState(ConditionId(1))!.IsTrue);
     }
 
     [TestMethod]
@@ -158,7 +162,7 @@ public class ConditionEvaluationTests
 
         await CreateEvaluation().UpdateAsync();
 
-        Assert.AreEqual(5, conditionRepo.GetState(5)!.ConditionId);
+        Assert.AreEqual(ConditionId(5), conditionRepo.GetState(ConditionId(5))!.Id);
     }
 
     // -------------------------------------------------------------------------
@@ -185,8 +189,8 @@ public class ConditionEvaluationTests
 
         await CreateEvaluation().UpdateAsync();
 
-        Assert.IsTrue(conditionRepo.GetState(1)!.IsTrue);
-        Assert.IsFalse(conditionRepo.GetState(2)!.IsTrue);
+        Assert.IsTrue(conditionRepo.GetState(ConditionId(1))!.IsTrue);
+        Assert.IsFalse(conditionRepo.GetState(ConditionId(2))!.IsTrue);
     }
 }
 

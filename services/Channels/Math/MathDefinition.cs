@@ -2,7 +2,7 @@
 
 public class MathDefinition
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public int Order { get; set; }
     public MathType Type { get; set; }
     public decimal A { get; set; }

@@ -39,7 +39,7 @@ public class ConditionEvaluation
             }
 
             var state = await conditionRepository.GetConditionStateAsync(conditionDefinition.Id);
-            state.ConditionId = conditionDefinition.Id;
+            state.Id = conditionDefinition.Id;
             state.IsTrue = result;
             await conditionRepository.SetConditionStateAsync(state);
 

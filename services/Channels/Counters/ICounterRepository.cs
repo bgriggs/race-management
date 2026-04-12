@@ -2,10 +2,10 @@
 
 namespace Channels.Counters;
 
-public interface ICounterRepository : IMutableDefinitionSetRepository<CounterDefinition>, IStateRepository<int, CounterState>
+public interface ICounterRepository : IMutableDefinitionSetRepository<CounterDefinition>, IStateRepository<Guid, CounterState>
 {
-    public Task<int> SaveCounterDefinitionAsync(CounterDefinition definition);
+    public Task<Guid> SaveCounterDefinitionAsync(CounterDefinition definition);
     public Task<List<CounterDefinition>> GetCounterDefinitionsAsync();
-    public Task<CounterState> GetCounterStateAsync(int counterId);
+    public Task<CounterState> GetCounterStateAsync(Guid counterId);
     public Task SetCounterStateAsync(CounterState counterState);
 }

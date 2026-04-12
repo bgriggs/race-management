@@ -2,7 +2,7 @@ namespace Channels.Tables;
 
 public class TableDefinition
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public bool IsEnum { get; set; }
     public bool IgnoreCase { get; set; }

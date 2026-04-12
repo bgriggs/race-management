@@ -11,6 +11,8 @@ public class CounterEvaluationTests
     private static readonly Guid Ch3   = new("00000000-0000-0000-0000-000000000003");
     private static readonly Guid ChOut  = new("00000000-0000-0000-0000-000000000010");
     private static readonly Guid ChOut2 = new("00000000-0000-0000-0000-000000000014");
+    private static readonly Guid Counter1 = new("00000000-0000-0000-0000-000000001001");
+    private static readonly Guid Counter2 = new("00000000-0000-0000-0000-000000001002");
 
     // -------------------------------------------------------------------------
     // Setup
@@ -29,11 +31,11 @@ public class CounterEvaluationTests
     private CounterEvaluation CreateEvaluation() =>
         new(counterRepo, channelRepo);
 
-    private static CounterDefinition BasicCounter(int id = 1, Guid outputChId = default, Guid upChId = default, Guid downChId = default, Guid resetChId = default)
+    private static CounterDefinition BasicCounter(Guid id = default, Guid outputChId = default, Guid upChId = default, Guid downChId = default, Guid resetChId = default)
     {
         return new CounterDefinition
         {
-            Id = id,
+            Id = id == default ? Counter1 : id,
             OutputChId = outputChId == default ? ChOut : outputChId,
             UpChId     = upChId    == default ? Ch1   : upChId,
             DownChId   = downChId  == default ? Ch2   : downChId,
@@ -404,8 +406,8 @@ public class CounterEvaluationTests
     [TestMethod]
     public async Task MultipleCounters_IndependentlyEvaluated()
     {
-        var c1 = new CounterDefinition { Id = 1, OutputChId = ChOut,  UpChId = Ch1,       DownChId = Guid.Empty, ResetChId = Guid.Empty, MinValue = 0, MaxValue = 100, StartValue = 0 };
-        var c2 = new CounterDefinition { Id = 2, OutputChId = ChOut2, UpChId = Guid.Empty, DownChId = Ch2,       ResetChId = Guid.Empty, MinValue = 0, MaxValue = 100, StartValue = 50 };
+        var c1 = new CounterDefinition { Id = Counter1, OutputChId = ChOut,  UpChId = Ch1,       DownChId = Guid.Empty, ResetChId = Guid.Empty, MinValue = 0, MaxValue = 100, StartValue = 0 };
+        var c2 = new CounterDefinition { Id = Counter2, OutputChId = ChOut2, UpChId = Guid.Empty, DownChId = Ch2,       ResetChId = Guid.Empty, MinValue = 0, MaxValue = 100, StartValue = 50 };
         counterRepo.Add(c1);
         counterRepo.Add(c2);
         channelRepo.Set(Ch1, "0");
@@ -437,7 +439,7 @@ public class CounterEvaluationTests
         var eval = CreateEvaluation();
         await eval.UpdateCountersAsync();
 
-        var state = counterRepo.GetState(1)!;
+        var state = counterRepo.GetState(Counter1)!;
         Assert.IsFalse(state.PreviousUpWasZero);
         Assert.IsTrue(state.PreviousDownWasZero);
     }

@@ -2,13 +2,13 @@ namespace Channels.Logic;
 
 public class StatementStateMemoryRepository : IStatementStateRepository
 {
-    private readonly Dictionary<int, bool> states = [];
+    private readonly Dictionary<Guid, bool> states = [];
     private static readonly SemaphoreSlim statesLock = new(1);
 
-    public bool? GetState(int statementId) =>
+    public bool? GetState(Guid statementId) =>
         states.TryGetValue(statementId, out var state) ? state : null;
 
-    public async Task<bool?> GetStateAsync(int statementId)
+    public async Task<bool?> GetStateAsync(Guid statementId)
     {
         await statesLock.WaitAsync();
         try
@@ -21,7 +21,7 @@ public class StatementStateMemoryRepository : IStatementStateRepository
         }
     }
 
-    public async Task SetStateAsync(int statementId, bool state)
+    public async Task SetStateAsync(Guid statementId, bool state)
     {
         await statesLock.WaitAsync();
         try

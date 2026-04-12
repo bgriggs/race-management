@@ -2,7 +2,7 @@
 
 public class CounterDefinition
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public Guid OutputChId { get; set; }
     /// <summary>
     /// Channel ID that will increment the counter when its value changes from 0 to non-zero. The counter will only increment on the rising edge of the signal, so it will not increment again until the signal goes back to 0 and then rises again.
