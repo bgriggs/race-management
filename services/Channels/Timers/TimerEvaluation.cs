@@ -150,11 +150,10 @@ public class TimerEvaluation
             : state.StartValue + elapsed;
     }
 
-    private async Task SetOutputValueAsync(int channelId, double value)
+    private async Task SetOutputValueAsync(Guid channelId, double value)
     {
-        await channelRepository.SetChannelValueAsync(new ChannelValue
+        await channelRepository.SetChannelValueAsync(channelId, new ChannelValue
         {
-            Id = channelId,
             Value = value.ToString(CultureInfo.InvariantCulture),
         });
     }

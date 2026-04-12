@@ -199,7 +199,7 @@ public class LogicEvaluation(
         return (now - startTime.Value).TotalMilliseconds >= requiredMs;
     }
 
-    private async Task<(double Value, string UnitType)> ResolveChannelWithUnitAsync(int channelId)
+    private async Task<(double Value, string UnitType)> ResolveChannelWithUnitAsync(Guid channelId)
     {
         var channelValue = await channelRepository.GetChannelValueAsync(channelId);
         var channelDef = await channelDefinitionRepository.GetChannelDefinitionAsync(channelId);

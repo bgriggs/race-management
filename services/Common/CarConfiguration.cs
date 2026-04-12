@@ -14,6 +14,7 @@ namespace Common;
 public class CarConfiguration
 {
     public Guid ConfigurationId { get; set; }
+    public int ConfigurationSchemaVersion { get; } = 1;
     public string Name { get; set; } = string.Empty;
     public string Notes { get; set; } = string.Empty;
     public DateTime LastUpdated { get; set; }

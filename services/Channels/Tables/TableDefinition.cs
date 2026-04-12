@@ -6,8 +6,8 @@ public class TableDefinition
     public string Name { get; set; } = string.Empty;
     public bool IsEnum { get; set; }
     public bool IgnoreCase { get; set; }
-    public int InputChannel { get; set; }
-    public int OutputChannel { get; set; }
+    public Guid InputChannel { get; set; }
+    public Guid OutputChannel { get; set; }
     public InterpolationType InterpolationType { get; set; }
 
     public List<(string input, string output)> Mapping { get; } = [];

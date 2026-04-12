@@ -29,7 +29,7 @@ public class TableEvaluation
             var inputCh = await channelRepository.GetChannelValueAsync(definition.InputChannel);
             var inputMap = await channelDefinitionRepository.GetChannelDefinitionAsync(definition.InputChannel);
             var outputMap = await channelDefinitionRepository.GetChannelDefinitionAsync(definition.OutputChannel);
-            var outputValue = new ChannelValue { Id = definition.OutputChannel };
+            var outputValue = new ChannelValue();
 
             // String, straight mapping, e.g. enum
             // String -> string
@@ -83,7 +83,7 @@ public class TableEvaluation
                 outputValue.SetBaseValue(interpolatedOutput, outputMap);
             }
 
-            await channelRepository.SetChannelValueAsync(outputValue);
+            await channelRepository.SetChannelValueAsync(definition.OutputChannel, outputValue);
         }
     }
 }

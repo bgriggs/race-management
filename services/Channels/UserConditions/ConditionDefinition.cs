@@ -13,6 +13,7 @@ public class ConditionDefinition
 
     /// <summary>
     /// Gets or sets the identifier of the output channel associated with this instance. This will be 0 or 1.
+    /// Use <see cref="Guid.Empty"/> when no output channel is needed.
     /// </summary>
-    public int OutputChannelId { get; set; }
+    public Guid OutputChannelId { get; set; }
 }

@@ -6,6 +6,12 @@ namespace ChannelsTests.Counters;
 [TestClass]
 public class CounterEvaluationTests
 {
+    private static readonly Guid Ch1   = new("00000000-0000-0000-0000-000000000001");
+    private static readonly Guid Ch2   = new("00000000-0000-0000-0000-000000000002");
+    private static readonly Guid Ch3   = new("00000000-0000-0000-0000-000000000003");
+    private static readonly Guid ChOut  = new("00000000-0000-0000-0000-000000000010");
+    private static readonly Guid ChOut2 = new("00000000-0000-0000-0000-000000000014");
+
     // -------------------------------------------------------------------------
     // Setup
     // -------------------------------------------------------------------------
@@ -23,20 +29,22 @@ public class CounterEvaluationTests
     private CounterEvaluation CreateEvaluation() =>
         new(counterRepo, channelRepo);
 
-    private static CounterDefinition BasicCounter(int id = 1, int outputChId = 10, int upChId = 1, int downChId = 2, int resetChId = 3) =>
-        new()
+    private static CounterDefinition BasicCounter(int id = 1, Guid outputChId = default, Guid upChId = default, Guid downChId = default, Guid resetChId = default)
+    {
+        return new CounterDefinition
         {
             Id = id,
-            OutputChId = outputChId,
-            UpChId = upChId,
-            DownChId = downChId,
-            ResetChId = resetChId,
+            OutputChId = outputChId == default ? ChOut : outputChId,
+            UpChId     = upChId    == default ? Ch1   : upChId,
+            DownChId   = downChId  == default ? Ch2   : downChId,
+            ResetChId  = resetChId == default ? Ch3   : resetChId,
             MinValue = 0,
             MaxValue = 100,
             StartValue = 0,
         };
+    }
 
-    private int GetOutput(int channelId) =>
+    private int GetOutput(Guid channelId) =>
         int.Parse(channelRepo.Get(channelId).Value);
 
     // -------------------------------------------------------------------------
@@ -49,13 +57,13 @@ public class CounterEvaluationTests
         var counter = BasicCounter();
         counter.StartValue = 10;
         counterRepo.Add(counter);
-        channelRepo.Set(1, "0");
-        channelRepo.Set(2, "0");
-        channelRepo.Set(3, "0");
+        channelRepo.Set(Ch1, "0");
+        channelRepo.Set(Ch2, "0");
+        channelRepo.Set(Ch3, "0");
 
         await CreateEvaluation().UpdateCountersAsync();
 
-        Assert.AreEqual(10, GetOutput(10));
+        Assert.AreEqual(10, GetOutput(ChOut));
     }
 
     [TestMethod]
@@ -64,17 +72,17 @@ public class CounterEvaluationTests
         var counter = BasicCounter();
         counter.StartValue = 10;
         counterRepo.Add(counter);
-        channelRepo.Set(1, "0");
-        channelRepo.Set(2, "0");
-        channelRepo.Set(3, "0");
+        channelRepo.Set(Ch1, "0");
+        channelRepo.Set(Ch2, "0");
+        channelRepo.Set(Ch3, "0");
 
         var eval = CreateEvaluation();
-        await eval.UpdateCountersAsync();           // init to 10
+        await eval.UpdateCountersAsync();
 
-        channelRepo.Set(1, "1");                    // up edge
-        await eval.UpdateCountersAsync();           // should increment to 11, not reinit to 10
+        channelRepo.Set(Ch1, "1");
+        await eval.UpdateCountersAsync();
 
-        Assert.AreEqual(11, GetOutput(10));
+        Assert.AreEqual(11, GetOutput(ChOut));
     }
 
     // -------------------------------------------------------------------------
@@ -85,59 +93,59 @@ public class CounterEvaluationTests
     public async Task UpEdge_SignalGoesFromZeroToNonZero_Increments()
     {
         counterRepo.Add(BasicCounter());
-        channelRepo.Set(1, "0");
-        channelRepo.Set(2, "0");
-        channelRepo.Set(3, "0");
+        channelRepo.Set(Ch1, "0");
+        channelRepo.Set(Ch2, "0");
+        channelRepo.Set(Ch3, "0");
 
         var eval = CreateEvaluation();
-        await eval.UpdateCountersAsync();           // init, up=0
-
-        channelRepo.Set(1, "1");                    // rising edge
         await eval.UpdateCountersAsync();
 
-        Assert.AreEqual(1, GetOutput(10));
+        channelRepo.Set(Ch1, "1");
+        await eval.UpdateCountersAsync();
+
+        Assert.AreEqual(1, GetOutput(ChOut));
     }
 
     [TestMethod]
     public async Task UpEdge_SignalStaysNonZero_DoesNotIncrementAgain()
     {
         counterRepo.Add(BasicCounter());
-        channelRepo.Set(1, "0");
-        channelRepo.Set(2, "0");
-        channelRepo.Set(3, "0");
+        channelRepo.Set(Ch1, "0");
+        channelRepo.Set(Ch2, "0");
+        channelRepo.Set(Ch3, "0");
 
         var eval = CreateEvaluation();
-        await eval.UpdateCountersAsync();           // init
+        await eval.UpdateCountersAsync();
 
-        channelRepo.Set(1, "1");
-        await eval.UpdateCountersAsync();           // edge fires → 1
+        channelRepo.Set(Ch1, "1");
+        await eval.UpdateCountersAsync();
 
-        await eval.UpdateCountersAsync();           // still 1, no edge → stays 1
+        await eval.UpdateCountersAsync();
 
-        Assert.AreEqual(1, GetOutput(10));
+        Assert.AreEqual(1, GetOutput(ChOut));
     }
 
     [TestMethod]
     public async Task UpEdge_SignalReturnsToZeroThenRises_IncrementsAgain()
     {
         counterRepo.Add(BasicCounter());
-        channelRepo.Set(1, "0");
-        channelRepo.Set(2, "0");
-        channelRepo.Set(3, "0");
+        channelRepo.Set(Ch1, "0");
+        channelRepo.Set(Ch2, "0");
+        channelRepo.Set(Ch3, "0");
 
         var eval = CreateEvaluation();
-        await eval.UpdateCountersAsync();           // init
+        await eval.UpdateCountersAsync();
 
-        channelRepo.Set(1, "1");
-        await eval.UpdateCountersAsync();           // → 1
+        channelRepo.Set(Ch1, "1");
+        await eval.UpdateCountersAsync();
 
-        channelRepo.Set(1, "0");
-        await eval.UpdateCountersAsync();           // back to zero, no increment
+        channelRepo.Set(Ch1, "0");
+        await eval.UpdateCountersAsync();
 
-        channelRepo.Set(1, "5");                    // any non-zero triggers edge
-        await eval.UpdateCountersAsync();           // → 2
+        channelRepo.Set(Ch1, "5");
+        await eval.UpdateCountersAsync();
 
-        Assert.AreEqual(2, GetOutput(10));
+        Assert.AreEqual(2, GetOutput(ChOut));
     }
 
     // -------------------------------------------------------------------------
@@ -150,17 +158,17 @@ public class CounterEvaluationTests
         var counter = BasicCounter();
         counter.StartValue = 5;
         counterRepo.Add(counter);
-        channelRepo.Set(1, "0");
-        channelRepo.Set(2, "0");
-        channelRepo.Set(3, "0");
+        channelRepo.Set(Ch1, "0");
+        channelRepo.Set(Ch2, "0");
+        channelRepo.Set(Ch3, "0");
 
         var eval = CreateEvaluation();
-        await eval.UpdateCountersAsync();           // init to 5
+        await eval.UpdateCountersAsync();
 
-        channelRepo.Set(2, "1");                    // down rising edge
-        await eval.UpdateCountersAsync();           // → 4
+        channelRepo.Set(Ch2, "1");
+        await eval.UpdateCountersAsync();
 
-        Assert.AreEqual(4, GetOutput(10));
+        Assert.AreEqual(4, GetOutput(ChOut));
     }
 
     [TestMethod]
@@ -169,18 +177,18 @@ public class CounterEvaluationTests
         var counter = BasicCounter();
         counter.StartValue = 5;
         counterRepo.Add(counter);
-        channelRepo.Set(1, "0");
-        channelRepo.Set(2, "0");
-        channelRepo.Set(3, "0");
+        channelRepo.Set(Ch1, "0");
+        channelRepo.Set(Ch2, "0");
+        channelRepo.Set(Ch3, "0");
 
         var eval = CreateEvaluation();
         await eval.UpdateCountersAsync();
 
-        channelRepo.Set(2, "1");
-        await eval.UpdateCountersAsync();           // → 4
-        await eval.UpdateCountersAsync();           // still 1, no edge → 4
+        channelRepo.Set(Ch2, "1");
+        await eval.UpdateCountersAsync();
+        await eval.UpdateCountersAsync();
 
-        Assert.AreEqual(4, GetOutput(10));
+        Assert.AreEqual(4, GetOutput(ChOut));
     }
 
     // -------------------------------------------------------------------------
@@ -193,25 +201,25 @@ public class CounterEvaluationTests
         var counter = BasicCounter();
         counter.StartValue = 0;
         counterRepo.Add(counter);
-        channelRepo.Set(1, "0");
-        channelRepo.Set(2, "0");
-        channelRepo.Set(3, "0");
+        channelRepo.Set(Ch1, "0");
+        channelRepo.Set(Ch2, "0");
+        channelRepo.Set(Ch3, "0");
 
         var eval = CreateEvaluation();
-        await eval.UpdateCountersAsync();           // init to 0
-
-        channelRepo.Set(1, "1");
-        await eval.UpdateCountersAsync();           // → 1
-        channelRepo.Set(1, "0");
         await eval.UpdateCountersAsync();
-        channelRepo.Set(1, "1");
-        await eval.UpdateCountersAsync();           // → 2
 
-        channelRepo.Set(1, "0");
-        channelRepo.Set(3, "1");                    // reset edge
-        await eval.UpdateCountersAsync();           // → 0 (StartValue)
+        channelRepo.Set(Ch1, "1");
+        await eval.UpdateCountersAsync();
+        channelRepo.Set(Ch1, "0");
+        await eval.UpdateCountersAsync();
+        channelRepo.Set(Ch1, "1");
+        await eval.UpdateCountersAsync();
 
-        Assert.AreEqual(0, GetOutput(10));
+        channelRepo.Set(Ch1, "0");
+        channelRepo.Set(Ch3, "1");
+        await eval.UpdateCountersAsync();
+
+        Assert.AreEqual(0, GetOutput(ChOut));
     }
 
     [TestMethod]
@@ -220,20 +228,19 @@ public class CounterEvaluationTests
         var counter = BasicCounter();
         counter.StartValue = 50;
         counterRepo.Add(counter);
-        channelRepo.Set(1, "0");
-        channelRepo.Set(2, "0");
-        channelRepo.Set(3, "0");
+        channelRepo.Set(Ch1, "0");
+        channelRepo.Set(Ch2, "0");
+        channelRepo.Set(Ch3, "0");
 
         var eval = CreateEvaluation();
-        await eval.UpdateCountersAsync();           // init to 50
-
-        // All three rising edges fire simultaneously
-        channelRepo.Set(1, "1");
-        channelRepo.Set(2, "1");
-        channelRepo.Set(3, "1");
         await eval.UpdateCountersAsync();
 
-        Assert.AreEqual(50, GetOutput(10));         // reset wins → StartValue
+        channelRepo.Set(Ch1, "1");
+        channelRepo.Set(Ch2, "1");
+        channelRepo.Set(Ch3, "1");
+        await eval.UpdateCountersAsync();
+
+        Assert.AreEqual(50, GetOutput(ChOut));
     }
 
     // -------------------------------------------------------------------------
@@ -248,17 +255,17 @@ public class CounterEvaluationTests
         counter.MaxValue = 100;
         counter.RollAtLimit = false;
         counterRepo.Add(counter);
-        channelRepo.Set(1, "0");
-        channelRepo.Set(2, "0");
-        channelRepo.Set(3, "0");
+        channelRepo.Set(Ch1, "0");
+        channelRepo.Set(Ch2, "0");
+        channelRepo.Set(Ch3, "0");
 
         var eval = CreateEvaluation();
-        await eval.UpdateCountersAsync();           // init to 100
+        await eval.UpdateCountersAsync();
 
-        channelRepo.Set(1, "1");
-        await eval.UpdateCountersAsync();           // 101 → clamped to 100
+        channelRepo.Set(Ch1, "1");
+        await eval.UpdateCountersAsync();
 
-        Assert.AreEqual(100, GetOutput(10));
+        Assert.AreEqual(100, GetOutput(ChOut));
     }
 
     [TestMethod]
@@ -269,17 +276,17 @@ public class CounterEvaluationTests
         counter.MinValue = 0;
         counter.RollAtLimit = false;
         counterRepo.Add(counter);
-        channelRepo.Set(1, "0");
-        channelRepo.Set(2, "0");
-        channelRepo.Set(3, "0");
+        channelRepo.Set(Ch1, "0");
+        channelRepo.Set(Ch2, "0");
+        channelRepo.Set(Ch3, "0");
 
         var eval = CreateEvaluation();
-        await eval.UpdateCountersAsync();           // init to 0
+        await eval.UpdateCountersAsync();
 
-        channelRepo.Set(2, "1");
-        await eval.UpdateCountersAsync();           // -1 → clamped to 0
+        channelRepo.Set(Ch2, "1");
+        await eval.UpdateCountersAsync();
 
-        Assert.AreEqual(0, GetOutput(10));
+        Assert.AreEqual(0, GetOutput(ChOut));
     }
 
     // -------------------------------------------------------------------------
@@ -295,17 +302,17 @@ public class CounterEvaluationTests
         counter.MaxValue = 100;
         counter.RollAtLimit = true;
         counterRepo.Add(counter);
-        channelRepo.Set(1, "0");
-        channelRepo.Set(2, "0");
-        channelRepo.Set(3, "0");
+        channelRepo.Set(Ch1, "0");
+        channelRepo.Set(Ch2, "0");
+        channelRepo.Set(Ch3, "0");
 
         var eval = CreateEvaluation();
-        await eval.UpdateCountersAsync();           // init to 100
+        await eval.UpdateCountersAsync();
 
-        channelRepo.Set(1, "1");
-        await eval.UpdateCountersAsync();           // 101 → wraps to 0
+        channelRepo.Set(Ch1, "1");
+        await eval.UpdateCountersAsync();
 
-        Assert.AreEqual(0, GetOutput(10));
+        Assert.AreEqual(0, GetOutput(ChOut));
     }
 
     [TestMethod]
@@ -317,53 +324,53 @@ public class CounterEvaluationTests
         counter.MaxValue = 100;
         counter.RollAtLimit = true;
         counterRepo.Add(counter);
-        channelRepo.Set(1, "0");
-        channelRepo.Set(2, "0");
-        channelRepo.Set(3, "0");
+        channelRepo.Set(Ch1, "0");
+        channelRepo.Set(Ch2, "0");
+        channelRepo.Set(Ch3, "0");
 
         var eval = CreateEvaluation();
-        await eval.UpdateCountersAsync();           // init to 0
+        await eval.UpdateCountersAsync();
 
-        channelRepo.Set(2, "1");
-        await eval.UpdateCountersAsync();           // -1 → wraps to 100
+        channelRepo.Set(Ch2, "1");
+        await eval.UpdateCountersAsync();
 
-        Assert.AreEqual(100, GetOutput(10));
+        Assert.AreEqual(100, GetOutput(ChOut));
     }
 
     // -------------------------------------------------------------------------
-    // Unconfigured channels (ID = 0)
+    // Unconfigured channels (Guid.Empty)
     // -------------------------------------------------------------------------
 
     [TestMethod]
     public async Task UpChannelNotConfigured_NeverIncrements()
     {
         var counter = BasicCounter();
-        counter.UpChId = 0;
+        counter.UpChId = Guid.Empty;
         counter.StartValue = 5;
         counterRepo.Add(counter);
-        channelRepo.Set(2, "0");
-        channelRepo.Set(3, "0");
+        channelRepo.Set(Ch2, "0");
+        channelRepo.Set(Ch3, "0");
 
         var eval = CreateEvaluation();
         await eval.UpdateCountersAsync();
 
-        Assert.AreEqual(5, GetOutput(10));
+        Assert.AreEqual(5, GetOutput(ChOut));
     }
 
     [TestMethod]
     public async Task DownChannelNotConfigured_NeverDecrements()
     {
         var counter = BasicCounter();
-        counter.DownChId = 0;
+        counter.DownChId = Guid.Empty;
         counter.StartValue = 5;
         counterRepo.Add(counter);
-        channelRepo.Set(1, "0");
-        channelRepo.Set(3, "0");
+        channelRepo.Set(Ch1, "0");
+        channelRepo.Set(Ch3, "0");
 
         var eval = CreateEvaluation();
         await eval.UpdateCountersAsync();
 
-        Assert.AreEqual(5, GetOutput(10));
+        Assert.AreEqual(5, GetOutput(ChOut));
     }
 
     // -------------------------------------------------------------------------
@@ -376,18 +383,18 @@ public class CounterEvaluationTests
         var counter = BasicCounter();
         counter.StartValue = 50;
         counterRepo.Add(counter);
-        channelRepo.Set(1, "0");
-        channelRepo.Set(2, "0");
-        channelRepo.Set(3, "0");
+        channelRepo.Set(Ch1, "0");
+        channelRepo.Set(Ch2, "0");
+        channelRepo.Set(Ch3, "0");
 
         var eval = CreateEvaluation();
-        await eval.UpdateCountersAsync();           // init to 50
+        await eval.UpdateCountersAsync();
 
-        channelRepo.Set(1, "1");                    // up edge
-        channelRepo.Set(2, "1");                    // down edge
-        await eval.UpdateCountersAsync();           // +1 then -1 = net 0
+        channelRepo.Set(Ch1, "1");
+        channelRepo.Set(Ch2, "1");
+        await eval.UpdateCountersAsync();
 
-        Assert.AreEqual(50, GetOutput(10));
+        Assert.AreEqual(50, GetOutput(ChOut));
     }
 
     // -------------------------------------------------------------------------
@@ -397,22 +404,22 @@ public class CounterEvaluationTests
     [TestMethod]
     public async Task MultipleCounters_IndependentlyEvaluated()
     {
-        var c1 = new CounterDefinition { Id = 1, OutputChId = 10, UpChId = 1, DownChId = 0, ResetChId = 0, MinValue = 0, MaxValue = 100, StartValue = 0 };
-        var c2 = new CounterDefinition { Id = 2, OutputChId = 20, UpChId = 0, DownChId = 2, ResetChId = 0, MinValue = 0, MaxValue = 100, StartValue = 50 };
+        var c1 = new CounterDefinition { Id = 1, OutputChId = ChOut,  UpChId = Ch1,       DownChId = Guid.Empty, ResetChId = Guid.Empty, MinValue = 0, MaxValue = 100, StartValue = 0 };
+        var c2 = new CounterDefinition { Id = 2, OutputChId = ChOut2, UpChId = Guid.Empty, DownChId = Ch2,       ResetChId = Guid.Empty, MinValue = 0, MaxValue = 100, StartValue = 50 };
         counterRepo.Add(c1);
         counterRepo.Add(c2);
-        channelRepo.Set(1, "0");
-        channelRepo.Set(2, "0");
+        channelRepo.Set(Ch1, "0");
+        channelRepo.Set(Ch2, "0");
 
         var eval = CreateEvaluation();
-        await eval.UpdateCountersAsync();           // init: c1=0, c2=50
-
-        channelRepo.Set(1, "1");                    // c1 up edge
-        channelRepo.Set(2, "1");                    // c2 down edge
         await eval.UpdateCountersAsync();
 
-        Assert.AreEqual(1, GetOutput(10));          // c1: 0+1
-        Assert.AreEqual(49, GetOutput(20));         // c2: 50-1
+        channelRepo.Set(Ch1, "1");
+        channelRepo.Set(Ch2, "1");
+        await eval.UpdateCountersAsync();
+
+        Assert.AreEqual(1,  GetOutput(ChOut));
+        Assert.AreEqual(49, GetOutput(ChOut2));
     }
 
     // -------------------------------------------------------------------------
@@ -423,15 +430,15 @@ public class CounterEvaluationTests
     public async Task EdgeTrackingState_PersistedBetweenCalls()
     {
         counterRepo.Add(BasicCounter());
-        channelRepo.Set(1, "1");                    // non-zero from the start
-        channelRepo.Set(2, "0");
-        channelRepo.Set(3, "0");
+        channelRepo.Set(Ch1, "1");
+        channelRepo.Set(Ch2, "0");
+        channelRepo.Set(Ch3, "0");
 
         var eval = CreateEvaluation();
-        await eval.UpdateCountersAsync();           // init, up=1 → edge fires → 1
+        await eval.UpdateCountersAsync();
 
         var state = counterRepo.GetState(1)!;
-        Assert.IsFalse(state.PreviousUpWasZero);    // persisted: was non-zero
-        Assert.IsTrue(state.PreviousDownWasZero);   // persisted: was zero
+        Assert.IsFalse(state.PreviousUpWasZero);
+        Assert.IsTrue(state.PreviousDownWasZero);
     }
 }

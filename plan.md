@@ -2,6 +2,8 @@
 List of tasks to be implemented
 
 # Configuration UI
+[ ] Navigation tree
+[ ] Validation service / Error List
 [ ] General settting
 [ ] Channel configuration
 [ ] CAN Bus configuration
@@ -10,7 +12,6 @@ List of tasks to be implemented
 [ ] Logging configuration
 [ ] Math configuration
 [ ] User condition configuration
-[ ] Logic configuration
 [ ] Alarm configuration
 [ ] Counter configuration
 

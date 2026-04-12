@@ -7,7 +7,7 @@ namespace Channels.Timers;
 public class TimerDefinition
 {
     public int Id { get; set; }
-    public int OutputChId { get; set; }
+    public Guid OutputChId { get; set; }
     public int StartStatementId { get; set; }
     public int StopStatementId { get; set; }
     public bool CountDown { get; set; }

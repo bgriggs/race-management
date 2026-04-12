@@ -3,19 +3,22 @@
 public class CounterDefinition
 {
     public int Id { get; set; }
-    public int OutputChId { get; set; }
+    public Guid OutputChId { get; set; }
     /// <summary>
     /// Channel ID that will increment the counter when its value changes from 0 to non-zero. The counter will only increment on the rising edge of the signal, so it will not increment again until the signal goes back to 0 and then rises again.
+    /// Use <see cref="Guid.Empty"/> to leave this input unconfigured.
     /// </summary>
-    public int UpChId { get; set; }
+    public Guid UpChId { get; set; }
     /// <summary>
     /// Channel ID that will decrement the counter on its rising edge, similar to the UpChId but for decrementing. The counter will only decrement on the rising edge of the signal, so it will not decrement again until the signal goes back to 0 and then rises again.
+    /// Use <see cref="Guid.Empty"/> to leave this input unconfigured.
     /// </summary>
-    public int DownChId { get; set; }
+    public Guid DownChId { get; set; }
     /// <summary>
     /// Channel ID that will reset the counter to the StartValue on its rising edge, similar to the UpChId but for resetting. The counter will only reset on the rising edge of the signal, so it will not reset again until the signal goes back to 0 and then rises again.
+    /// Use <see cref="Guid.Empty"/> to leave this input unconfigured.
     /// </summary>
-    public int ResetChId { get; set; }
+    public Guid ResetChId { get; set; }
     /// <summary>
     /// Gets or sets the maximum allowable value.
     /// </summary>

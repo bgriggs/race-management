@@ -6,6 +6,13 @@ namespace ChannelsTests.Math;
 [TestClass]
 public class MathEvaluationTests
 {
+    private static readonly Guid Ch1   = new("00000000-0000-0000-0000-000000000001");
+    private static readonly Guid Ch2   = new("00000000-0000-0000-0000-000000000002");
+    private static readonly Guid ChOut  = new("00000000-0000-0000-0000-000000000010");
+    private static readonly Guid ChOut2 = new("00000000-0000-0000-0000-000000000014");
+    private static readonly Guid ChInt  = new("00000000-0000-0000-0000-000000000063");
+    private static readonly Guid ChOut3 = new("00000000-0000-0000-0000-000000000064");
+
     // -------------------------------------------------------------------------
     // Setup
     // -------------------------------------------------------------------------
@@ -25,29 +32,19 @@ public class MathEvaluationTests
     private MathEvaluation CreateEvaluation() =>
         new(mathRepo, channelRepo, channelDefRepo);
 
-    /// <summary>
-    /// Sets up a channel with a value and an unambiguous base unit so GetOutputQuantity
-    /// returns a non-null IQuantity. "m" is ambiguous in UnitsNet v6 (Meter vs Minute),
-    /// so "km" is used as the default.
-    /// </summary>
-    private void SetupInputChannel(int id, string value, string baseUnit = "km") =>
+    private void SetupInputChannel(Guid id, string value, string baseUnit = "km") =>
         SetupChannel(id, value, baseUnit, 2);
 
-    /// <summary>
-    /// Sets up a channel that can serve as both an intermediate output and a subsequent input.
-    /// Requires both BaseDecimalPlaces (for SetBaseValue formatting) and BaseUnitType
-    /// (so GetOutputQuantity can construct an IQuantity when the channel is read back).
-    /// </summary>
-    private void SetupChannel(int id, string value, string baseUnit, int decimalPlaces)
+    private void SetupChannel(Guid id, string value, string baseUnit, int decimalPlaces)
     {
         channelRepo.Set(id, value);
         channelDefRepo.Set(new ChannelDefinition { Id = id, BaseUnitType = baseUnit, BaseDecimalPlaces = decimalPlaces });
     }
 
-    private void SetupOutputChannel(int id, int decimalPlaces = 2) =>
+    private void SetupOutputChannel(Guid id, int decimalPlaces = 2) =>
         channelDefRepo.Set(new ChannelDefinition { Id = id, BaseDecimalPlaces = decimalPlaces });
 
-    private double GetOutput(int channelId) =>
+    private double GetOutput(Guid channelId) =>
         double.Parse(channelRepo.Get(channelId).Value);
 
     // -------------------------------------------------------------------------
@@ -57,40 +54,40 @@ public class MathEvaluationTests
     [TestMethod]
     public async Task Bias_TypicalValues_ReturnsChannel1DividedBySum()
     {
-        SetupInputChannel(1, "3");
-        SetupInputChannel(2, "1");
-        SetupOutputChannel(10);
-        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.Bias, Channel1Id = 1, Channel2Id = 2, OutputChannelId = 10 });
+        SetupInputChannel(Ch1, "3");
+        SetupInputChannel(Ch2, "1");
+        SetupOutputChannel(ChOut);
+        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.Bias, Channel1Id = Ch1, Channel2Id = Ch2, OutputChannelId = ChOut });
 
         await CreateEvaluation().RunCalculationsAsync();
 
-        Assert.AreEqual(0.75, GetOutput(10), 0.001);   // 3 / (3 + 1)
+        Assert.AreEqual(0.75, GetOutput(ChOut), 0.001);   // 3 / (3 + 1)
     }
 
     [TestMethod]
     public async Task Bias_EqualChannelValues_ReturnsHalf()
     {
-        SetupInputChannel(1, "5");
-        SetupInputChannel(2, "5");
-        SetupOutputChannel(10);
-        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.Bias, Channel1Id = 1, Channel2Id = 2, OutputChannelId = 10 });
+        SetupInputChannel(Ch1, "5");
+        SetupInputChannel(Ch2, "5");
+        SetupOutputChannel(ChOut);
+        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.Bias, Channel1Id = Ch1, Channel2Id = Ch2, OutputChannelId = ChOut });
 
         await CreateEvaluation().RunCalculationsAsync();
 
-        Assert.AreEqual(0.5, GetOutput(10), 0.001);    // 5 / (5 + 5)
+        Assert.AreEqual(0.5, GetOutput(ChOut), 0.001);    // 5 / (5 + 5)
     }
 
     [TestMethod]
     public async Task Bias_Channel1Dominant_ReturnsValueCloseToOne()
     {
-        SetupInputChannel(1, "9");
-        SetupInputChannel(2, "1");
-        SetupOutputChannel(10);
-        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.Bias, Channel1Id = 1, Channel2Id = 2, OutputChannelId = 10 });
+        SetupInputChannel(Ch1, "9");
+        SetupInputChannel(Ch2, "1");
+        SetupOutputChannel(ChOut);
+        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.Bias, Channel1Id = Ch1, Channel2Id = Ch2, OutputChannelId = ChOut });
 
         await CreateEvaluation().RunCalculationsAsync();
 
-        Assert.AreEqual(0.9, GetOutput(10), 0.001);    // 9 / (9 + 1)
+        Assert.AreEqual(0.9, GetOutput(ChOut), 0.001);    // 9 / (9 + 1)
     }
 
     // -------------------------------------------------------------------------
@@ -100,140 +97,140 @@ public class MathEvaluationTests
     [TestMethod]
     public async Task LinearCorrector_PositiveScaleAndOffset_ReturnsCorrectValue()
     {
-        SetupInputChannel(1, "5");
-        SetupOutputChannel(10);
-        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.LinearCorrector, Channel1Id = 1, OutputChannelId = 10, A = 2m, B = 3m });
+        SetupInputChannel(Ch1, "5");
+        SetupOutputChannel(ChOut);
+        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.LinearCorrector, Channel1Id = Ch1, OutputChannelId = ChOut, A = 2m, B = 3m });
 
         await CreateEvaluation().RunCalculationsAsync();
 
-        Assert.AreEqual(13.0, GetOutput(10), 0.001);   // (5 * 2) + 3
+        Assert.AreEqual(13.0, GetOutput(ChOut), 0.001);   // (5 * 2) + 3
     }
 
     [TestMethod]
     public async Task LinearCorrector_ZeroOffset_ReturnsScaledValue()
     {
-        SetupInputChannel(1, "4");
-        SetupOutputChannel(10);
-        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.LinearCorrector, Channel1Id = 1, OutputChannelId = 10, A = 3m, B = 0m });
+        SetupInputChannel(Ch1, "4");
+        SetupOutputChannel(ChOut);
+        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.LinearCorrector, Channel1Id = Ch1, OutputChannelId = ChOut, A = 3m, B = 0m });
 
         await CreateEvaluation().RunCalculationsAsync();
 
-        Assert.AreEqual(12.0, GetOutput(10), 0.001);   // (4 * 3) + 0
+        Assert.AreEqual(12.0, GetOutput(ChOut), 0.001);   // (4 * 3) + 0
     }
 
     [TestMethod]
     public async Task LinearCorrector_ZeroScale_ReturnsOffset()
     {
-        SetupInputChannel(1, "100");
-        SetupOutputChannel(10);
-        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.LinearCorrector, Channel1Id = 1, OutputChannelId = 10, A = 0m, B = 7m });
+        SetupInputChannel(Ch1, "100");
+        SetupOutputChannel(ChOut);
+        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.LinearCorrector, Channel1Id = Ch1, OutputChannelId = ChOut, A = 0m, B = 7m });
 
         await CreateEvaluation().RunCalculationsAsync();
 
-        Assert.AreEqual(7.0, GetOutput(10), 0.001);    // (100 * 0) + 7
+        Assert.AreEqual(7.0, GetOutput(ChOut), 0.001);    // (100 * 0) + 7
     }
 
     [TestMethod]
     public async Task LinearCorrector_NegativeOffset_SubtractsFromScaled()
     {
-        SetupInputChannel(1, "10");
-        SetupOutputChannel(10);
-        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.LinearCorrector, Channel1Id = 1, OutputChannelId = 10, A = 2m, B = -5m });
+        SetupInputChannel(Ch1, "10");
+        SetupOutputChannel(ChOut);
+        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.LinearCorrector, Channel1Id = Ch1, OutputChannelId = ChOut, A = 2m, B = -5m });
 
         await CreateEvaluation().RunCalculationsAsync();
 
-        Assert.AreEqual(15.0, GetOutput(10), 0.001);   // (10 * 2) + (-5)
+        Assert.AreEqual(15.0, GetOutput(ChOut), 0.001);   // (10 * 2) + (-5)
     }
 
     // -------------------------------------------------------------------------
-    // SimpleOperation: output = ch1 OP A  (or ch1 OP ch2 when Channel2Id > 0)
+    // SimpleOperation: output = ch1 OP A  (or ch1 OP ch2 when Channel2Id != Guid.Empty)
     // -------------------------------------------------------------------------
 
     [TestMethod]
     public async Task SimpleOperation_Add_WithConstantA_AddsA()
     {
-        SetupInputChannel(1, "5");
-        SetupOutputChannel(10);
-        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.SimpleOperation, SimpleOperationType = SimpleOperationType.Add, Channel1Id = 1, Channel2Id = 0, OutputChannelId = 10, A = 3m });
+        SetupInputChannel(Ch1, "5");
+        SetupOutputChannel(ChOut);
+        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.SimpleOperation, SimpleOperationType = SimpleOperationType.Add, Channel1Id = Ch1, Channel2Id = Guid.Empty, OutputChannelId = ChOut, A = 3m });
 
         await CreateEvaluation().RunCalculationsAsync();
 
-        Assert.AreEqual(8.0, GetOutput(10), 0.001);    // 5 + 3
+        Assert.AreEqual(8.0, GetOutput(ChOut), 0.001);    // 5 + 3
     }
 
     [TestMethod]
     public async Task SimpleOperation_Add_WithChannel2_AddsChannel2Value()
     {
-        SetupInputChannel(1, "5");
-        SetupInputChannel(2, "7");
-        SetupOutputChannel(10);
-        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.SimpleOperation, SimpleOperationType = SimpleOperationType.Add, Channel1Id = 1, Channel2Id = 2, OutputChannelId = 10 });
+        SetupInputChannel(Ch1, "5");
+        SetupInputChannel(Ch2, "7");
+        SetupOutputChannel(ChOut);
+        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.SimpleOperation, SimpleOperationType = SimpleOperationType.Add, Channel1Id = Ch1, Channel2Id = Ch2, OutputChannelId = ChOut });
 
         await CreateEvaluation().RunCalculationsAsync();
 
-        Assert.AreEqual(12.0, GetOutput(10), 0.001);   // 5 + 7
+        Assert.AreEqual(12.0, GetOutput(ChOut), 0.001);   // 5 + 7
     }
 
     [TestMethod]
     public async Task SimpleOperation_Subtract_WithConstantA_SubtractsA()
     {
-        SetupInputChannel(1, "10");
-        SetupOutputChannel(10);
-        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.SimpleOperation, SimpleOperationType = SimpleOperationType.Subtract, Channel1Id = 1, Channel2Id = 0, OutputChannelId = 10, A = 4m });
+        SetupInputChannel(Ch1, "10");
+        SetupOutputChannel(ChOut);
+        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.SimpleOperation, SimpleOperationType = SimpleOperationType.Subtract, Channel1Id = Ch1, Channel2Id = Guid.Empty, OutputChannelId = ChOut, A = 4m });
 
         await CreateEvaluation().RunCalculationsAsync();
 
-        Assert.AreEqual(6.0, GetOutput(10), 0.001);    // 10 - 4
+        Assert.AreEqual(6.0, GetOutput(ChOut), 0.001);    // 10 - 4
     }
 
     [TestMethod]
     public async Task SimpleOperation_Subtract_WithChannel2_SubtractsChannel2Value()
     {
-        SetupInputChannel(1, "10");
-        SetupInputChannel(2, "3");
-        SetupOutputChannel(10);
-        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.SimpleOperation, SimpleOperationType = SimpleOperationType.Subtract, Channel1Id = 1, Channel2Id = 2, OutputChannelId = 10 });
+        SetupInputChannel(Ch1, "10");
+        SetupInputChannel(Ch2, "3");
+        SetupOutputChannel(ChOut);
+        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.SimpleOperation, SimpleOperationType = SimpleOperationType.Subtract, Channel1Id = Ch1, Channel2Id = Ch2, OutputChannelId = ChOut });
 
         await CreateEvaluation().RunCalculationsAsync();
 
-        Assert.AreEqual(7.0, GetOutput(10), 0.001);    // 10 - 3
+        Assert.AreEqual(7.0, GetOutput(ChOut), 0.001);    // 10 - 3
     }
 
     [TestMethod]
     public async Task SimpleOperation_Multiply_WithConstantA_MultipliesA()
     {
-        SetupInputChannel(1, "3");
-        SetupOutputChannel(10);
-        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.SimpleOperation, SimpleOperationType = SimpleOperationType.Multiply, Channel1Id = 1, Channel2Id = 0, OutputChannelId = 10, A = 4m });
+        SetupInputChannel(Ch1, "3");
+        SetupOutputChannel(ChOut);
+        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.SimpleOperation, SimpleOperationType = SimpleOperationType.Multiply, Channel1Id = Ch1, Channel2Id = Guid.Empty, OutputChannelId = ChOut, A = 4m });
 
         await CreateEvaluation().RunCalculationsAsync();
 
-        Assert.AreEqual(12.0, GetOutput(10), 0.001);   // 3 * 4
+        Assert.AreEqual(12.0, GetOutput(ChOut), 0.001);   // 3 * 4
     }
 
     [TestMethod]
     public async Task SimpleOperation_Divide_WithConstantA_DividesA()
     {
-        SetupInputChannel(1, "10");
-        SetupOutputChannel(10);
-        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.SimpleOperation, SimpleOperationType = SimpleOperationType.Divide, Channel1Id = 1, Channel2Id = 0, OutputChannelId = 10, A = 4m });
+        SetupInputChannel(Ch1, "10");
+        SetupOutputChannel(ChOut);
+        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.SimpleOperation, SimpleOperationType = SimpleOperationType.Divide, Channel1Id = Ch1, Channel2Id = Guid.Empty, OutputChannelId = ChOut, A = 4m });
 
         await CreateEvaluation().RunCalculationsAsync();
 
-        Assert.AreEqual(2.5, GetOutput(10), 0.001);    // 10 / 4
+        Assert.AreEqual(2.5, GetOutput(ChOut), 0.001);    // 10 / 4
     }
 
     [TestMethod]
     public async Task SimpleOperation_Divide_WithChannel2_DividesChannel2Value()
     {
-        SetupInputChannel(1, "12");
-        SetupInputChannel(2, "4");
-        SetupOutputChannel(10);
-        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.SimpleOperation, SimpleOperationType = SimpleOperationType.Divide, Channel1Id = 1, Channel2Id = 2, OutputChannelId = 10 });
+        SetupInputChannel(Ch1, "12");
+        SetupInputChannel(Ch2, "4");
+        SetupOutputChannel(ChOut);
+        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.SimpleOperation, SimpleOperationType = SimpleOperationType.Divide, Channel1Id = Ch1, Channel2Id = Ch2, OutputChannelId = ChOut });
 
         await CreateEvaluation().RunCalculationsAsync();
 
-        Assert.AreEqual(3.0, GetOutput(10), 0.001);    // 12 / 4
+        Assert.AreEqual(3.0, GetOutput(ChOut), 0.001);    // 12 / 4
     }
 
     // -------------------------------------------------------------------------
@@ -243,37 +240,37 @@ public class MathEvaluationTests
     [TestMethod]
     public async Task DivisionInteger_WithRemainder_TruncatesDecimalPart()
     {
-        SetupInputChannel(1, "7");
-        SetupOutputChannel(10);
-        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.DivisionInteger, Channel1Id = 1, OutputChannelId = 10, A = 2m });
+        SetupInputChannel(Ch1, "7");
+        SetupOutputChannel(ChOut);
+        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.DivisionInteger, Channel1Id = Ch1, OutputChannelId = ChOut, A = 2m });
 
         await CreateEvaluation().RunCalculationsAsync();
 
-        Assert.AreEqual(3.0, GetOutput(10), 0.001);    // Truncate(7 / 2) = Truncate(3.5) = 3
+        Assert.AreEqual(3.0, GetOutput(ChOut), 0.001);    // Truncate(7 / 2) = Truncate(3.5) = 3
     }
 
     [TestMethod]
     public async Task DivisionInteger_ExactDivision_ReturnsWholeNumber()
     {
-        SetupInputChannel(1, "9");
-        SetupOutputChannel(10);
-        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.DivisionInteger, Channel1Id = 1, OutputChannelId = 10, A = 3m });
+        SetupInputChannel(Ch1, "9");
+        SetupOutputChannel(ChOut);
+        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.DivisionInteger, Channel1Id = Ch1, OutputChannelId = ChOut, A = 3m });
 
         await CreateEvaluation().RunCalculationsAsync();
 
-        Assert.AreEqual(3.0, GetOutput(10), 0.001);    // Truncate(9 / 3) = 3
+        Assert.AreEqual(3.0, GetOutput(ChOut), 0.001);    // Truncate(9 / 3) = 3
     }
 
     [TestMethod]
     public async Task DivisionInteger_NegativeResult_TruncatesTowardZero()
     {
-        SetupInputChannel(1, "7");
-        SetupOutputChannel(10);
-        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.DivisionInteger, Channel1Id = 1, OutputChannelId = 10, A = -2m });
+        SetupInputChannel(Ch1, "7");
+        SetupOutputChannel(ChOut);
+        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.DivisionInteger, Channel1Id = Ch1, OutputChannelId = ChOut, A = -2m });
 
         await CreateEvaluation().RunCalculationsAsync();
 
-        Assert.AreEqual(-3.0, GetOutput(10), 0.001);   // Truncate(7 / -2) = Truncate(-3.5) = -3
+        Assert.AreEqual(-3.0, GetOutput(ChOut), 0.001);   // Truncate(7 / -2) = Truncate(-3.5) = -3
     }
 
     // -------------------------------------------------------------------------
@@ -283,37 +280,37 @@ public class MathEvaluationTests
     [TestMethod]
     public async Task DivisionModulo_WithRemainder_ReturnsTruncatedRemainder()
     {
-        SetupInputChannel(1, "7");
-        SetupOutputChannel(10);
-        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.DivisionModulo, Channel1Id = 1, OutputChannelId = 10, A = 3m });
+        SetupInputChannel(Ch1, "7");
+        SetupOutputChannel(ChOut);
+        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.DivisionModulo, Channel1Id = Ch1, OutputChannelId = ChOut, A = 3m });
 
         await CreateEvaluation().RunCalculationsAsync();
 
-        Assert.AreEqual(1.0, GetOutput(10), 0.001);    // Truncate(7 % 3) = Truncate(1) = 1
+        Assert.AreEqual(1.0, GetOutput(ChOut), 0.001);    // Truncate(7 % 3) = Truncate(1) = 1
     }
 
     [TestMethod]
     public async Task DivisionModulo_ExactDivision_ReturnsZero()
     {
-        SetupInputChannel(1, "9");
-        SetupOutputChannel(10);
-        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.DivisionModulo, Channel1Id = 1, OutputChannelId = 10, A = 3m });
+        SetupInputChannel(Ch1, "9");
+        SetupOutputChannel(ChOut);
+        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.DivisionModulo, Channel1Id = Ch1, OutputChannelId = ChOut, A = 3m });
 
         await CreateEvaluation().RunCalculationsAsync();
 
-        Assert.AreEqual(0.0, GetOutput(10), 0.001);    // Truncate(9 % 3) = 0
+        Assert.AreEqual(0.0, GetOutput(ChOut), 0.001);    // Truncate(9 % 3) = 0
     }
 
     [TestMethod]
     public async Task DivisionModulo_LargerDivisor_ReturnsOriginalValue()
     {
-        SetupInputChannel(1, "4");
-        SetupOutputChannel(10);
-        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.DivisionModulo, Channel1Id = 1, OutputChannelId = 10, A = 10m });
+        SetupInputChannel(Ch1, "4");
+        SetupOutputChannel(ChOut);
+        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.DivisionModulo, Channel1Id = Ch1, OutputChannelId = ChOut, A = 10m });
 
         await CreateEvaluation().RunCalculationsAsync();
 
-        Assert.AreEqual(4.0, GetOutput(10), 0.001);    // Truncate(4 % 10) = 4
+        Assert.AreEqual(4.0, GetOutput(ChOut), 0.001);    // Truncate(4 % 10) = 4
     }
 
     // -------------------------------------------------------------------------
@@ -323,37 +320,33 @@ public class MathEvaluationTests
     [TestMethod]
     public async Task Order_MultipleParameters_ExecutedInAscendingOrder()
     {
-        // Op with Order=2 is added first — it must still run after Order=1.
-        SetupInputChannel(1, "5");
-        SetupOutputChannel(10);
-        SetupOutputChannel(20);
+        SetupInputChannel(Ch1, "5");
+        SetupOutputChannel(ChOut);
+        SetupOutputChannel(ChOut2);
 
-        mathRepo.Add(new MathDefinition { Id = 2, Order = 2, Type = MathType.LinearCorrector, Channel1Id = 1, OutputChannelId = 20, A = 3m, B = 0m });
-        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.LinearCorrector, Channel1Id = 1, OutputChannelId = 10, A = 2m, B = 0m });
+        mathRepo.Add(new MathDefinition { Id = 2, Order = 2, Type = MathType.LinearCorrector, Channel1Id = Ch1, OutputChannelId = ChOut2, A = 3m, B = 0m });
+        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.LinearCorrector, Channel1Id = Ch1, OutputChannelId = ChOut,  A = 2m, B = 0m });
 
         await CreateEvaluation().RunCalculationsAsync();
 
-        Assert.AreEqual(10.0, GetOutput(10), 0.001);   // 5 * 2
-        Assert.AreEqual(15.0, GetOutput(20), 0.001);   // 5 * 3
+        Assert.AreEqual(10.0, GetOutput(ChOut),  0.001);   // 5 * 2
+        Assert.AreEqual(15.0, GetOutput(ChOut2), 0.001);   // 5 * 3
     }
 
     [TestMethod]
     public async Task Order_LaterOperationReadsOutputOfEarlierOperation()
     {
-        // Op1 (Order=1): ch1=5, Add A=10 → writes 15 to ch99.
-        // Op2 (Order=2): reads ch99 (now 15), Multiply A=2 → writes 30 to ch100.
-        // ch99 must have BaseUnitType so GetOutputQuantity returns non-null when Op2 reads it.
-        SetupInputChannel(1, "5");
-        SetupChannel(99, "0", baseUnit: "km", decimalPlaces: 2);   // intermediate
-        SetupOutputChannel(100);
+        SetupInputChannel(Ch1, "5");
+        SetupChannel(ChInt, "0", baseUnit: "km", decimalPlaces: 2);
+        SetupOutputChannel(ChOut3);
 
-        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.SimpleOperation, SimpleOperationType = SimpleOperationType.Add, Channel1Id = 1, Channel2Id = 0, OutputChannelId = 99, A = 10m });
-        mathRepo.Add(new MathDefinition { Id = 2, Order = 2, Type = MathType.SimpleOperation, SimpleOperationType = SimpleOperationType.Multiply, Channel1Id = 99, Channel2Id = 0, OutputChannelId = 100, A = 2m });
+        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.SimpleOperation, SimpleOperationType = SimpleOperationType.Add,      Channel1Id = Ch1,  Channel2Id = Guid.Empty, OutputChannelId = ChInt,  A = 10m });
+        mathRepo.Add(new MathDefinition { Id = 2, Order = 2, Type = MathType.SimpleOperation, SimpleOperationType = SimpleOperationType.Multiply,  Channel1Id = ChInt, Channel2Id = Guid.Empty, OutputChannelId = ChOut3, A = 2m });
 
         await CreateEvaluation().RunCalculationsAsync();
 
-        Assert.AreEqual(15.0, GetOutput(99), 0.001);   // 5 + 10
-        Assert.AreEqual(30.0, GetOutput(100), 0.001);  // 15 * 2
+        Assert.AreEqual(15.0, GetOutput(ChInt),  0.001);
+        Assert.AreEqual(30.0, GetOutput(ChOut3), 0.001);
     }
 
     // -------------------------------------------------------------------------
@@ -363,15 +356,14 @@ public class MathEvaluationTests
     [TestMethod]
     public async Task Output_FormattedWithDefinedDecimalPlaces()
     {
-        SetupInputChannel(1, "5");
-        channelDefRepo.Set(new ChannelDefinition { Id = 10, BaseDecimalPlaces = 3 });
+        SetupInputChannel(Ch1, "5");
+        channelDefRepo.Set(new ChannelDefinition { Id = ChOut, BaseDecimalPlaces = 3 });
 
-        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.LinearCorrector, Channel1Id = 1, OutputChannelId = 10, A = 2m, B = 0m });
+        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.LinearCorrector, Channel1Id = Ch1, OutputChannelId = ChOut, A = 2m, B = 0m });
 
         await CreateEvaluation().RunCalculationsAsync();
 
-        // 5 * 2 = 10, formatted to 3 decimal places → "10.000"
-        var raw = channelRepo.Get(10).Value;
+        var raw = channelRepo.Get(ChOut).Value;
         Assert.AreEqual(10.0, double.Parse(raw), 0.0001);
         Assert.IsTrue(raw.Contains('.') || raw.Contains(','), "Should contain a decimal separator");
     }
@@ -383,11 +375,10 @@ public class MathEvaluationTests
     [TestMethod]
     public async Task Channel1WithoutBaseUnit_ThrowsInvalidOperationException()
     {
-        // Channel has a value but no BaseUnitType → GetOutputQuantity returns null.
-        channelRepo.Set(1, "5");
-        channelDefRepo.Set(new ChannelDefinition { Id = 1, BaseUnitType = string.Empty });
-        SetupOutputChannel(10);
-        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.LinearCorrector, Channel1Id = 1, OutputChannelId = 10, A = 1m, B = 0m });
+        channelRepo.Set(Ch1, "5");
+        channelDefRepo.Set(new ChannelDefinition { Id = Ch1, BaseUnitType = string.Empty });
+        SetupOutputChannel(ChOut);
+        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.LinearCorrector, Channel1Id = Ch1, OutputChannelId = ChOut, A = 1m, B = 0m });
 
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => CreateEvaluation().RunCalculationsAsync());
@@ -396,11 +387,11 @@ public class MathEvaluationTests
     [TestMethod]
     public async Task BiasChannel2WithoutBaseUnit_ThrowsInvalidOperationException()
     {
-        SetupInputChannel(1, "3");
-        channelRepo.Set(2, "1");
-        channelDefRepo.Set(new ChannelDefinition { Id = 2, BaseUnitType = string.Empty });
-        SetupOutputChannel(10);
-        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.Bias, Channel1Id = 1, Channel2Id = 2, OutputChannelId = 10 });
+        SetupInputChannel(Ch1, "3");
+        channelRepo.Set(Ch2, "1");
+        channelDefRepo.Set(new ChannelDefinition { Id = Ch2, BaseUnitType = string.Empty });
+        SetupOutputChannel(ChOut);
+        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.Bias, Channel1Id = Ch1, Channel2Id = Ch2, OutputChannelId = ChOut });
 
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => CreateEvaluation().RunCalculationsAsync());
@@ -409,11 +400,11 @@ public class MathEvaluationTests
     [TestMethod]
     public async Task SimpleOperationChannel2WithoutBaseUnit_ThrowsInvalidOperationException()
     {
-        SetupInputChannel(1, "5");
-        channelRepo.Set(2, "3");
-        channelDefRepo.Set(new ChannelDefinition { Id = 2, BaseUnitType = string.Empty });
-        SetupOutputChannel(10);
-        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.SimpleOperation, SimpleOperationType = SimpleOperationType.Add, Channel1Id = 1, Channel2Id = 2, OutputChannelId = 10 });
+        SetupInputChannel(Ch1, "5");
+        channelRepo.Set(Ch2, "3");
+        channelDefRepo.Set(new ChannelDefinition { Id = Ch2, BaseUnitType = string.Empty });
+        SetupOutputChannel(ChOut);
+        mathRepo.Add(new MathDefinition { Id = 1, Order = 1, Type = MathType.SimpleOperation, SimpleOperationType = SimpleOperationType.Add, Channel1Id = Ch1, Channel2Id = Ch2, OutputChannelId = ChOut });
 
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => CreateEvaluation().RunCalculationsAsync());

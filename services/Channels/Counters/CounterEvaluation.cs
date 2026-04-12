@@ -29,12 +29,12 @@ public class CounterEvaluation
                 state.Initialized = true;
             }
 
-            // Read current channel values (0 means not configured)
-            bool upIsNonZero = definition.UpChId > 0
+            // Read current channel values (Guid.Empty means not configured)
+            bool upIsNonZero = definition.UpChId != Guid.Empty
                 && (await channelRepository.GetChannelValueAsync(definition.UpChId)).GetValueDouble() != 0;
-            bool downIsNonZero = definition.DownChId > 0
+            bool downIsNonZero = definition.DownChId != Guid.Empty
                 && (await channelRepository.GetChannelValueAsync(definition.DownChId)).GetValueDouble() != 0;
-            bool resetIsNonZero = definition.ResetChId > 0
+            bool resetIsNonZero = definition.ResetChId != Guid.Empty
                 && (await channelRepository.GetChannelValueAsync(definition.ResetChId)).GetValueDouble() != 0;
 
             // Detect rising edges: previous was zero AND current is non-zero
@@ -73,9 +73,8 @@ public class CounterEvaluation
                 }
             }
 
-            await channelRepository.SetChannelValueAsync(new ChannelValue
+            await channelRepository.SetChannelValueAsync(definition.OutputChId, new ChannelValue
             {
-                Id = definition.OutputChId,
                 Value = state.Value.ToString(),
             });
 

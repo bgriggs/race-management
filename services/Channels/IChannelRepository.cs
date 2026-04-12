@@ -2,8 +2,8 @@
 
 namespace Channels;
 
-public interface IChannelRepository : IStateRepository<int, ChannelValue>
+public interface IChannelRepository
 {
-    public Task<ChannelValue> GetChannelValueAsync(int channelId);
-    public Task SetChannelValueAsync(ChannelValue ch);
+    Task<ChannelValue> GetChannelValueAsync(Guid channelId);
+    Task SetChannelValueAsync(Guid channelId, ChannelValue ch);
 }

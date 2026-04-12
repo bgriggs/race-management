@@ -47,7 +47,7 @@ public class MathEvaluation
                 // Output = value1 +-*/ value2
                 case MathType.SimpleOperation:
                     double value2 = (double)definition.A;
-                    if (definition.Channel2Id > 0)
+                    if (definition.Channel2Id != Guid.Empty)
                     {
                         var ch2 = await GetChannelQuantity(definition.Channel2Id) ?? throw new InvalidOperationException($"Channel {definition.Channel2Id} not found");
                         value2 = (double)ch2.Value;
@@ -81,13 +81,13 @@ public class MathEvaluation
             }
 
             var outputChMap = await channelDefinitionRepository.GetChannelDefinitionAsync(definition.OutputChannelId);
-            var outputValue = new ChannelValue { Id = definition.OutputChannelId };
+            var outputValue = new ChannelValue();
             outputValue.SetBaseValue(output, outputChMap);
-            await channelRepository.SetChannelValueAsync(outputValue);
+            await channelRepository.SetChannelValueAsync(definition.OutputChannelId, outputValue);
         }
     }
 
-    private async Task<IQuantity?> GetChannelQuantity(int chId)
+    private async Task<IQuantity?> GetChannelQuantity(Guid chId)
     {
         var ch = await channelRepository.GetChannelValueAsync(chId);
         var map = await channelDefinitionRepository.GetChannelDefinitionAsync(chId);

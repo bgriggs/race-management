@@ -5,7 +5,11 @@
 /// </summary>
 public class ChannelDefinition
 {
-    public int Id { get; set; }
+    /// <summary>
+    /// Globally unique identifier for this channel, stable across all tiers (car, cloud, local config)
+    /// without requiring a central authority. Generated once at definition time and never changed.
+    /// </summary>
+    public Guid Id { get; set; }
     public bool IsReserved { get; set; }
     public string Category { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;

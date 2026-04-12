@@ -2,10 +2,10 @@ namespace Channels.Logic;
 
 public class PreviousChannelValueMemoryRepository : IPreviousChannelValueRepository
 {
-    private readonly Dictionary<int, string> values = [];
+    private readonly Dictionary<Guid, string> values = [];
     private static readonly SemaphoreSlim valuesLock = new(1);
 
-    public async Task<string?> GetPreviousValueAsync(int channelId)
+    public async Task<string?> GetPreviousValueAsync(Guid channelId)
     {
         await valuesLock.WaitAsync();
         try
@@ -18,7 +18,7 @@ public class PreviousChannelValueMemoryRepository : IPreviousChannelValueReposit
         }
     }
 
-    public async Task SetPreviousValueAsync(int channelId, string value)
+    public async Task SetPreviousValueAsync(Guid channelId, string value)
     {
         await valuesLock.WaitAsync();
         try

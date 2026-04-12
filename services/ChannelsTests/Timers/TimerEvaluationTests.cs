@@ -8,6 +8,10 @@ namespace ChannelsTests.Timers;
 [TestClass]
 public class TimerEvaluationTests
 {
+    private static readonly Guid ChTrigger = new("00000000-0000-0000-0000-000000000063");
+    private static readonly Guid ChOut     = new("00000000-0000-0000-0000-000000000010");
+    private static readonly Guid ChOut2    = new("00000000-0000-0000-0000-000000000014");
+
     // -------------------------------------------------------------------------
     // Fakes
     // -------------------------------------------------------------------------
@@ -48,14 +52,16 @@ public class TimerEvaluationTests
 
     // Always-true / always-false statements for controlling start/stop conditions.
     private static StatementDefinition AlwaysTrueStatement(int id) =>
-        new() { Id = id, ActivateComparisons = [[new ComparisonDefinition { Id = id, ChannelId = 99, Logic = LogicType.True }]] };
+        new() { Id = id, ActivateComparisons = [[new ComparisonDefinition { Id = id, ChannelId = ChTrigger, Logic = LogicType.True }]] };
 
     private static StatementDefinition AlwaysFalseStatement(int id) =>
-        new() { Id = id, ActivateComparisons = [[new ComparisonDefinition { Id = id, ChannelId = 99, Logic = LogicType.False }]] };
+        new() { Id = id, ActivateComparisons = [[new ComparisonDefinition { Id = id, ChannelId = ChTrigger, Logic = LogicType.False }]] };
 
     // A basic count-up timer with no limits.
-    private static TimerDefinition BasicTimer(int id = 1, int outputChId = 10, int startStmtId = 1, int stopStmtId = 2) =>
-        new() { Id = id, OutputChId = outputChId, StartStatementId = startStmtId, StopStatementId = stopStmtId };
+    private static TimerDefinition BasicTimer(int id = 1, Guid outputChId = default, int startStmtId = 1, int stopStmtId = 2)
+    {
+        return new TimerDefinition { Id = id, OutputChId = outputChId == default ? ChOut : outputChId, StartStatementId = startStmtId, StopStatementId = stopStmtId };
+    }
 
     // Pre-seed a timer state where the start edge will fire on the next true evaluation.
     private void SetReadyToStart(int timerId = 1) =>
@@ -72,7 +78,7 @@ public class TimerEvaluationTests
             PreviousStopResult = !stopEdgeReady,
         });
 
-    private double ParseOutput(int channelId) =>
+    private double ParseOutput(Guid channelId) =>
         double.Parse(channelRepo.Get(channelId).Value, CultureInfo.InvariantCulture);
 
     // -------------------------------------------------------------------------
@@ -174,14 +180,14 @@ public class TimerEvaluationTests
 
         await CreateEvaluation().UpdateTimersAsync();
 
-        Assert.AreEqual(30.0, ParseOutput(10), 0.001);
+        Assert.AreEqual(30.0, ParseOutput(ChOut), 0.001);
         Assert.AreEqual(30.0, timerRepo.GetState(1)!.StartValue, 0.001);
     }
 
     [TestMethod]
     public async Task StartEdge_NoEnableStartSeconds_ResumesFromCurrentChannelValue()
     {
-        channelRepo.Set(10, "15");
+        channelRepo.Set(ChOut, "15");
         timerRepo.AddTimer(BasicTimer());
         statementRepo.Set(AlwaysTrueStatement(1));
         statementRepo.Set(AlwaysFalseStatement(2));
@@ -190,13 +196,13 @@ public class TimerEvaluationTests
         await CreateEvaluation().UpdateTimersAsync();
 
         Assert.AreEqual(15.0, timerRepo.GetState(1)!.StartValue, 0.001);
-        Assert.AreEqual(15.0, ParseOutput(10), 0.001);
+        Assert.AreEqual(15.0, ParseOutput(ChOut), 0.001);
     }
 
     [TestMethod]
     public async Task StartEdge_NoEnableStartSeconds_UnparsableChannelValue_DefaultsToZero()
     {
-        channelRepo.Set(10, "");
+        channelRepo.Set(ChOut, "");
         timerRepo.AddTimer(BasicTimer());
         statementRepo.Set(AlwaysTrueStatement(1));
         statementRepo.Set(AlwaysFalseStatement(2));
@@ -222,7 +228,7 @@ public class TimerEvaluationTests
         timeProvider.Advance(TimeSpan.FromSeconds(10));
         await CreateEvaluation().UpdateTimersAsync();
 
-        Assert.AreEqual(10.0, ParseOutput(10), 0.001);
+        Assert.AreEqual(10.0, ParseOutput(ChOut), 0.001);
     }
 
     [TestMethod]
@@ -238,7 +244,7 @@ public class TimerEvaluationTests
         timeProvider.Advance(TimeSpan.FromSeconds(7));
         await CreateEvaluation().UpdateTimersAsync();
 
-        Assert.AreEqual(13.0, ParseOutput(10), 0.001);
+        Assert.AreEqual(13.0, ParseOutput(ChOut), 0.001);
     }
 
     [TestMethod]
@@ -258,7 +264,7 @@ public class TimerEvaluationTests
         timeProvider.Advance(TimeSpan.FromSeconds(5));
         await evaluation.UpdateTimersAsync();       // 50 + 5
 
-        Assert.AreEqual(55.0, ParseOutput(10), 0.001);
+        Assert.AreEqual(55.0, ParseOutput(ChOut), 0.001);
     }
 
     // -------------------------------------------------------------------------
@@ -292,7 +298,7 @@ public class TimerEvaluationTests
         timeProvider.Advance(TimeSpan.FromSeconds(5));
         await CreateEvaluation().UpdateTimersAsync();
 
-        Assert.AreEqual("99", channelRepo.Get(10).Value);
+        Assert.AreEqual("99", channelRepo.Get(ChOut).Value);
     }
 
     [TestMethod]
@@ -306,7 +312,7 @@ public class TimerEvaluationTests
         timeProvider.Advance(TimeSpan.FromSeconds(7));
         await CreateEvaluation().UpdateTimersAsync();
 
-        Assert.AreEqual(7.0, ParseOutput(10), 0.001);
+        Assert.AreEqual(7.0, ParseOutput(ChOut), 0.001);
         Assert.IsNull(timerRepo.GetState(1)!.Started);
     }
 
@@ -323,7 +329,7 @@ public class TimerEvaluationTests
         await CreateEvaluation().UpdateTimersAsync();
 
         Assert.IsNotNull(timerRepo.GetState(1)!.Started);
-        Assert.AreEqual(5.0, ParseOutput(10), 0.001);
+        Assert.AreEqual(5.0, ParseOutput(ChOut), 0.001);
     }
 
     // -------------------------------------------------------------------------
@@ -342,7 +348,7 @@ public class TimerEvaluationTests
         await CreateEvaluation(). UpdateTimersAsync();
 
         Assert.IsNotNull(timerRepo.GetState(1)!.Started);  // still running
-        Assert.AreEqual(1000.0, ParseOutput(10), 0.001);
+        Assert.AreEqual(1000.0, ParseOutput(ChOut), 0.001);
     }
 
     [TestMethod]
@@ -360,7 +366,7 @@ public class TimerEvaluationTests
         timeProvider.Advance(TimeSpan.FromSeconds(10));
         await CreateEvaluation().UpdateTimersAsync();
 
-        Assert.AreEqual(10.0, ParseOutput(10), 0.001);
+        Assert.AreEqual(10.0, ParseOutput(ChOut), 0.001);
         Assert.IsNotNull(timerRepo.GetState(1)!.Started);  // still running
     }
 
@@ -378,7 +384,7 @@ public class TimerEvaluationTests
         timeProvider.Advance(TimeSpan.FromSeconds(15));
         await CreateEvaluation().UpdateTimersAsync();
 
-        Assert.AreEqual(10.0, ParseOutput(10), 0.001);
+        Assert.AreEqual(10.0, ParseOutput(ChOut), 0.001);
         Assert.IsNull(timerRepo.GetState(1)!.Started);  // stopped
     }
 
@@ -396,7 +402,7 @@ public class TimerEvaluationTests
         timeProvider.Advance(TimeSpan.FromSeconds(13));  // 13 % 10 = 3
         await CreateEvaluation().UpdateTimersAsync();
 
-        Assert.AreEqual(3.0, ParseOutput(10), 0.001);
+        Assert.AreEqual(3.0, ParseOutput(ChOut), 0.001);
         Assert.IsNotNull(timerRepo.GetState(1)!.Started);  // still running
     }
 
@@ -414,7 +420,7 @@ public class TimerEvaluationTests
         timeProvider.Advance(TimeSpan.FromSeconds(27));  // 27 % 10 = 7
         await CreateEvaluation().UpdateTimersAsync();
 
-        Assert.AreEqual(7.0, ParseOutput(10), 0.001);
+        Assert.AreEqual(7.0, ParseOutput(ChOut), 0.001);
     }
 
     // -------------------------------------------------------------------------
@@ -434,7 +440,7 @@ public class TimerEvaluationTests
         timeProvider.Advance(TimeSpan.FromSeconds(20));
         await CreateEvaluation().UpdateTimersAsync();
 
-        Assert.AreEqual(-15.0, ParseOutput(10), 0.001);
+        Assert.AreEqual(-15.0, ParseOutput(ChOut), 0.001);
         Assert.IsNotNull(timerRepo.GetState(1)!.Started);  // still running
     }
 
@@ -453,7 +459,7 @@ public class TimerEvaluationTests
         timeProvider.Advance(TimeSpan.FromSeconds(8));  // 5 - 8 = -3 → clamp to 0
         await CreateEvaluation().UpdateTimersAsync();
 
-        Assert.AreEqual(0.0, ParseOutput(10), 0.001);
+        Assert.AreEqual(0.0, ParseOutput(ChOut), 0.001);
         Assert.IsNull(timerRepo.GetState(1)!.Started);  // stopped
     }
 
@@ -473,7 +479,7 @@ public class TimerEvaluationTests
         timeProvider.Advance(TimeSpan.FromSeconds(5));
         await CreateEvaluation().UpdateTimersAsync();
 
-        Assert.AreEqual(8.0, ParseOutput(10), 0.001);
+        Assert.AreEqual(8.0, ParseOutput(ChOut), 0.001);
         Assert.IsNotNull(timerRepo.GetState(1)!.Started);  // still running
     }
 
@@ -493,7 +499,7 @@ public class TimerEvaluationTests
         timeProvider.Advance(TimeSpan.FromSeconds(25));
         await CreateEvaluation().UpdateTimersAsync();
 
-        Assert.AreEqual(8.0, ParseOutput(10), 0.001);
+        Assert.AreEqual(8.0, ParseOutput(ChOut), 0.001);
     }
 
     // -------------------------------------------------------------------------
@@ -503,8 +509,8 @@ public class TimerEvaluationTests
     [TestMethod]
     public async Task MultipleTimers_EachUpdatedIndependently()
     {
-        var timer1 = new TimerDefinition { Id = 1, OutputChId = 10, StartStatementId = 1, StopStatementId = 2 };
-        var timer2 = new TimerDefinition { Id = 2, OutputChId = 20, StartStatementId = 3, StopStatementId = 4, CountDown = true };
+        var timer1 = new TimerDefinition { Id = 1, OutputChId = ChOut,  StartStatementId = 1, StopStatementId = 2 };
+        var timer2 = new TimerDefinition { Id = 2, OutputChId = ChOut2, StartStatementId = 3, StopStatementId = 4, CountDown = true };
         timerRepo.AddTimer(timer1);
         timerRepo.AddTimer(timer2);
 
@@ -519,22 +525,22 @@ public class TimerEvaluationTests
         timeProvider.Advance(TimeSpan.FromSeconds(5));
         await CreateEvaluation().UpdateTimersAsync();
 
-        Assert.AreEqual(5.0, ParseOutput(10), 0.001);    // timer 1: 0 + 5
-        Assert.AreEqual(95.0, ParseOutput(20), 0.001);   // timer 2: 100 - 5
+        Assert.AreEqual(5.0,  ParseOutput(ChOut),  0.001);
+        Assert.AreEqual(95.0, ParseOutput(ChOut2), 0.001);
     }
 
     [TestMethod]
     public async Task MultipleTimers_OneStops_OtherContinues()
     {
-        var timer1 = new TimerDefinition { Id = 1, OutputChId = 10, StartStatementId = 1, StopStatementId = 2 };
-        var timer2 = new TimerDefinition { Id = 2, OutputChId = 20, StartStatementId = 3, StopStatementId = 4 };
+        var timer1 = new TimerDefinition { Id = 1, OutputChId = ChOut,  StartStatementId = 1, StopStatementId = 2 };
+        var timer2 = new TimerDefinition { Id = 2, OutputChId = ChOut2, StartStatementId = 3, StopStatementId = 4 };
         timerRepo.AddTimer(timer1);
         timerRepo.AddTimer(timer2);
 
         statementRepo.Set(AlwaysFalseStatement(1));
-        statementRepo.Set(AlwaysTrueStatement(2));   // timer 1 stop edge will fire
+        statementRepo.Set(AlwaysTrueStatement(2));
         statementRepo.Set(AlwaysFalseStatement(3));
-        statementRepo.Set(AlwaysFalseStatement(4));  // timer 2 keeps running
+        statementRepo.Set(AlwaysFalseStatement(4));
 
         SetRunning(timerId: 1, startValue: 0, stopEdgeReady: true);
         SetRunning(timerId: 2, startValue: 0, stopEdgeReady: false);
@@ -542,9 +548,9 @@ public class TimerEvaluationTests
         timeProvider.Advance(TimeSpan.FromSeconds(5));
         await CreateEvaluation().UpdateTimersAsync();
 
-        Assert.IsNull(timerRepo.GetState(1)!.Started);    // timer 1 stopped
-        Assert.IsNotNull(timerRepo.GetState(2)!.Started); // timer 2 still running
-        Assert.AreEqual(5.0, ParseOutput(20), 0.001);
+        Assert.IsNull(timerRepo.GetState(1)!.Started);
+        Assert.IsNotNull(timerRepo.GetState(2)!.Started);
+        Assert.AreEqual(5.0, ParseOutput(ChOut2), 0.001);
     }
 
     // -------------------------------------------------------------------------

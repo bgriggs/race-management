@@ -6,9 +6,11 @@ namespace Channels;
 public class ChannelValue
 {
     /// <summary>
-    /// ID of the channel as specified with a channel definition.
+    /// Compact session index negotiated at connection time for high-frequency streaming.
+    /// Populated by the transport layer from a <see cref="ChannelSessionMap"/> before transmission.
+    /// This index will correspond to the Car's configuration Channel list index for the channel value being used.
     /// </summary>
-    public int Id { get; set; }
+    public ushort SessionIndex { get; set; }
 
     public string Value { get; set; } = string.Empty;
 

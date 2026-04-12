@@ -2,27 +2,27 @@
 
 public class ChannelMemoryRepository : IChannelRepository
 {
-    private readonly Dictionary<int, ChannelValue> channels = new();
+    private readonly Dictionary<Guid, ChannelValue> channels = new();
     private static readonly SemaphoreSlim channelsLock = new(1);
 
-    public void Set(int id, string value)
+    public void Set(Guid id, string value)
     {
-        channels[id] = new ChannelValue { Id = id, Value = value };
+        channels[id] = new ChannelValue { Value = value };
     }
 
-    public ChannelValue Get(int id)
+    public ChannelValue Get(Guid id)
     {
-        return channels.TryGetValue(id, out var v) ? v : new ChannelValue { Id = id };
+        return channels.TryGetValue(id, out var v) ? v : new ChannelValue();
     }
 
-    public async Task<ChannelValue> GetChannelValueAsync(int channelId)
+    public async Task<ChannelValue> GetChannelValueAsync(Guid channelId)
     {
         await channelsLock.WaitAsync();
         try
         {
             return channels.TryGetValue(channelId, out var value)
                 ? value
-                : new ChannelValue { Id = channelId };
+                : new ChannelValue();
         }
         finally
         {
@@ -30,12 +30,12 @@ public class ChannelMemoryRepository : IChannelRepository
         }
     }
 
-    public async Task SetChannelValueAsync(ChannelValue ch)
+    public async Task SetChannelValueAsync(Guid channelId, ChannelValue ch)
     {
         await channelsLock.WaitAsync();
         try
         {
-            channels[ch.Id] = ch;
+            channels[channelId] = ch;
         }
         finally
         {
@@ -43,11 +43,5 @@ public class ChannelMemoryRepository : IChannelRepository
         }
     }
 
-    public Task<ChannelValue> GetStateAsync(int id) =>
-        GetChannelValueAsync(id);
-
-    public Task SetStateAsync(ChannelValue state) =>
-        SetChannelValueAsync(state);
-
-    public bool HasChannel(int id) => channels.ContainsKey(id);
+    public bool HasChannel(Guid id) => channels.ContainsKey(id);
 }

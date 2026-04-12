@@ -7,7 +7,7 @@ namespace Channels.Logic;
 public interface IPreviousChannelValueRepository
 {
     /// <summary>Returns the previously recorded value for the channel, or null if none has been recorded yet.</summary>
-    Task<string?> GetPreviousValueAsync(int channelId);
+    Task<string?> GetPreviousValueAsync(Guid channelId);
 
-    Task SetPreviousValueAsync(int channelId, string value);
+    Task SetPreviousValueAsync(Guid channelId, string value);
 }

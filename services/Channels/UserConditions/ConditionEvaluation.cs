@@ -43,11 +43,10 @@ public class ConditionEvaluation
             state.IsTrue = result;
             await conditionRepository.SetConditionStateAsync(state);
 
-            if (conditionDefinition.OutputChannelId > 0)
+            if (conditionDefinition.OutputChannelId != Guid.Empty)
             {
-                await channelRepository.SetChannelValueAsync(new ChannelValue
+                await channelRepository.SetChannelValueAsync(conditionDefinition.OutputChannelId, new ChannelValue
                 {
-                    Id = conditionDefinition.OutputChannelId,
                     Value = result ? "1" : "0",
                 });
             }
