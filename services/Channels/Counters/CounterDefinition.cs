@@ -1,6 +1,6 @@
 ﻿namespace Channels.Counters;
 
-public class CounterParameters
+public class CounterDefinition
 {
     public int Id { get; set; }
     public int OutputChId { get; set; }
@@ -30,6 +30,7 @@ public class CounterParameters
     public bool RollAtLimit { get; set; }
     /// <summary>
     /// Gets or sets the initial value of the counter.
+    /// </summary>
     public int StartValue { get; set; }
     /// <summary>
     /// Whether to save value across restarts. If false, the counter will be reset to StartValue on each restart. If true, the counter value will be persisted and restored on restart.

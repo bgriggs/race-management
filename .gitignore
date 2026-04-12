@@ -56,3 +56,4 @@ nunit-*.xml
 /Design.md
 /RaceManagement/Channels/readme.md
 /.vs
+/ui/race-management-local/.vscode

@@ -17,25 +17,25 @@ public class CounterEvaluation
     /// </summary>
     public async Task UpdateCountersAsync()
     {
-        var parameters = await counterRepository.GetCounterParametersAsync();
-        foreach (var parameter in parameters)
+        var definitions = await counterRepository.GetCounterDefinitionsAsync();
+        foreach (var definition in definitions)
         {
-            var state = await counterRepository.GetCounterStateAsync(parameter.Id);
+            var state = await counterRepository.GetCounterStateAsync(definition.Id);
 
             // Initialize on first run
             if (!state.Initialized)
             {
-                state.Value = parameter.StartValue;
+                state.Value = definition.StartValue;
                 state.Initialized = true;
             }
 
             // Read current channel values (0 means not configured)
-            bool upIsNonZero = parameter.UpChId > 0
-                && (await channelRepository.GetChannelValueAsync(parameter.UpChId)).GetValueDouble() != 0;
-            bool downIsNonZero = parameter.DownChId > 0
-                && (await channelRepository.GetChannelValueAsync(parameter.DownChId)).GetValueDouble() != 0;
-            bool resetIsNonZero = parameter.ResetChId > 0
-                && (await channelRepository.GetChannelValueAsync(parameter.ResetChId)).GetValueDouble() != 0;
+            bool upIsNonZero = definition.UpChId > 0
+                && (await channelRepository.GetChannelValueAsync(definition.UpChId)).GetValueDouble() != 0;
+            bool downIsNonZero = definition.DownChId > 0
+                && (await channelRepository.GetChannelValueAsync(definition.DownChId)).GetValueDouble() != 0;
+            bool resetIsNonZero = definition.ResetChId > 0
+                && (await channelRepository.GetChannelValueAsync(definition.ResetChId)).GetValueDouble() != 0;
 
             // Detect rising edges: previous was zero AND current is non-zero
             bool upEdge = state.PreviousUpWasZero && upIsNonZero;
@@ -50,32 +50,32 @@ public class CounterEvaluation
             // Reset takes priority over increment/decrement
             if (resetEdge)
             {
-                state.Value = parameter.StartValue;
+                state.Value = definition.StartValue;
             }
             else
             {
                 if (upEdge)
                 {
                     state.Value++;
-                    if (state.Value > parameter.MaxValue)
+                    if (state.Value > definition.MaxValue)
                     {
-                        state.Value = parameter.RollAtLimit ? parameter.MinValue : parameter.MaxValue;
+                        state.Value = definition.RollAtLimit ? definition.MinValue : definition.MaxValue;
                     }
                 }
 
                 if (downEdge)
                 {
                     state.Value--;
-                    if (state.Value < parameter.MinValue)
+                    if (state.Value < definition.MinValue)
                     {
-                        state.Value = parameter.RollAtLimit ? parameter.MaxValue : parameter.MinValue;
+                        state.Value = definition.RollAtLimit ? definition.MaxValue : definition.MinValue;
                     }
                 }
             }
 
             await channelRepository.SetChannelValueAsync(new ChannelValue
             {
-                Id = parameter.OutputChId,
+                Id = definition.OutputChId,
                 Value = state.Value.ToString(),
             });
 

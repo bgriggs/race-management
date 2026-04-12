@@ -2,8 +2,8 @@
 
 public interface ICounterRepository
 {
-    public Task<int> SaveCounterParametersAsync(CounterParameters parameters);
-    public Task<List<CounterParameters>> GetCounterParametersAsync();
+    public Task<int> SaveCounterDefinitionAsync(CounterDefinition definition);
+    public Task<List<CounterDefinition>> GetCounterDefinitionsAsync();
     public Task<CounterState> GetCounterStateAsync(int counterId);
     public Task SetCounterStateAsync(CounterState counterState);
 }

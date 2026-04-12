@@ -2,5 +2,5 @@
 
 public interface IMathRepository
 {
-    public Task<IEnumerable<MathParameters>> GetParameters();
+    public Task<IEnumerable<MathDefinition>> GetDefinitionsAsync();
 }

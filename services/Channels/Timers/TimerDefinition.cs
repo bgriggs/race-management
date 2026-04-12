@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Channels.Timers;
 
-public class TimerParameters
+public class TimerDefinition
 {
     public int Id { get; set; }
     public int OutputChId { get; set; }

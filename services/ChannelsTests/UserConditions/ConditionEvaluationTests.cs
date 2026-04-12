@@ -1,4 +1,4 @@
-﻿using Channels;
+using Channels;
 using Channels.Logic;
 using Channels.UserConditions;
 
@@ -72,16 +72,16 @@ public class ConditionEvaluationTests
 
     private sealed class FakeStatementRepository : IStatementRepository
     {
-        private readonly Dictionary<int, Statements> statements = [];
+        private readonly Dictionary<int, StatementDefinition> statementDefinitions = [];
 
-        public void Add(Statements s) => statements[s.Id] = s;
+        public void Add(StatementDefinition definition) => statementDefinitions[definition.Id] = definition;
 
-        public Task<Statements> GetStatementsAsync(int statementId) =>
-            Task.FromResult(statements.TryGetValue(statementId, out var s) ? s : new Statements { Id = statementId });
+        public Task<StatementDefinition> GetStatementDefinitionAsync(int statementId) =>
+            Task.FromResult(statementDefinitions.TryGetValue(statementId, out var definition) ? definition : new StatementDefinition { Id = statementId });
 
-        public Task SetStatementsAsync(Statements s)
+        public Task SetStatementDefinitionAsync(StatementDefinition definition)
         {
-            statements[s.Id] = s;
+            statementDefinitions[definition.Id] = definition;
             return Task.CompletedTask;
         }
     }
@@ -107,19 +107,19 @@ public class ConditionEvaluationTests
     private ConditionEvaluation CreateEvaluation() =>
         new(conditionRepo, channelRepo, channelDefRepo, statementRepo);
 
-    private static Statements AlwaysTrueStatement(int id) =>
-        new() { Id = id, ActivateComparisons = [[new Comparison { ComparisonId = id, ChannelId = 1, Logic = LogicType.True }]] };
+    private static StatementDefinition AlwaysTrueStatement(int id) =>
+        new() { Id = id, ActivateComparisons = [[new ComparisonDefinition { ComparisonId = id, ChannelId = 1, Logic = LogicType.True }]] };
 
-    private static Statements AlwaysFalseStatement(int id) =>
-        new() { Id = id, ActivateComparisons = [[new Comparison { ComparisonId = id, ChannelId = 1, Logic = LogicType.False }]] };
+    private static StatementDefinition AlwaysFalseStatement(int id) =>
+        new() { Id = id, ActivateComparisons = [[new ComparisonDefinition { ComparisonId = id, ChannelId = 1, Logic = LogicType.False }]] };
 
-    private void AddCondition(int id, int outputChannelId, params Statements[] statements)
+    private void AddCondition(int id, int outputChannelId, params StatementDefinition[] statementDefinitions)
     {
         var def = new ConditionDefinition { Id = id, OutputChannelId = outputChannelId };
-        def.Statements.AddRange(statements);
+        def.Statements.AddRange(statementDefinitions);
         conditionRepo.Add(def);
-        foreach (var s in statements)
-            statementRepo.Add(s);
+        foreach (var statementDefinition in statementDefinitions)
+            statementRepo.Add(statementDefinition);
     }
 
     private string GetChannelValue(int channelId) => channelRepo.Get(channelId).Value;
@@ -264,3 +264,4 @@ public class ConditionEvaluationTests
         Assert.IsFalse(conditionRepo.GetState(2)!.IsTrue);
     }
 }
+

@@ -15,7 +15,12 @@ public class DataController : ControllerBase
     [ProducesResponseType<CarConfiguration>(StatusCodes.Status200OK)]
     public Task<ActionResult<CarConfiguration>> LoadCarConfigurationAsync(Guid configId)
     {
-        return Task.FromResult<ActionResult<CarConfiguration>>(Ok(new CarConfiguration()));
+        return Task.FromResult<ActionResult<CarConfiguration>>(Ok(new CarConfiguration
+        {
+            Car = string.Empty,
+            ClientId = string.Empty,
+            ClientSecret = string.Empty,
+        }));
     }
 
     [HttpGet(Name = "save-car-configuration")]

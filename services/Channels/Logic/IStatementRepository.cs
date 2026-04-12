@@ -5,6 +5,6 @@
 /// </summary>
 public interface IStatementRepository
 {
-    public Task<Statements> GetStatementsAsync(int statementId);
-    public Task SetStatementsAsync(Statements s);
+    public Task<StatementDefinition> GetStatementDefinitionAsync(int statementId);
+    public Task SetStatementDefinitionAsync(StatementDefinition definition);
 }

@@ -2,18 +2,18 @@
 
 public class TimerMemoryRepository : ITimerRepository
 {
-    private readonly List<TimerParameters> timerParameters = [];
+    private readonly List<TimerDefinition> timerDefinitions = [];
     private readonly Dictionary<int, TimerState> timerStates = [];
 
-    public Task<IEnumerable<TimerParameters>> GetTimersAsync()
+    public Task<IEnumerable<TimerDefinition>> GetTimerDefinitionsAsync()
     {
-        return Task.FromResult(timerParameters.AsEnumerable());
+        return Task.FromResult(timerDefinitions.AsEnumerable());
     }
 
-    public Task SaveTimersAsync(IEnumerable<TimerParameters> timers)
+    public Task SaveTimerDefinitionsAsync(IEnumerable<TimerDefinition> definitions)
     {
-        timerParameters.Clear();
-        timerParameters.AddRange(timers);
+        timerDefinitions.Clear();
+        timerDefinitions.AddRange(definitions);
         return Task.CompletedTask;
     }
 

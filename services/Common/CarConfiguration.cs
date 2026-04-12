@@ -24,10 +24,10 @@ public class CarConfiguration
 
     public CanMessageConfig CanConfig { get; set; } = new();
     public List<ChannelDefinition> ChannelDefinitions { get; } = [];
-    public List<CounterParameters> CounterParameters { get; } = [];
-    public List<MathParameters> MathParameters { get; } = [];
+    public List<CounterDefinition> CounterDefinitions { get; } = [];
+    public List<MathDefinition> MathDefinitions { get; } = [];
     public List<TableMapping> TableMappings { get; } = [];
-    public List<TimerParameters> TimerParameters { get; } = [];
+    public List<TimerDefinition> TimerDefinitions { get; } = [];
     public List<ConditionDefinition> UserConditions { get; } = [];
 
 }

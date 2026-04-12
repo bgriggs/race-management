@@ -12,24 +12,24 @@ public class CounterEvaluationTests
 
     private sealed class FakeCounterRepository : ICounterRepository
     {
-        private readonly List<CounterParameters> parameters = [];
+        private readonly List<CounterDefinition> definitions = [];
         private readonly Dictionary<int, CounterState> states = [];
 
-        public void Add(CounterParameters p) => parameters.Add(p);
+        public void Add(CounterDefinition definition) => definitions.Add(definition);
 
         public void SetState(CounterState s) => states[s.Id] = s;
 
         public CounterState? GetState(int id) =>
             states.TryGetValue(id, out var s) ? s : null;
 
-        public Task<int> SaveCounterParametersAsync(CounterParameters p)
+        public Task<int> SaveCounterDefinitionAsync(CounterDefinition definition)
         {
-            parameters.Add(p);
-            return Task.FromResult(p.Id);
+            definitions.Add(definition);
+            return Task.FromResult(definition.Id);
         }
 
-        public Task<List<CounterParameters>> GetCounterParametersAsync() =>
-            Task.FromResult(new List<CounterParameters>(parameters));
+        public Task<List<CounterDefinition>> GetCounterDefinitionsAsync() =>
+            Task.FromResult(new List<CounterDefinition>(definitions));
 
         public Task<CounterState> GetCounterStateAsync(int counterId)
         {
@@ -82,7 +82,7 @@ public class CounterEvaluationTests
     private CounterEvaluation CreateEvaluation() =>
         new(counterRepo, channelRepo);
 
-    private static CounterParameters BasicCounter(int id = 1, int outputChId = 10, int upChId = 1, int downChId = 2, int resetChId = 3) =>
+    private static CounterDefinition BasicCounter(int id = 1, int outputChId = 10, int upChId = 1, int downChId = 2, int resetChId = 3) =>
         new()
         {
             Id = id,
@@ -456,8 +456,8 @@ public class CounterEvaluationTests
     [TestMethod]
     public async Task MultipleCounters_IndependentlyEvaluated()
     {
-        var c1 = new CounterParameters { Id = 1, OutputChId = 10, UpChId = 1, DownChId = 0, ResetChId = 0, MinValue = 0, MaxValue = 100, StartValue = 0 };
-        var c2 = new CounterParameters { Id = 2, OutputChId = 20, UpChId = 0, DownChId = 2, ResetChId = 0, MinValue = 0, MaxValue = 100, StartValue = 50 };
+        var c1 = new CounterDefinition { Id = 1, OutputChId = 10, UpChId = 1, DownChId = 0, ResetChId = 0, MinValue = 0, MaxValue = 100, StartValue = 0 };
+        var c2 = new CounterDefinition { Id = 2, OutputChId = 20, UpChId = 0, DownChId = 2, ResetChId = 0, MinValue = 0, MaxValue = 100, StartValue = 50 };
         counterRepo.Add(c1);
         counterRepo.Add(c2);
         channelRepo.Set(1, "0");

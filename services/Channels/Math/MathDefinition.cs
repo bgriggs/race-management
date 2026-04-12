@@ -1,6 +1,6 @@
 ﻿namespace Channels.Math;
 
-public class MathParameters
+public class MathDefinition
 {
     public int Id { get; set; }
     public int Order { get; set; }

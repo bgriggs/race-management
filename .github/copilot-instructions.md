@@ -42,6 +42,11 @@ Channels are either **user-defined** or **reserved**.
 
 Reserved channels are well-known by the application and can be shared across cars and cloud services. They enable streamlined usage in dashboards and alarms without per-car definitions, and can unlock special features when present (e.g., fuel range analysis when a fuel usage channel is available).
 
+### Channel Class Naming Conventions
+
+- Saved behavior/configuration classes should use the suffix **'Definition'**.
+- Runtime/status classes should use the suffix **'State'**.
+
 ## Configuration UI
 
 A laptop-based configuration tool (Angular frontend + locally installed C# backend service) for setting up the in-car application. Configuration includes channels, math, login, logging, and CAN Bus communications. Configuration is exchanged with the device over Ethernet. A copy is saved to the cloud; multiple versions can exist but only one is active on the car at a time.

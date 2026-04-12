@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using UnitsNet;
 
 namespace Channels.Logic;
@@ -31,36 +31,36 @@ public class LogicEvaluation
         this.timeProvider = timeProvider ?? TimeProvider.System;
     }
 
-    public async Task<bool> EvaluateAsync(int statementsId)
+    public async Task<bool> EvaluateAsync(int statementId)
     {
-        var statements = await statementRepository.GetStatementsAsync(statementsId);
+        var statementDefinition = await statementRepository.GetStatementDefinitionAsync(statementId);
 
-        if (statements.DeactivateComparisons is { Count: > 0 })
+        if (statementDefinition.DeactivateComparisons is { Count: > 0 })
         {
             // With separate deactivate comparisons, deactivation takes priority.
             // If neither fires, the previous state is retained.
-            bool deactivate = await EvaluateComparisonsAsync(statements.DeactivateComparisons);
+            bool deactivate = await EvaluateComparisonsAsync(statementDefinition.DeactivateComparisons);
             if (deactivate)
             {
-                await statementStateRepository.SetStateAsync(statementsId, false);
+                await statementStateRepository.SetStateAsync(statementId, false);
                 return false;
             }
 
-            bool activate = await EvaluateComparisonsAsync(statements.ActivateComparisons);
+            bool activate = await EvaluateComparisonsAsync(statementDefinition.ActivateComparisons);
             if (activate)
             {
-                await statementStateRepository.SetStateAsync(statementsId, true);
+                await statementStateRepository.SetStateAsync(statementId, true);
                 return true;
             }
 
             // Neither triggered — maintain previous state (default false)
-            return await statementStateRepository.GetStateAsync(statementsId) ?? false;
+            return await statementStateRepository.GetStateAsync(statementId) ?? false;
         }
 
         // No deactivate comparisons: activate result directly determines state.
         // When false, the statement deactivates.
-        bool result = await EvaluateComparisonsAsync(statements.ActivateComparisons);
-        await statementStateRepository.SetStateAsync(statementsId, result);
+        bool result = await EvaluateComparisonsAsync(statementDefinition.ActivateComparisons);
+        await statementStateRepository.SetStateAsync(statementId, result);
         return result;
     }
 
@@ -68,7 +68,7 @@ public class LogicEvaluation
     /// Evaluates comparison groups with OR logic across groups and AND logic within each group.
     /// Any single group evaluating to true causes the overall result to be true.
     /// </summary>
-    private async Task<bool> EvaluateComparisonsAsync(List<List<Comparison>> comparisonGroups)
+    private async Task<bool> EvaluateComparisonsAsync(List<List<ComparisonDefinition>> comparisonGroups)
     {
         foreach (var group in comparisonGroups)
         {
@@ -90,7 +90,7 @@ public class LogicEvaluation
         return false;
     }
 
-    private async Task<bool> EvaluateComparisonAsync(Comparison comparison)
+    private async Task<bool> EvaluateComparisonAsync(ComparisonDefinition comparison)
     {
         bool result = comparison.Logic switch
         {
@@ -115,7 +115,7 @@ public class LogicEvaluation
     /// a static value or another channel's value. Uses UnitsNet for unit-aware conversion when both
     /// channels have units defined.
     /// </summary>
-    private async Task<bool> EvaluateRelationalAsync(Comparison comparison)
+    private async Task<bool> EvaluateRelationalAsync(ComparisonDefinition comparison)
     {
         var (leftValue, leftUnit) = await ResolveChannelWithUnitAsync(comparison.ChannelId);
         double rightValue;
@@ -133,7 +133,7 @@ public class LogicEvaluation
         else
         {
             throw new InvalidOperationException(
-                $"Comparison {comparison.ComparisonId} requires either a static value or a comparison channel.");
+                $"ComparisonDefinition {comparison.ComparisonId} requires either a static value or a comparison channel.");
         }
 
         return Compare(leftValue, rightValue, comparison.Logic);
@@ -142,7 +142,7 @@ public class LogicEvaluation
     /// <summary>
     /// Evaluates whether a channel value has changed since the previous evaluation.
     /// </summary>
-    private async Task<bool> EvaluateUpdatedAsync(Comparison comparison)
+    private async Task<bool> EvaluateUpdatedAsync(ComparisonDefinition comparison)
     {
         var channelValue = await channelRepository.GetChannelValueAsync(comparison.ChannelId);
         var previous = await previousChannelValueRepository.GetPreviousValueAsync(comparison.ChannelId);
@@ -155,7 +155,7 @@ public class LogicEvaluation
     /// Evaluates whether a channel value has changed by at least a threshold amount since
     /// the previous evaluation. The threshold comes from the static value or comparison channel.
     /// </summary>
-    private async Task<bool> EvaluateChangedByAsync(Comparison comparison)
+    private async Task<bool> EvaluateChangedByAsync(ComparisonDefinition comparison)
     {
         var (currentValue, currentUnit) = await ResolveChannelWithUnitAsync(comparison.ChannelId);
         var previousStr = await previousChannelValueRepository.GetPreviousValueAsync(comparison.ChannelId);
@@ -183,7 +183,7 @@ public class LogicEvaluation
         else
         {
             throw new InvalidOperationException(
-                $"Comparison {comparison.ComparisonId} (ChangedBy) requires either a static threshold or a comparison channel.");
+                $"ComparisonDefinition {comparison.ComparisonId} (ChangedBy) requires either a static threshold or a comparison channel.");
         }
 
         return System.Math.Abs(currentValue - previousValue) >= threshold;
@@ -266,3 +266,4 @@ public class LogicEvaluation
         _ => throw new InvalidOperationException($"Unsupported relational logic type: {logic}"),
     };
 }
+

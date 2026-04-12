@@ -30,16 +30,16 @@ public class TimerEvaluation
     /// </summary>
     public async Task UpdateTimersAsync()
     {
-        var parameters = await timerRepository.GetTimersAsync();
+        var definitions = await timerRepository.GetTimerDefinitionsAsync();
         var now = timeProvider.GetUtcNow();
 
-        foreach (var parameter in parameters)
+        foreach (var definition in definitions)
         {
-            var timerState = await timerRepository.GetTimerStateAsync(parameter.Id);
+            var timerState = await timerRepository.GetTimerStateAsync(definition.Id);
 
             // Always evaluate both conditions for edge detection, regardless of timer state.
-            bool currentStart = await logicEvaluation.EvaluateAsync(parameter.StartStatementId);
-            bool currentStop = await logicEvaluation.EvaluateAsync(parameter.StopStatementId);
+            bool currentStart = await logicEvaluation.EvaluateAsync(definition.StartStatementId);
+            bool currentStop = await logicEvaluation.EvaluateAsync(definition.StopStatementId);
 
             // Detect edges: false → true transitions
             bool startEdge = !timerState.PreviousStartResult && currentStart;
@@ -55,21 +55,21 @@ public class TimerEvaluation
                 if (startEdge)
                 {
                     double startValue;
-                    if (parameter.EnableStartSeconds)
+                    if (definition.EnableStartSeconds)
                     {
-                        startValue = parameter.StartSeconds;
+                        startValue = definition.StartSeconds;
                     }
                     else
                     {
                         // Resume from current output channel value, or 0 if not set / not parseable.
-                        var outputCh = await channelRepository.GetChannelValueAsync(parameter.OutputChId);
+                        var outputCh = await channelRepository.GetChannelValueAsync(definition.OutputChId);
                         startValue = double.TryParse(outputCh.Value, CultureInfo.InvariantCulture, out double v) ? v : 0;
                     }
 
                     timerState.StartValue = startValue;
                     timerState.Started = now;
 
-                    await SetOutputValueAsync(parameter.OutputChId, startValue);
+                    await SetOutputValueAsync(definition.OutputChId, startValue);
                 }
             }
             else
@@ -79,46 +79,46 @@ public class TimerEvaluation
                 {
                     // Stop the timer — apply stop setting or freeze at current value.
                     double stopValue;
-                    if (parameter.EnableStopSeconds)
+                    if (definition.EnableStopSeconds)
                     {
-                        stopValue = parameter.StopSeconds;
+                        stopValue = definition.StopSeconds;
                     }
                     else
                     {
-                        stopValue = CalculateCurrentValue(timerState, parameter, now);
+                        stopValue = CalculateCurrentValue(timerState, definition, now);
                     }
 
                     timerState.Started = null;
-                    await SetOutputValueAsync(parameter.OutputChId, stopValue);
+                    await SetOutputValueAsync(definition.OutputChId, stopValue);
                 }
                 else
                 {
                     // Timer still running — calculate current value and apply limits.
-                    double currentValue = CalculateCurrentValue(timerState, parameter, now);
+                    double currentValue = CalculateCurrentValue(timerState, definition, now);
                     bool hitLimit = false;
 
-                    if (parameter.RolloverSeconds > 0)
+                    if (definition.RolloverSeconds > 0)
                     {
-                        if (!parameter.CountDown && currentValue > parameter.RolloverSeconds)
+                        if (!definition.CountDown && currentValue > definition.RolloverSeconds)
                         {
-                            if (parameter.EnableRollover)
+                            if (definition.EnableRollover)
                             {
                                 // Count up rollover: wrap around using modulo.
-                                currentValue %= parameter.RolloverSeconds;
+                                currentValue %= definition.RolloverSeconds;
                             }
                             else
                             {
                                 // Count up no rollover: clamp to high limit and stop.
-                                currentValue = parameter.RolloverSeconds;
+                                currentValue = definition.RolloverSeconds;
                                 hitLimit = true;
                             }
                         }
-                        else if (parameter.CountDown && currentValue < 0)
+                        else if (definition.CountDown && currentValue < 0)
                         {
-                            if (parameter.EnableRollover)
+                            if (definition.EnableRollover)
                             {
                                 // Count down rollover: wrap to high limit using positive modulo.
-                                currentValue = ((currentValue % parameter.RolloverSeconds) + parameter.RolloverSeconds) % parameter.RolloverSeconds;
+                                currentValue = ((currentValue % definition.RolloverSeconds) + definition.RolloverSeconds) % definition.RolloverSeconds;
                             }
                             else
                             {
@@ -129,7 +129,7 @@ public class TimerEvaluation
                         }
                     }
 
-                    await SetOutputValueAsync(parameter.OutputChId, currentValue);
+                    await SetOutputValueAsync(definition.OutputChId, currentValue);
 
                     if (hitLimit)
                     {
@@ -142,10 +142,10 @@ public class TimerEvaluation
         }
     }
 
-    private static double CalculateCurrentValue(TimerState state, TimerParameters parameters, DateTimeOffset now)
+    private static double CalculateCurrentValue(TimerState state, TimerDefinition definition, DateTimeOffset now)
     {
         double elapsed = (now - state.Started!.Value).TotalSeconds;
-        return parameters.CountDown
+        return definition.CountDown
             ? state.StartValue - elapsed
             : state.StartValue + elapsed;
     }

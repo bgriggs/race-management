@@ -29,9 +29,9 @@ public class ConditionEvaluation
         {
             // All statements must evaluate to true for the condition to be true (AND logic across statements)
             bool result = true;
-            foreach (var statement in conditionDefinition.Statements)
+            foreach (var statementDefinition in conditionDefinition.Statements)
             {
-                if (!await logicEvaluation.EvaluateAsync(statement.Id))
+                if (!await logicEvaluation.EvaluateAsync(statementDefinition.Id))
                 {
                     result = false;
                     break;

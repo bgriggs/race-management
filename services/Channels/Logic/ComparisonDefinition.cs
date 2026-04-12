@@ -1,6 +1,6 @@
-﻿namespace Channels.Logic;
+namespace Channels.Logic;
 
-public class Comparison
+public class ComparisonDefinition
 {
     public int ComparisonId { get; set; }
     public int ChannelId { get; set; }

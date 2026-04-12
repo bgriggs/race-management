@@ -6,18 +6,18 @@ namespace Channels.Logic;
 
 public class StatementMemoryRepository : IStatementRepository
 {
-    private readonly Dictionary<int, Statements> statements = [];
+    private readonly Dictionary<int, StatementDefinition> statementDefinitions = [];
 
-    public Task<Statements> GetStatementsAsync(int statementsId)
+    public Task<StatementDefinition> GetStatementDefinitionAsync(int statementId)
     {
-        _ = statements.TryGetValue(statementsId, out Statements? s);
-        s ??= new Statements { Id = statementsId };
-        return Task.FromResult(s);
+        _ = statementDefinitions.TryGetValue(statementId, out StatementDefinition? definition);
+        definition ??= new StatementDefinition { Id = statementId };
+        return Task.FromResult(definition);
     }
 
-    public Task SetStatementsAsync(Statements s)
+    public Task SetStatementDefinitionAsync(StatementDefinition definition)
     {
-        statements[s.Id] = s;
+        statementDefinitions[definition.Id] = definition;
         return Task.CompletedTask;
     }
 }

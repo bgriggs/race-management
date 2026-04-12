@@ -9,7 +9,7 @@ public class ConditionDefinition
 {
     public int Id { get; set; }
 
-    public List<Statements> Statements { get; } = [];
+    public List<StatementDefinition> Statements { get; } = [];
 
     /// <summary>
     /// Gets or sets the identifier of the output channel associated with this instance. This will be 0 or 1.

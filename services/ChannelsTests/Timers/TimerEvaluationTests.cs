@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using Channels;
 using Channels.Logic;
 using Channels.Timers;
@@ -14,23 +14,23 @@ public class TimerEvaluationTests
 
     private sealed class FakeTimerRepository : ITimerRepository
     {
-        private readonly List<TimerParameters> parameters = [];
+        private readonly List<TimerDefinition> definitions = [];
         private readonly Dictionary<int, TimerState> states = [];
 
-        public void AddTimer(TimerParameters p) => parameters.Add(p);
+        public void AddTimer(TimerDefinition definition) => definitions.Add(definition);
 
         public void SetState(TimerState state) => states[state.Id] = state;
 
         public TimerState? GetState(int id) =>
             states.TryGetValue(id, out var s) ? s : null;
 
-        public Task<IEnumerable<TimerParameters>> GetTimersAsync() =>
-            Task.FromResult(parameters.AsEnumerable());
+        public Task<IEnumerable<TimerDefinition>> GetTimerDefinitionsAsync() =>
+            Task.FromResult(definitions.AsEnumerable());
 
-        public Task SaveTimersAsync(IEnumerable<TimerParameters> timers)
+        public Task SaveTimerDefinitionsAsync(IEnumerable<TimerDefinition> definitions)
         {
-            parameters.Clear();
-            parameters.AddRange(timers);
+            this.definitions.Clear();
+            this.definitions.AddRange(definitions);
             return Task.CompletedTask;
         }
 
@@ -80,18 +80,18 @@ public class TimerEvaluationTests
 
     private sealed class FakeStatementRepository : IStatementRepository
     {
-        private readonly Dictionary<int, Statements> statements = [];
+        private readonly Dictionary<int, StatementDefinition> statementDefinitions = [];
 
-        public void Set(Statements s) => statements[s.Id] = s;
+        public void Set(StatementDefinition definition) => statementDefinitions[definition.Id] = definition;
 
-        public Task<Statements> GetStatementsAsync(int statementId) =>
-            Task.FromResult(statements.TryGetValue(statementId, out var s)
-                ? s
-                : new Statements { Id = statementId });
+        public Task<StatementDefinition> GetStatementDefinitionAsync(int statementId) =>
+            Task.FromResult(statementDefinitions.TryGetValue(statementId, out var definition)
+                ? definition
+                : new StatementDefinition { Id = statementId });
 
-        public Task SetStatementsAsync(Statements s)
+        public Task SetStatementDefinitionAsync(StatementDefinition definition)
         {
-            statements[s.Id] = s;
+            statementDefinitions[definition.Id] = definition;
             return Task.CompletedTask;
         }
     }
@@ -131,14 +131,14 @@ public class TimerEvaluationTests
         new(timerRepo, channelRepo, channelDefRepo, statementRepo, timeProvider);
 
     // Always-true / always-false statements for controlling start/stop conditions.
-    private static Statements AlwaysTrueStatement(int id) =>
-        new() { Id = id, ActivateComparisons = [[new Comparison { ComparisonId = id, ChannelId = 99, Logic = LogicType.True }]] };
+    private static StatementDefinition AlwaysTrueStatement(int id) =>
+        new() { Id = id, ActivateComparisons = [[new ComparisonDefinition { ComparisonId = id, ChannelId = 99, Logic = LogicType.True }]] };
 
-    private static Statements AlwaysFalseStatement(int id) =>
-        new() { Id = id, ActivateComparisons = [[new Comparison { ComparisonId = id, ChannelId = 99, Logic = LogicType.False }]] };
+    private static StatementDefinition AlwaysFalseStatement(int id) =>
+        new() { Id = id, ActivateComparisons = [[new ComparisonDefinition { ComparisonId = id, ChannelId = 99, Logic = LogicType.False }]] };
 
     // A basic count-up timer with no limits.
-    private static TimerParameters BasicTimer(int id = 1, int outputChId = 10, int startStmtId = 1, int stopStmtId = 2) =>
+    private static TimerDefinition BasicTimer(int id = 1, int outputChId = 10, int startStmtId = 1, int stopStmtId = 2) =>
         new() { Id = id, OutputChId = outputChId, StartStatementId = startStmtId, StopStatementId = stopStmtId };
 
     // Pre-seed a timer state where the start edge will fire on the next true evaluation.
@@ -423,7 +423,7 @@ public class TimerEvaluationTests
         SetRunning(timerId: 1, startValue: 0);
 
         timeProvider.Advance(TimeSpan.FromSeconds(1000));
-        await CreateEvaluation().UpdateTimersAsync();
+        await CreateEvaluation(). UpdateTimersAsync();
 
         Assert.IsNotNull(timerRepo.GetState(1)!.Started);  // still running
         Assert.AreEqual(1000.0, ParseOutput(10), 0.001);
@@ -587,8 +587,8 @@ public class TimerEvaluationTests
     [TestMethod]
     public async Task MultipleTimers_EachUpdatedIndependently()
     {
-        var timer1 = new TimerParameters { Id = 1, OutputChId = 10, StartStatementId = 1, StopStatementId = 2 };
-        var timer2 = new TimerParameters { Id = 2, OutputChId = 20, StartStatementId = 3, StopStatementId = 4, CountDown = true };
+        var timer1 = new TimerDefinition { Id = 1, OutputChId = 10, StartStatementId = 1, StopStatementId = 2 };
+        var timer2 = new TimerDefinition { Id = 2, OutputChId = 20, StartStatementId = 3, StopStatementId = 4, CountDown = true };
         timerRepo.AddTimer(timer1);
         timerRepo.AddTimer(timer2);
 
@@ -610,8 +610,8 @@ public class TimerEvaluationTests
     [TestMethod]
     public async Task MultipleTimers_OneStops_OtherContinues()
     {
-        var timer1 = new TimerParameters { Id = 1, OutputChId = 10, StartStatementId = 1, StopStatementId = 2 };
-        var timer2 = new TimerParameters { Id = 2, OutputChId = 20, StartStatementId = 3, StopStatementId = 4 };
+        var timer1 = new TimerDefinition { Id = 1, OutputChId = 10, StartStatementId = 1, StopStatementId = 2 };
+        var timer2 = new TimerDefinition { Id = 2, OutputChId = 20, StartStatementId = 3, StopStatementId = 4 };
         timerRepo.AddTimer(timer1);
         timerRepo.AddTimer(timer2);
 
@@ -651,4 +651,5 @@ public class TimerEvaluationTests
         Assert.IsFalse(state.PreviousStopResult);   // persisted as false
     }
 }
+
 
