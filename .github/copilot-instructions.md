@@ -74,3 +74,25 @@ A systemd C# service running on the Raspberry Pi, responsible for:
 - `services/ChannelsTests/` — Unit tests for channel evaluation
 - `services/Common/` — Shared models and utilities (e.g., car configuration, CAN Bus)
 - `services/RaceManagementService/` — ASP.NET Core web API entry point
+
+## UI Shared Library Guidance
+
+The Angular UI uses two applications in one workspace (`ui/race-management-cloud` and `ui/race-management-local`) plus a shared library area under `ui/shared-ui`.
+
+When generating or modifying frontend code:
+- Put reusable UI components in `ui/shared-ui/src/lib`.
+- Put shared UI styles with the shared elements in `ui/shared-ui` (for example component-level styles and reusable shared style definitions).
+- Prefer global shared styles/tokens from `ui/shared-ui` where possible before adding new component-local styles.
+- Avoid duplicating shared components or shared styles in both app folders.
+- Do not duplicate style definitions in app-specific components when an equivalent shared style already exists.
+- Keep app-specific concerns (routing, app shell, and environment-specific wiring) in each app project.
+
+### Shared UI Checklist
+
+- Confirm the UI element is reusable across cloud and local apps.
+- Create the component in `ui/shared-ui/src/lib`.
+- Keep shared styles with the shared component in `ui/shared-ui`.
+- Export from `ui/shared-ui/src/public-api.ts` when a public shared import is needed.
+- Keep shared components presentation-focused (inputs/outputs), with environment-specific behavior in app-level services.
+- Remove duplicated app-local copies after adopting the shared component.
+- Validate both apps build from `ui/` after integration.

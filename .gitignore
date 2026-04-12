@@ -57,3 +57,7 @@ nunit-*.xml
 /RaceManagement/Channels/readme.md
 /.vs
 /ui/race-management-local/.vscode
+/ui/.angular/cache/21.2.7
+/ui/dist/race-management-cloud
+/ui/dist/race-management-local
+/ui/node_modules
