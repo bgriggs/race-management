@@ -1,0 +1,6 @@
+@RaceManagementService_HostAddress = http://localhost:5206
+
+GET {{RaceManagementService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

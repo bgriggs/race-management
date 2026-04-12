@@ -1,4 +1,0 @@
-<Solution>
-  <Project Path="Channels/Channels.csproj" />
-  <Project Path="ChannelsTests/ChannelsTests.csproj" />
-</Solution>

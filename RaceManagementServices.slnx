@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/car/" />
+  <Folder Name="/cloud/" />
+  <Folder Name="/onprem/">
+    <Project Path="services/RaceManagementService/RaceManagementService.csproj" />
+  </Folder>
+  <Folder Name="/shared/">
+    <Project Path="services/Channels/Channels.csproj" />
+    <Project Path="services/ChannelsTests/ChannelsTests.csproj" />
+    <Project Path="services/Common/Common.csproj" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path="Design.md" />
+    <File Path="README.md" />
+  </Folder>
+</Solution>
