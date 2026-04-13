@@ -87,6 +87,15 @@ When generating or modifying frontend code:
 - Do not duplicate style definitions in app-specific components when an equivalent shared style already exists.
 - Keep app-specific concerns (routing, app shell, and environment-specific wiring) in each app project.
 
+### Angular Coding Preferences
+
+When generating or modifying Angular code in this repository:
+- Prefer Promise-returning client APIs with `async`/`await` semantics instead of Observable-based client contracts for data service clients.
+- Prefer Angular's new template control flow syntax (for example `@if`, `@for`) instead of legacy structural directives like `*ngIf`/`*ngFor` for newly written template code.
+- Use Angular Signals (`signal`, `computed`, and `effect`) where they improve local component state management and derived state clarity.
+- Keep usage pragmatic: use Signals where they simplify state flow, and avoid forced conversions when existing patterns are already appropriate.
+- Before marking frontend work complete, check for cross-browser CSS compatibility issues (especially Safari/iOS), and add required vendor-prefixed properties (for example `-webkit-user-select` with `user-select`) when needed.
+
 ### Shared UI Checklist
 
 - Confirm the UI element is reusable across cloud and local apps.
@@ -96,3 +105,13 @@ When generating or modifying frontend code:
 - Keep shared components presentation-focused (inputs/outputs), with environment-specific behavior in app-level services.
 - Remove duplicated app-local copies after adopting the shared component.
 - Validate both apps build from `ui/` after integration.
+
+## Database Conventions
+
+### Entity Framework / SQLite (RaceManagementService local database)
+
+- EF Core uses C# property names directly as column names and the `DbSet<T>` property name as the table name. Because C# naming conventions are Pascal Case, Pascal Case column and table names are produced by default — do not add explicit `ToTable` or `HasColumnName` calls unless overriding a non-Pascal name.
+- Name `DbSet<T>` properties in Pascal Case plural form (e.g., `CarConfigurations`), which also serves as the table name.
+- With `<Nullable>enable</Nullable>` in the project, EF Core automatically marks non-nullable string properties as required — do not add redundant `.IsRequired()` calls.
+- For entities that back a summary + full-data pattern, store only the summary scalar columns as real columns and serialize the full object into a `Data` column (JSON string).
+- Use `System.Text.Json` with `JsonSerializerDefaults.Web` for serializing entity `Data` columns.

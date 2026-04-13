@@ -1,0 +1,16 @@
+{
+  "generationSpecs": [
+    "Common.TypeScript.ModelGenerationSpec"
+  ],
+  "outputPath": "../../ui/shared-ui/src/models",
+  "csNullableTranslation": "null",
+  "customTypeMappings": {
+    "System.Guid": "string",
+    "System.TimeSpan": "string",
+    "System.ValueTuple`2": "[string, string]",
+    "System.Runtime.CompilerServices.IValueTupleInternal": "unknown",
+    "System.Runtime.CompilerServices.ITuple": "unknown",
+    "System.Collections.IStructuralEquatable": "unknown",
+    "System.Collections.IStructuralComparable": "unknown"
+  }
+}

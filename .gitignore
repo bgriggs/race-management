@@ -61,3 +61,7 @@ nunit-*.xml
 /ui/dist/race-management-cloud
 /ui/dist/race-management-local
 /ui/node_modules
+/.vscode
+*.db
+/services/RaceManagementService/race-management.db-shm
+/services/RaceManagementService/race-management.db-wal
