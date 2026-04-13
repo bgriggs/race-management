@@ -1,0 +1,44 @@
+.cloud-configuration h2 {
+	margin: 0;
+	font-size: 1.1rem;
+	color: #2f3d2c;
+}
+
+.cloud-configuration p {
+	margin: 0.5rem 0 1rem;
+	color: #465643;
+}
+
+.cloud-form {
+	display: grid;
+	gap: 0.9rem;
+}
+
+.field {
+	display: grid;
+	gap: 0.35rem;
+	color: #2f3d2c;
+	font-weight: 600;
+}
+
+.field input {
+	border: 1px solid #c5d1c3;
+	border-radius: 8px;
+	padding: 0.45rem 0.55rem;
+	font-size: 0.95rem;
+}
+
+.field input:focus-visible {
+	outline: 2px solid #1f4e2c;
+	outline-offset: 1px;
+}
+
+.field-hint {
+	color: #53644f;
+	font-weight: 400;
+}
+
+.field-error {
+	color: #8b2d2d;
+	font-weight: 500;
+}

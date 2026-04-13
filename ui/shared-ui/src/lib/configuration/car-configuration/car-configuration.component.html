@@ -23,20 +23,25 @@
           @for (summary of configurationSummaries(); track summary.id) {
           <div class="summary-item" role="listitem">
             <button type="button" class="summary-open" (click)="openConfiguration(summary.id)">
-              <span class="summary-name">
-                {{ summary.name || '(Unnamed configuration)' }}
-                <span class="summary-car">Car: {{ summary.car || '-' }}</span>
+              <div class="summary-text">
+                <span class="summary-name">
+                  {{ summary.name || '(Unnamed configuration)' }}
+                  <span class="summary-car">Car: {{ summary.car || '-' }}</span>
+                </span>
+                <span class="summary-notes">{{ summary.notes || 'No notes' }}</span>
+              </div>
+              <span
+                class="summary-delete"
+                role="button"
+                tabindex="0"
+                (click)="deleteConfiguration(summary.id); $event.stopPropagation()"
+                (keydown.enter)="deleteConfiguration(summary.id); $event.stopPropagation()"
+                (keydown.space)="deleteConfiguration(summary.id); $event.stopPropagation()"
+                aria-label="Delete configuration"
+                title="Delete configuration"
+              >
+                <mat-icon>delete</mat-icon>
               </span>
-              <span class="summary-notes">{{ summary.notes || 'No notes' }}</span>
-            </button>
-            <button
-              type="button"
-              class="summary-delete"
-              (click)="deleteConfiguration(summary.id)"
-              aria-label="Delete configuration"
-              title="Delete configuration"
-            >
-              <rm-trash-icon />
             </button>
           </div>
           }
@@ -89,6 +94,11 @@
         }
 
         @if (selectedNodeId() === 'communications') {
+          <lib-communications-settings
+            [isCloudConnectionEnabled]="cloudConnectionEnabled()"
+            (isCloudConnectionEnabledChange)="onCloudConnectionEnabledChange($event)"
+          />
+
           <section class="feature-toggle">
             <label>
               <input
@@ -102,6 +112,13 @@
               This toggle controls visibility of the CAN Bus child node under Communications.
             </p>
           </section>
+        }
+
+        @if (selectedNodeId() === 'cloud-configuration') {
+          <lib-cloud-configuration
+            [configuration]="cloudCredentials()"
+            (configurationChange)="onCloudConfigurationChange($event)"
+          />
         }
       </article>
 

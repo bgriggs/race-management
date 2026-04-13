@@ -1,0 +1,61 @@
+.communications-settings h2 {
+	margin: 0;
+	font-size: 1.1rem;
+	color: #2f3d2c;
+}
+
+.communications-settings p {
+	margin: 0.5rem 0 1rem;
+	color: #465643;
+}
+
+.slider-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.65rem;
+	cursor: pointer;
+	color: #2f3d2c;
+	font-weight: 500;
+}
+
+.slider-toggle input {
+	position: absolute;
+	opacity: 0;
+	width: 1px;
+	height: 1px;
+}
+
+.slider {
+	width: 2.6rem;
+	height: 1.45rem;
+	border-radius: 999px;
+	background: #9ca89a;
+	position: relative;
+	transition: background-color 0.2s ease;
+}
+
+.slider::before {
+	content: '';
+	position: absolute;
+	width: 1.05rem;
+	height: 1.05rem;
+	border-radius: 50%;
+	top: 0.2rem;
+	left: 0.2rem;
+	background: #ffffff;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
+	transition: transform 0.2s ease;
+}
+
+.slider-toggle input:checked + .slider {
+	background: #2f5d3a;
+}
+
+.slider-toggle input:checked + .slider::before {
+	transform: translateX(1.15rem);
+}
+
+.slider-toggle input:focus-visible + .slider {
+	outline: 2px solid #163f22;
+	outline-offset: 2px;
+}

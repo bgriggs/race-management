@@ -157,6 +157,66 @@ describe('CarConfigurationComponent', () => {
     expect(component.selectedNodeId()).toBe('communications');
   });
 
+  it('updates active configuration cloud connection flag when cloud communications toggle changes', () => {
+    const fixture = TestBed.createComponent(CarConfigurationComponent);
+    const component = fixture.componentInstance;
+
+    component.activeConfiguration.set({ ...buildConfig('Config A'), isCloudConnectionEnabled: false });
+
+    component.onCloudConnectionEnabledChange(true);
+
+    expect(component.activeConfiguration()?.isCloudConnectionEnabled).toBe(true);
+  });
+
+  it('shows cloud configuration tree node only when cloud connection is enabled', () => {
+    const fixture = TestBed.createComponent(CarConfigurationComponent);
+    const component = fixture.componentInstance;
+
+    component.activeConfiguration.set({ ...buildConfig('Config A'), isCloudConnectionEnabled: false });
+    const nodeBeforeEnable = component
+      .treeNodes()
+      .find((node) => node.id === 'communications')
+      ?.children
+      ?.find((child) => child.id === 'cloud-configuration');
+
+    component.onCloudConnectionEnabledChange(true);
+    const nodeAfterEnable = component
+      .treeNodes()
+      .find((node) => node.id === 'communications')
+      ?.children
+      ?.find((child) => child.id === 'cloud-configuration');
+
+    expect(nodeBeforeEnable?.visible).toBe(false);
+    expect(nodeAfterEnable?.visible).toBe(true);
+  });
+
+  it('updates cloud credentials when cloud configuration form emits changes', () => {
+    const fixture = TestBed.createComponent(CarConfigurationComponent);
+    const component = fixture.componentInstance;
+
+    component.activeConfiguration.set({ ...buildConfig('Config A'), clientId: '', clientSecret: '' });
+
+    component.onCloudConfigurationChange({
+      clientId: 'client-123',
+      clientSecret: 'secret-456'
+    });
+
+    expect(component.activeConfiguration()?.clientId).toBe('client-123');
+    expect(component.activeConfiguration()?.clientSecret).toBe('secret-456');
+  });
+
+  it('requires cloud credentials when cloud communications is enabled', () => {
+    const fixture = TestBed.createComponent(CarConfigurationComponent);
+    const component = fixture.componentInstance;
+
+    component.activeConfiguration.set({ ...buildConfig('Config A'), clientId: '', clientSecret: '' });
+    component.onCloudConnectionEnabledChange(true);
+
+    const messages = component.validationErrors().map((item) => item.message);
+    expect(messages).toContain('Client ID is required and must be 64 characters or fewer.');
+    expect(messages).toContain('Client Secret is required and must be 32 characters or fewer.');
+  });
+
   it('saves active configuration and updates state', async () => {
     const fixture = TestBed.createComponent(CarConfigurationComponent);
     fixture.detectChanges();

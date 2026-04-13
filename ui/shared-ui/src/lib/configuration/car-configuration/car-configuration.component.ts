@@ -1,9 +1,17 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { ErrorListComponent, ErrorListItem } from '../error-list/error-list.component';
 import { NavigationTreeComponent, NavigationTreeNode } from '../navigation-tree/navigation-tree.component';
 import { GeneralSettings } from '../general-settings/general-settings';
-import { TrashIconComponent } from '../../icons/trash-icon/trash-icon.component';
+import { CommunicationsSettings } from '../communications-settings/communications-settings';
+import { CloudConfiguration } from '../cloud-configuration/cloud-configuration';
+import { MatIcon } from '@angular/material/icon';
+import { MatDialog } from '@angular/material/dialog';
+import {
+  ConfirmDialogComponent,
+  type ConfirmDialogData
+} from '../../dialogs/confirm-dialog/confirm-dialog.component';
 import {
   MANAGEMENT_DATA_CLIENT,
   type ManagementDataClient
@@ -14,12 +22,21 @@ import { CarConfiguration } from '../../../models/car-configuration';
 @Component({
   selector: 'rm-car-configuration',
   standalone: true,
-  imports: [CommonModule, NavigationTreeComponent, ErrorListComponent, GeneralSettings, TrashIconComponent],
+  imports: [
+    CommonModule,
+    NavigationTreeComponent,
+    ErrorListComponent,
+    GeneralSettings,
+    CommunicationsSettings,
+    CloudConfiguration,
+    MatIcon
+  ],
   templateUrl: './car-configuration.component.html',
   styleUrl: './car-configuration.component.css'
 })
 export class CarConfigurationComponent implements OnInit {
   private readonly managementDataClient = inject(MANAGEMENT_DATA_CLIENT);
+  private readonly dialog = inject(MatDialog);
   private snackbarTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   readonly canBusEnabled = signal(true);
@@ -32,6 +49,22 @@ export class CarConfigurationComponent implements OnInit {
   readonly configurationSummaries = signal<CarConfigurationSummary[]>([]);
 
   readonly treeNodes = computed<NavigationTreeNode[]>(() => this.buildTreeNodes());
+
+  readonly cloudConnectionEnabled = computed(
+    () => this.activeConfiguration()?.isCloudConnectionEnabled ?? false
+  );
+
+  readonly cloudCredentials = computed<Pick<CarConfiguration, 'clientId' | 'clientSecret'> | null>(() => {
+    const configuration = this.activeConfiguration();
+    if (!configuration) {
+      return null;
+    }
+
+    return {
+      clientId: configuration.clientId,
+      clientSecret: configuration.clientSecret
+    };
+  });
 
   readonly validationErrors = computed<ErrorListItem[]>(() => {
     const config = this.activeConfiguration();
@@ -70,6 +103,28 @@ export class CarConfigurationComponent implements OnInit {
       });
     }
 
+    if (this.cloudConnectionEnabled()) {
+      const trimmedClientId = config.clientId.trim();
+      if (trimmedClientId.length === 0 || trimmedClientId.length > 64) {
+        errors.push({
+          id: 'cloud-client-id-invalid',
+          nodeId: 'cloud-configuration',
+          pageLabel: 'Cloud Configuration',
+          message: 'Client ID is required and must be 64 characters or fewer.'
+        });
+      }
+
+      const trimmedClientSecret = config.clientSecret.trim();
+      if (trimmedClientSecret.length === 0 || trimmedClientSecret.length > 32) {
+        errors.push({
+          id: 'cloud-client-secret-invalid',
+          nodeId: 'cloud-configuration',
+          pageLabel: 'Cloud Configuration',
+          message: 'Client Secret is required and must be 32 characters or fewer.'
+        });
+      }
+    }
+
     return errors;
   });
 
@@ -97,6 +152,10 @@ export class CarConfigurationComponent implements OnInit {
     communications: {
       label: 'Communications',
       description: 'Communication settings will be added here.'
+    },
+    'cloud-configuration': {
+      label: 'Cloud Configuration',
+      description: 'Cloud communication credentials and endpoint settings are configured here.'
     },
     'can-bus': {
       label: 'CAN Bus',
@@ -170,6 +229,22 @@ export class CarConfigurationComponent implements OnInit {
   }
 
   async deleteConfiguration(configurationId: string): Promise<void> {
+    const confirmed = await firstValueFrom(
+      this.dialog
+        .open<ConfirmDialogComponent, ConfirmDialogData, boolean>(ConfirmDialogComponent, {
+          data: {
+            title: 'Delete Configuration',
+            message: 'Are you sure you want to delete this configuration? This action cannot be undone.',
+            confirmLabel: 'Delete',
+            cancelLabel: 'Cancel',
+          },
+          width: '400px',
+        })
+        .afterClosed()
+    );
+
+    if (!confirmed) return;
+
     try {
       await this.managementDataClient.deleteCarConfigurationAsync(configurationId);
       this.configurationSummaries.set(await this.managementDataClient.loadCarConfigurationSummariesAsync());
@@ -245,11 +320,43 @@ export class CarConfigurationComponent implements OnInit {
 
   onCanBusFeatureToggle(event: Event): void {
     const target = event.target as HTMLInputElement;
-    this.canBusEnabled.set(target.checked);
+    this.onCanBusEnabledChange(target.checked);
+  }
+
+  onCanBusEnabledChange(enabled: boolean): void {
+    this.canBusEnabled.set(enabled);
 
     if (!this.canBusEnabled() && this.selectedNodeId() === 'can-bus') {
       this.selectedNodeId.set('communications');
     }
+  }
+
+  onCloudConnectionEnabledChange(enabled: boolean): void {
+    const current = this.activeConfiguration();
+    if (!current) {
+      return;
+    }
+
+    this.activeConfiguration.set({
+      ...current,
+      isCloudConnectionEnabled: enabled
+    });
+
+    if (!enabled && this.selectedNodeId() === 'cloud-configuration') {
+      this.selectedNodeId.set('communications');
+    }
+  }
+
+  onCloudConfigurationChange(data: Pick<CarConfiguration, 'clientId' | 'clientSecret'>): void {
+    const current = this.activeConfiguration();
+    if (!current) {
+      return;
+    }
+
+    this.activeConfiguration.set({
+      ...current,
+      ...data
+    });
   }
 
   private buildTreeNodes(): NavigationTreeNode[] {
@@ -260,6 +367,11 @@ export class CarConfigurationComponent implements OnInit {
         id: 'communications',
         label: 'Communications',
         children: [
+          {
+            id: 'cloud-configuration',
+            label: 'Cloud Configuration',
+            visible: this.cloudConnectionEnabled()
+          },
           {
             id: 'can-bus',
             label: 'CAN Bus',

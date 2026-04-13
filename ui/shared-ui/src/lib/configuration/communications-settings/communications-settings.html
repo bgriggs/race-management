@@ -1,0 +1,18 @@
+<section class="communications-settings">
+	<h2>Cloud Communications</h2>
+	<p>
+		Enable cloud connectivity to configure credentials and allow telemetry services to connect.
+	</p>
+
+	<label class="slider-toggle" for="cloudConnectionEnabled">
+		<input
+			id="cloudConnectionEnabled"
+			type="checkbox"
+			role="switch"
+			[checked]="isCloudConnectionEnabled()"
+			(change)="onCloudConnectionToggle($event)"
+		/>
+		<span class="slider" aria-hidden="true"></span>
+		<span class="toggle-label">Enable Cloud Communications</span>
+	</label>
+</section>

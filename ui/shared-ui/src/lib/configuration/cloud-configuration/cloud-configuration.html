@@ -1,0 +1,25 @@
+<section class="cloud-configuration">
+	<p>
+		Set cloud connection credentials for this car configuration.
+	</p>
+
+	<form class="cloud-form" [formGroup]="form" novalidate>
+		<label class="field" for="clientId">
+			<span>Client ID</span>
+			<input id="clientId" type="text" formControlName="clientId" maxlength="64" />
+			<small class="field-hint">Max 64 characters</small>
+			@if (form.controls.clientId.invalid && (form.controls.clientId.dirty || form.controls.clientId.touched)) {
+				<small class="field-error">Client ID is required and must be 64 characters or fewer.</small>
+			}
+		</label>
+
+		<label class="field" for="clientSecret">
+			<span>Client Secret</span>
+			<input id="clientSecret" type="text" formControlName="clientSecret" maxlength="32" />
+			<small class="field-hint">Max 32 characters</small>
+			@if (form.controls.clientSecret.invalid && (form.controls.clientSecret.dirty || form.controls.clientSecret.touched)) {
+				<small class="field-error">Client Secret is required and must be 32 characters or fewer.</small>
+			}
+		</label>
+	</form>
+</section>
