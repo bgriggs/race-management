@@ -26,10 +26,13 @@
     ]
   },
   "dependencies": {
+    "@angular/animations": "^21.2.8",
+    "@angular/cdk": "^21.2.6",
     "@angular/common": "^21.0.0",
     "@angular/compiler": "^21.0.0",
     "@angular/core": "^21.0.0",
     "@angular/forms": "^21.0.0",
+    "@angular/material": "^21.2.6",
     "@angular/platform-browser": "^21.0.0",
     "@angular/router": "^21.0.0",
     "@msgpack/msgpack": "^3.1.2",

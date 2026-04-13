@@ -7,6 +7,8 @@ export interface CarConfigurationSummary {
     id: string;
     lastUpdated: Date;
     name: string;
+    car: string;
     notes: string;
     configurationSchemaVersion: number;
+    lastUpdatedOnCarTimestamp: Date | null;
 }

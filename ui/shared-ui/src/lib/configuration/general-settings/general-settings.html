@@ -1,0 +1,56 @@
+<form [formGroup]="form" class="config-form">
+    <div class="field-meta-group">
+        <div class="field-meta">
+            <span class="field-meta-label">Configuration ID</span>
+            <span class="field-meta-value">{{ configurationIdDisplay }}</span>
+        </div>
+        <div class="field-meta">
+            <span class="field-meta-label">Last Updated</span>
+            <span class="field-meta-value">{{ lastUpdatedDisplay }}</span>
+        </div>
+    </div>
+
+    <div class="field">
+        <label for="gs-name" class="field-label">
+            Name <span class="required-mark">*</span>
+        </label>
+        <input id="gs-name" type="text" formControlName="name" class="field-input"
+            [class.input-error]="form.controls.name.invalid && form.controls.name.touched"
+            placeholder="Configuration name" maxlength="32" />
+        @if (form.controls.name.touched && form.controls.name.errors?.['required']) {
+        <p class="field-error">Name is required.</p>
+        } @else if (form.controls.name.touched && form.controls.name.errors?.['minlength']) {
+        <p class="field-error">Name must be at least 3 characters.</p>
+        } @else if (form.controls.name.touched && form.controls.name.errors?.['maxlength']) {
+        <p class="field-error">Name cannot exceed 32 characters.</p>
+        }
+    </div>
+
+    <div class="field">
+        <label for="gs-car" class="field-label">
+            Car <span class="required-mark">*</span>
+        </label>
+        <input id="gs-car" type="text" formControlName="car" class="field-input"
+            [class.input-error]="form.controls.car.invalid && form.controls.car.touched"
+            placeholder="Car code" maxlength="6" />
+        @if (form.controls.car.touched && form.controls.car.errors?.['required']) {
+        <p class="field-error">Car is required.</p>
+        } @else if (form.controls.car.touched && form.controls.car.errors?.['minlength']) {
+        <p class="field-error">Car must be at least 1 character.</p>
+        } @else if (form.controls.car.touched && form.controls.car.errors?.['maxlength']) {
+        <p class="field-error">Car cannot exceed 6 characters.</p>
+        }
+    </div>
+
+    <div class="field">
+        <label for="gs-notes" class="field-label">Notes</label>
+        <textarea id="gs-notes" formControlName="notes" class="field-textarea"
+            [class.input-error]="form.controls.notes.invalid && form.controls.notes.touched" rows="4"
+            placeholder="Optional notes about this configuration" maxlength="1024"></textarea>
+        @if (form.controls.notes.touched && form.controls.notes.errors?.['maxlength']) {
+        <p class="field-error">Notes cannot exceed 1024 characters.</p>
+        }
+    </div>
+
+
+</form>

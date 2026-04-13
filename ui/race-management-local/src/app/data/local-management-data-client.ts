@@ -42,6 +42,12 @@ export class LocalManagementDataClient implements ManagementDataClient {
     );
   }
 
+  async transmitToCarAsync(carConfiguration: CarConfiguration): Promise<CarConfiguration> {
+    return await firstValueFrom(
+      this.httpClient.post<CarConfiguration>(this.buildActionUrl('transmit-to-car'), carConfiguration)
+    );
+  }
+
   async deleteCarConfigurationAsync(id: string): Promise<void> {
     return await firstValueFrom(
         this.httpClient.delete<void>(this.buildActionUrl('delete-car-configuration'), {

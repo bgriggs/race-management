@@ -23,7 +23,9 @@ function buildConfig(name: string): CarConfiguration {
     name,
     notes: 'notes',
     lastUpdated: new Date('2026-01-01T00:00:00Z'),
+    lastUpdatedOnCarTimestamp: null,
     car: 'car-1',
+    isCloudConnectionEnabled: true,
     clientId: 'client-id',
     clientSecret: 'client-secret',
     canConfig: {
@@ -56,11 +58,15 @@ describe('CarConfigurationComponent', () => {
           id: 'summary-1',
           lastUpdated: new Date('2026-01-02T00:00:00Z'),
           name: 'Config A',
-          notes: 'A'
+          car: 'car-1',
+          notes: 'A',
+          configurationSchemaVersion: 1,
+          lastUpdatedOnCarTimestamp: null
         }
       ]),
       loadCarConfigurationAsync: vi.fn().mockResolvedValue(buildConfig('Loaded Config')),
       saveCarConfigurationAsync: vi.fn(),
+      transmitToCarAsync: vi.fn(),
       deleteCarConfigurationAsync: vi.fn()
     };
 
@@ -100,6 +106,7 @@ describe('CarConfigurationComponent', () => {
       loadCarConfigurationSummariesAsync: vi.fn().mockResolvedValue([]),
       loadCarConfigurationAsync: vi.fn().mockResolvedValue(buildConfig('Loaded Config')),
       saveCarConfigurationAsync: vi.fn(),
+      transmitToCarAsync: vi.fn(),
       deleteCarConfigurationAsync: vi.fn()
     };
 
@@ -148,5 +155,109 @@ describe('CarConfigurationComponent', () => {
 
     expect(component.canBusEnabled()).toBe(false);
     expect(component.selectedNodeId()).toBe('communications');
+  });
+
+  it('saves active configuration and updates state', async () => {
+    const fixture = TestBed.createComponent(CarConfigurationComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const component = fixture.componentInstance;
+    const saved = buildConfig('Saved Config');
+    (mockClient.saveCarConfigurationAsync as ReturnType<typeof vi.fn>).mockResolvedValue(saved);
+
+    component.activeConfiguration.set(buildConfig('Before Save'));
+    await component.saveConfiguration();
+
+    expect(mockClient.saveCarConfigurationAsync).toHaveBeenCalledTimes(1);
+    expect(component.activeConfiguration()?.name).toBe('Saved Config');
+    expect(component.snackbarMessage()).toBe('Configuration saved.');
+  });
+
+  it('transmits active configuration and updates state from response', async () => {
+    const fixture = TestBed.createComponent(CarConfigurationComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const component = fixture.componentInstance;
+    const transmitted = buildConfig('Transmitted Config');
+    (mockClient.transmitToCarAsync as ReturnType<typeof vi.fn>).mockResolvedValue(transmitted);
+
+    component.activeConfiguration.set(buildConfig('Before Transmit'));
+    await component.transmitToCar();
+
+    expect(mockClient.transmitToCarAsync).toHaveBeenCalledTimes(1);
+    expect(component.activeConfiguration()?.name).toBe('Transmitted Config');
+    expect(component.snackbarMessage()).toBe('Configuration transmitted to car.');
+  });
+
+  it('does not save when configuration is invalid', async () => {
+    const fixture = TestBed.createComponent(CarConfigurationComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const component = fixture.componentInstance;
+    component.activeConfiguration.set({ ...buildConfig('Valid Name'), name: '' });
+
+    await component.saveConfiguration();
+
+    expect(mockClient.saveCarConfigurationAsync).not.toHaveBeenCalled();
+    expect(component.errorDialogMessage()).toBe('Please resolve validation errors before saving.');
+  });
+
+  it('does not transmit when configuration is invalid', async () => {
+    const fixture = TestBed.createComponent(CarConfigurationComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const component = fixture.componentInstance;
+    component.activeConfiguration.set({ ...buildConfig('Valid Name'), name: '' });
+
+    await component.transmitToCar();
+
+    expect(mockClient.transmitToCarAsync).not.toHaveBeenCalled();
+    expect(component.errorDialogMessage()).toBe('Please resolve validation errors before transmitting to car.');
+  });
+
+  it('shows dialog when save request fails', async () => {
+    const fixture = TestBed.createComponent(CarConfigurationComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const component = fixture.componentInstance;
+    (mockClient.saveCarConfigurationAsync as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Server unavailable'));
+
+    component.activeConfiguration.set(buildConfig('Valid Name'));
+    await component.saveConfiguration();
+
+    expect(component.errorDialogMessage()).toContain('Unable to save configuration.');
+  });
+
+  it('shows dialog when transmit request fails', async () => {
+    const fixture = TestBed.createComponent(CarConfigurationComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const component = fixture.componentInstance;
+    (mockClient.transmitToCarAsync as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Car offline'));
+
+    component.activeConfiguration.set(buildConfig('Valid Name'));
+    await component.transmitToCar();
+
+    expect(component.errorDialogMessage()).toContain('Unable to transmit configuration to car.');
+  });
+
+  it('deletes a configuration from the list and shows snackbar', async () => {
+    const fixture = TestBed.createComponent(CarConfigurationComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const component = fixture.componentInstance;
+    (mockClient.deleteCarConfigurationAsync as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
+
+    await component.deleteConfiguration('summary-1');
+
+    expect(mockClient.deleteCarConfigurationAsync).toHaveBeenCalledWith('summary-1');
+    expect(component.snackbarMessage()).toBe('Configuration deleted.');
   });
 });

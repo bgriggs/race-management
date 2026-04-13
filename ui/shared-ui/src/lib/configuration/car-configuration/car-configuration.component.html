@@ -23,8 +23,20 @@
           @for (summary of configurationSummaries(); track summary.id) {
           <div class="summary-item" role="listitem">
             <button type="button" class="summary-open" (click)="openConfiguration(summary.id)">
-              <span class="summary-name">{{ summary.name || '(Unnamed configuration)' }}</span>
+              <span class="summary-name">
+                {{ summary.name || '(Unnamed configuration)' }}
+                <span class="summary-car">Car: {{ summary.car || '-' }}</span>
+              </span>
               <span class="summary-notes">{{ summary.notes || 'No notes' }}</span>
+            </button>
+            <button
+              type="button"
+              class="summary-delete"
+              (click)="deleteConfiguration(summary.id)"
+              aria-label="Delete configuration"
+              title="Delete configuration"
+            >
+              <rm-trash-icon />
             </button>
           </div>
           }
@@ -33,9 +45,20 @@
     </section>
   </section>
 } @else {
-  <button type="button" class="back-button" (click)="backToConfigurationPicker()">
-    Back to configurations
-  </button>
+  <section class="header-actions">
+    <button type="button" class="back-button" (click)="backToConfigurationPicker()">
+      Back to configurations
+    </button>
+
+    <div class="header-actions-right">
+      <button type="button" class="action-button" (click)="saveConfiguration()" [disabled]="!canSubmitConfiguration()">
+        Save
+      </button>
+      <button type="button" class="action-button primary" (click)="transmitToCar()" [disabled]="!canSubmitConfiguration()">
+        Transmit to Car
+      </button>
+    </div>
+  </section>
 
   <section class="layout">
     <aside class="left-nav">
@@ -54,7 +77,16 @@
           <p class="active-config-name">Editing: {{ activeConfiguration()!.name || '(New configuration)' }}</p>
         </header>
 
-        <p class="page-note">{{ selectedPageDescription() }}</p>
+        @if (selectedNodeId() !== 'general-settings') {
+          <p class="page-note">{{ selectedPageDescription() }}</p>
+        }
+
+        @if (selectedNodeId() === 'general-settings') {
+          <lib-general-settings
+            [configuration]="activeConfiguration()"
+            (configurationChange)="onGeneralSettingsChange($event)"
+          />
+        }
 
         @if (selectedNodeId() === 'communications') {
           <section class="feature-toggle">
@@ -73,7 +105,23 @@
         }
       </article>
 
-      <rm-error-list [items]="validationErrors" (navigateToNode)="navigateFromError($event)" />
+      <rm-error-list [items]="validationErrors()" (navigateToNode)="navigateFromError($event)" />
+    </section>
+  </section>
+}
+
+@if (snackbarMessage()) {
+  <section class="snackbar" role="status" aria-live="polite">
+    {{ snackbarMessage() }}
+  </section>
+}
+
+@if (errorDialogMessage()) {
+  <section class="dialog-backdrop" role="presentation" (click)="closeErrorDialog()">
+    <section class="dialog" role="alertdialog" aria-modal="true" aria-label="Action failed" (click)="$event.stopPropagation()">
+      <h2>Action Failed</h2>
+      <p>{{ errorDialogMessage() }}</p>
+      <button type="button" class="dialog-close" (click)="closeErrorDialog()">Close</button>
     </section>
   </section>
 }

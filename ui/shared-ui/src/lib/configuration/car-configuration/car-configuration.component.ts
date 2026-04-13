@@ -2,6 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { ErrorListComponent, ErrorListItem } from '../error-list/error-list.component';
 import { NavigationTreeComponent, NavigationTreeNode } from '../navigation-tree/navigation-tree.component';
+import { GeneralSettings } from '../general-settings/general-settings';
+import { TrashIconComponent } from '../../icons/trash-icon/trash-icon.component';
 import {
   MANAGEMENT_DATA_CLIENT,
   type ManagementDataClient
@@ -12,38 +14,70 @@ import { CarConfiguration } from '../../../models/car-configuration';
 @Component({
   selector: 'rm-car-configuration',
   standalone: true,
-  imports: [CommonModule, NavigationTreeComponent, ErrorListComponent],
+  imports: [CommonModule, NavigationTreeComponent, ErrorListComponent, GeneralSettings, TrashIconComponent],
   templateUrl: './car-configuration.component.html',
   styleUrl: './car-configuration.component.css'
 })
 export class CarConfigurationComponent implements OnInit {
   private readonly managementDataClient = inject(MANAGEMENT_DATA_CLIENT);
+  private snackbarTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   readonly canBusEnabled = signal(true);
   readonly selectedNodeId = signal('general-settings');
   readonly loadingSummaries = signal(false);
   readonly summaryLoadError = signal<string | null>(null);
+  readonly snackbarMessage = signal<string | null>(null);
+  readonly errorDialogMessage = signal<string | null>(null);
   readonly activeConfiguration = signal<CarConfiguration | null>(null);
   readonly configurationSummaries = signal<CarConfigurationSummary[]>([]);
 
   readonly treeNodes = computed<NavigationTreeNode[]>(() => this.buildTreeNodes());
 
-  readonly validationErrors: ErrorListItem[] = [
-    {
-      id: 'general-name-required',
-      nodeId: 'general-settings',
-      pageLabel: 'General Settings',
-      message: 'Car display name is required.'
-    },
-    {
-      id: 'can-bus-bitrate-required',
-      nodeId: 'can-bus',
-      pageLabel: 'CAN Bus',
-      message: 'CAN Bus bitrate must be selected.'
+  readonly validationErrors = computed<ErrorListItem[]>(() => {
+    const config = this.activeConfiguration();
+    if (!config) {
+      return [];
     }
-  ];
 
-  readonly errorNodeIds = computed(() => new Set(this.validationErrors.map((item) => item.nodeId)));
+    const errors: ErrorListItem[] = [];
+    const trimmedName = config.name.trim();
+
+    if (trimmedName.length === 0) {
+      errors.push({
+        id: 'general-name-required',
+        nodeId: 'general-settings',
+        pageLabel: 'General Settings',
+        message: 'Car display name is required.'
+      });
+    }
+
+    const trimmedCar = config.car.trim();
+    if (trimmedCar.length === 0 || trimmedCar.length > 6) {
+      errors.push({
+        id: 'general-car-invalid',
+        nodeId: 'general-settings',
+        pageLabel: 'General Settings',
+        message: 'Car is required and must be 1 to 6 characters.'
+      });
+    }
+
+    if (this.canBusEnabled() && !config.canConfig.transmitRate?.trim()) {
+      errors.push({
+        id: 'can-bus-bitrate-required',
+        nodeId: 'can-bus',
+        pageLabel: 'CAN Bus',
+        message: 'CAN Bus bitrate must be selected.'
+      });
+    }
+
+    return errors;
+  });
+
+  readonly canSubmitConfiguration = computed(
+    () => !!this.activeConfiguration() && this.validationErrors().length === 0
+  );
+
+  readonly errorNodeIds = computed(() => new Set(this.validationErrors().map((item) => item.nodeId)));
 
   readonly selectedPageLabel = computed(() => this.pageMeta[this.selectedNodeId()]?.label ?? 'Configuration');
 
@@ -135,9 +169,70 @@ export class CarConfigurationComponent implements OnInit {
     this.summaryLoadError.set(null);
   }
 
+  async deleteConfiguration(configurationId: string): Promise<void> {
+    try {
+      await this.managementDataClient.deleteCarConfigurationAsync(configurationId);
+      this.configurationSummaries.set(await this.managementDataClient.loadCarConfigurationSummariesAsync());
+      this.summaryLoadError.set(null);
+      this.showSnackbar('Configuration deleted.');
+    } catch (error: unknown) {
+      this.openErrorDialog(this.getErrorMessage(error, 'Unable to delete configuration.'));
+    }
+  }
+
+  async saveConfiguration(): Promise<void> {
+    const current = this.activeConfiguration();
+    if (!current) return;
+
+    if (!this.canSubmitConfiguration()) {
+      this.openErrorDialog('Please resolve validation errors before saving.');
+      return;
+    }
+
+    try {
+      const saved = await this.managementDataClient.saveCarConfigurationAsync(current);
+      this.activeConfiguration.set(saved);
+      this.configurationSummaries.set(await this.managementDataClient.loadCarConfigurationSummariesAsync());
+      this.summaryLoadError.set(null);
+      this.showSnackbar('Configuration saved.');
+    } catch (error: unknown) {
+      this.openErrorDialog(this.getErrorMessage(error, 'Unable to save configuration.'));
+    }
+  }
+
+  async transmitToCar(): Promise<void> {
+    const current = this.activeConfiguration();
+    if (!current) return;
+
+    if (!this.canSubmitConfiguration()) {
+      this.openErrorDialog('Please resolve validation errors before transmitting to car.');
+      return;
+    }
+
+    try {
+      const updated = await this.managementDataClient.transmitToCarAsync(current);
+      this.activeConfiguration.set(updated);
+      this.configurationSummaries.set(await this.managementDataClient.loadCarConfigurationSummariesAsync());
+      this.summaryLoadError.set(null);
+      this.showSnackbar('Configuration transmitted to car.');
+    } catch (error: unknown) {
+      this.openErrorDialog(this.getErrorMessage(error, 'Unable to transmit configuration to car.'));
+    }
+  }
+
+  closeErrorDialog(): void {
+    this.errorDialogMessage.set(null);
+  }
+
   backToConfigurationPicker(): void {
     this.activeConfiguration.set(null);
     this.selectedNodeId.set('general-settings');
+  }
+
+  onGeneralSettingsChange(data: Pick<CarConfiguration, 'name' | 'car' | 'notes'>): void {
+    const current = this.activeConfiguration();
+    if (!current) return;
+    this.activeConfiguration.set({ ...current, ...data });
   }
 
   navigateFromError(nodeId: string): void {
@@ -182,14 +277,41 @@ export class CarConfigurationComponent implements OnInit {
     ];
   }
 
+  private showSnackbar(message: string): void {
+    this.snackbarMessage.set(message);
+
+    if (this.snackbarTimeoutId) {
+      clearTimeout(this.snackbarTimeoutId);
+    }
+
+    this.snackbarTimeoutId = setTimeout(() => {
+      this.snackbarMessage.set(null);
+      this.snackbarTimeoutId = null;
+    }, 3000);
+  }
+
+  private openErrorDialog(message: string): void {
+    this.errorDialogMessage.set(message);
+  }
+
+  private getErrorMessage(error: unknown, fallbackMessage: string): string {
+    if (error instanceof Error && error.message.trim()) {
+      return `${fallbackMessage} ${error.message}`;
+    }
+
+    return fallbackMessage;
+  }
+
   private buildEmptyConfiguration(): CarConfiguration {
     return {
-      configurationId: crypto.randomUUID(),
+      configurationId: '00000000-0000-0000-0000-000000000000',
       configurationSchemaVersion: 1,
       name: '',
       notes: '',
-      lastUpdated: new Date(),
+      lastUpdated: new Date('0001-01-01T00:00:00.000Z'),
+      lastUpdatedOnCarTimestamp: null,
       car: '',
+      isCloudConnectionEnabled: false,
       clientId: '',
       clientSecret: '',
       canConfig: {

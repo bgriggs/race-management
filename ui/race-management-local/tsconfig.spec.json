@@ -5,6 +5,7 @@
   "compilerOptions": {
     "rootDir": "..",
     "outDir": "./out-tsc/spec",
+    "ignoreDeprecations": "6.0",
     "types": [
       "vitest/globals"
     ]

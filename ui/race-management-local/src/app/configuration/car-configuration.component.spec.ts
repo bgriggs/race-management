@@ -51,6 +51,7 @@ describe('CarConfigurationComponent', () => {
       ]),
       loadCarConfigurationAsync: vi.fn().mockResolvedValue(buildConfig('Loaded Config')),
       saveCarConfigurationAsync: vi.fn(),
+      transmitToCarAsync: vi.fn(),
       deleteCarConfigurationAsync: vi.fn()
     };
 

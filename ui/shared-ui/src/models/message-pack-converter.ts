@@ -37,7 +37,9 @@ export function carConfigurationFromMessagePack(obj: Record<string, unknown>): C
         name: obj["Name"] as string,
         notes: obj["Notes"] as string,
         lastUpdated: new Date(obj["LastUpdated"] as string | number | Date),
+        lastUpdatedOnCarTimestamp: obj["LastUpdatedOnCarTimestamp"] != null ? new Date(obj["LastUpdatedOnCarTimestamp"] as string | number | Date) : null,
         car: obj["Car"] as string,
+        isCloudConnectionEnabled: obj["IsCloudConnectionEnabled"] as boolean,
         clientId: obj["ClientId"] as string,
         clientSecret: obj["ClientSecret"] as string,
         canConfig: canMessageConfigFromMessagePack(obj["CanConfig"] as Record<string, unknown>),
@@ -244,8 +246,10 @@ export function carConfigurationSummaryFromMessagePack(obj: Record<string, unkno
         id: obj["Id"] as string,
         lastUpdated: new Date(obj["LastUpdated"] as string | number | Date),
         name: obj["Name"] as string,
+        car: obj["Car"] as string,
         notes: obj["Notes"] as string,
         configurationSchemaVersion: obj["ConfigurationSchemaVersion"] as number,
+        lastUpdatedOnCarTimestamp: obj["LastUpdatedOnCarTimestamp"] != null ? new Date(obj["LastUpdatedOnCarTimestamp"] as string | number | Date) : null,
     };
 }
 

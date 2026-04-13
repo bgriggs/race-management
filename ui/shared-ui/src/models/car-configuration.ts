@@ -17,7 +17,9 @@ export interface CarConfiguration {
     name: string;
     notes: string;
     lastUpdated: Date;
+    lastUpdatedOnCarTimestamp: Date | null;
     car: string;
+    isCloudConnectionEnabled: boolean;
     clientId: string;
     clientSecret: string;
     canConfig: CanMessageConfig;
