@@ -25,9 +25,11 @@ public class DataController(RaceManagementDbContext db, ILogger<DataController> 
             {
                 Id = e.Id,
                 Name = e.Name,
+                Car = e.Car,
                 Notes = e.Notes,
                 LastUpdated = e.LastUpdated,
                 ConfigurationSchemaVersion = e.ConfigurationSchemaVersion,
+                LastUpdatedOnCarTimestamp = e.LastUpdatedOnCarTimestamp,
             })
             .ToListAsync();
 
@@ -56,6 +58,9 @@ public class DataController(RaceManagementDbContext db, ILogger<DataController> 
             return NotFound();
         }
 
+        config.Car = entity.Car;
+        config.LastUpdatedOnCarTimestamp = entity.LastUpdatedOnCarTimestamp;
+
         return Ok(config);
     }
 
@@ -79,8 +84,10 @@ public class DataController(RaceManagementDbContext db, ILogger<DataController> 
             {
                 Id = carConfiguration.ConfigurationId,
                 Name = carConfiguration.Name,
+                Car = carConfiguration.Car,
                 Notes = carConfiguration.Notes,
                 LastUpdated = carConfiguration.LastUpdated,
+                LastUpdatedOnCarTimestamp = carConfiguration.LastUpdatedOnCarTimestamp,
                 ConfigurationSchemaVersion = carConfiguration.ConfigurationSchemaVersion,
                 Data = JsonSerializer.Serialize(carConfiguration, JsonOptions),
             });
@@ -89,8 +96,10 @@ public class DataController(RaceManagementDbContext db, ILogger<DataController> 
         {
             logger.LogInformation("Updating existing car configuration...");
             existing.Name = carConfiguration.Name;
+            existing.Car = carConfiguration.Car;
             existing.Notes = carConfiguration.Notes;
             existing.LastUpdated = carConfiguration.LastUpdated;
+            existing.LastUpdatedOnCarTimestamp = carConfiguration.LastUpdatedOnCarTimestamp;
             existing.ConfigurationSchemaVersion = carConfiguration.ConfigurationSchemaVersion;
             existing.Data = JsonSerializer.Serialize(carConfiguration, JsonOptions);
         }
@@ -116,5 +125,21 @@ public class DataController(RaceManagementDbContext db, ILogger<DataController> 
         db.CarConfigurations.Remove(entity);
         await db.SaveChangesAsync();
         return Ok();
+    }
+
+    [HttpPost]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<CarConfiguration>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<CarConfiguration>> TransmitToCarAsync([FromBody] CarConfiguration carConfiguration)
+    {
+        logger.LogInformation("{MethodName} called", nameof(TransmitToCarAsync));
+
+        // Save the configuration
+        // Send to car
+        // Update the last updated on car timestamp
+
+        // Return the fully update configuration with the new timestamps
+        return Ok(carConfiguration);
     }
 }

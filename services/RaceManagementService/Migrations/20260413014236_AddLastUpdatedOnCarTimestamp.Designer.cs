@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RaceManagementService.Data;
 
@@ -10,9 +11,11 @@ using RaceManagementService.Data;
 namespace RaceManagementService.Migrations
 {
     [DbContext(typeof(RaceManagementDbContext))]
-    partial class RaceManagementDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260413014236_AddLastUpdatedOnCarTimestamp")]
+    partial class AddLastUpdatedOnCarTimestamp
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.5");
@@ -21,11 +24,6 @@ namespace RaceManagementService.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Car")
-                        .IsRequired()
-                        .HasMaxLength(6)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("ConfigurationSchemaVersion")
@@ -43,12 +41,10 @@ namespace RaceManagementService.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(32)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Notes")
                         .IsRequired()
-                        .HasMaxLength(1024)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
