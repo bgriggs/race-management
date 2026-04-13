@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
-import { SharedBannerComponent } from '../../../shared-ui/src/lib/shared-banner.component';
+import { CarConfigurationComponent } from '../../../shared-ui/src/lib/configuration/car-configuration/car-configuration.component';
 
 @Component({
   selector: 'app-root',
-  imports: [SharedBannerComponent],
+  imports: [CarConfigurationComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

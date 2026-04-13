@@ -1,0 +1,94 @@
+:host {
+	display: block;
+	min-height: 100vh;
+	background: #f6f8fb;
+	color: #112033;
+	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.top-menu {
+	position: sticky;
+	top: 0;
+	z-index: 10;
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	padding: 0.75rem 1.25rem;
+	background: #0f1f33;
+	color: #f8fbff;
+	box-shadow: 0 2px 10px rgb(9 18 31 / 20%);
+}
+
+.brand {
+	color: #f8fbff;
+	text-decoration: none;
+	font-weight: 700;
+	letter-spacing: 0.2px;
+	white-space: nowrap;
+}
+
+.menu-links {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+}
+
+.menu-links a {
+	color: #d9e3f2;
+	text-decoration: none;
+	font-weight: 500;
+	padding: 0.35rem 0;
+	border-bottom: 2px solid transparent;
+}
+
+.menu-links a:hover {
+	color: #ffffff;
+	border-bottom-color: #e45050;
+}
+
+.user-info {
+	margin-left: auto;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	color: #f8fbff;
+}
+
+.user-icon {
+	width: 1.55rem;
+	height: 1.55rem;
+	border-radius: 999px;
+	border: 2px solid #f8fbff;
+	display: inline-block;
+	position: relative;
+}
+
+.user-icon::before,
+.user-icon::after {
+	content: '';
+	position: absolute;
+	left: 50%;
+	transform: translateX(-50%);
+	border-radius: 999px;
+	background: #f8fbff;
+}
+
+.user-icon::before {
+	top: 0.2rem;
+	width: 0.45rem;
+	height: 0.45rem;
+}
+
+.user-icon::after {
+	bottom: 0.2rem;
+	width: 0.85rem;
+	height: 0.4rem;
+}
+
+.username {
+	font-weight: 600;
+}
+
+.app-content {
+	padding: 1rem;
+}

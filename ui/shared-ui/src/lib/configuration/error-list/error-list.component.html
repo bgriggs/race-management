@@ -1,0 +1,22 @@
+<section class="error-list" aria-label="Configuration errors">
+  <header>
+    <h3>Errors</h3>
+  </header>
+
+  @if (items().length === 0) {
+    <p class="empty">No validation errors.</p>
+  }
+
+  @if (items().length > 0) {
+    <div class="error-items" role="list" aria-label="Configuration errors">
+      @for (item of items(); track item.id) {
+      <div role="listitem">
+        <button type="button" (click)="navigateToNode.emit(item.nodeId)">
+          <span class="page">{{ item.pageLabel }}</span>
+          <span class="message">{{ item.message }}</span>
+        </button>
+      </div>
+      }
+    </div>
+  }
+</section>

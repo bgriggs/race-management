@@ -1,0 +1,79 @@
+@if (!activeConfiguration()) {
+  <section class="configuration-picker">
+    <header class="configuration-picker-header">
+      <h1>Open Car Configuration</h1>
+      <p>Choose an existing configuration or start a new one.</p>
+    </header>
+
+    <section class="configuration-picker-actions">
+      <button type="button" (click)="createNewConfiguration()">New</button>
+    </section>
+
+    <section class="data-status">
+      @if (loadingSummaries()) {
+        <p>Loading configuration summaries...</p>
+      } @else if (summaryLoadError()) {
+        <p class="data-status-error">{{ summaryLoadError() }}</p>
+      } @else if (configurationSummaries().length === 0) {
+        <p class="empty-state">There are no existing configurations, select New to start one</p>
+      } @else {
+        <p>Saved configurations found: {{ configurationSummaryCount() }}</p>
+
+        <div class="summary-list" role="list" aria-label="Saved configurations">
+          @for (summary of configurationSummaries(); track summary.id) {
+          <div class="summary-item" role="listitem">
+            <button type="button" class="summary-open" (click)="openConfiguration(summary.id)">
+              <span class="summary-name">{{ summary.name || '(Unnamed configuration)' }}</span>
+              <span class="summary-notes">{{ summary.notes || 'No notes' }}</span>
+            </button>
+          </div>
+          }
+        </div>
+      }
+    </section>
+  </section>
+} @else {
+  <button type="button" class="back-button" (click)="backToConfigurationPicker()">
+    Back to configurations
+  </button>
+
+  <section class="layout">
+    <aside class="left-nav">
+      <rm-navigation-tree
+        [nodes]="treeNodes()"
+        [selectedNodeId]="selectedNodeId()"
+        [errorNodeIds]="errorNodeIds()"
+        (nodeSelected)="selectNode($event)"
+      />
+    </aside>
+
+    <section class="right-content">
+      <article class="page-content">
+        <header>
+          <h1>{{ selectedPageLabel() }}</h1>
+          <p class="active-config-name">Editing: {{ activeConfiguration()!.name || '(New configuration)' }}</p>
+        </header>
+
+        <p class="page-note">{{ selectedPageDescription() }}</p>
+
+        @if (selectedNodeId() === 'communications') {
+          <section class="feature-toggle">
+            <label>
+              <input
+                type="checkbox"
+                [checked]="canBusEnabled()"
+                (change)="onCanBusFeatureToggle($event)"
+              />
+              Enable CAN Bus configuration
+            </label>
+            <p>
+              This toggle controls visibility of the CAN Bus child node under Communications.
+            </p>
+          </section>
+        }
+      </article>
+
+      <rm-error-list [items]="validationErrors" (navigateToNode)="navigateFromError($event)" />
+    </section>
+  </section>
+}

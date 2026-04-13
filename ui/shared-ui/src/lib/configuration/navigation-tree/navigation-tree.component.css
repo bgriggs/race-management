@@ -1,0 +1,72 @@
+.tree {
+  border: 1px solid #d9dfd8;
+  border-radius: 10px;
+  background: #f8fbf7;
+  padding: 0.5rem;
+}
+
+.tree-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tree-item {
+  margin: 0;
+  padding: 0;
+}
+
+.node-row {
+  --level: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.35rem 0.4rem;
+  padding-left: calc((var(--level) * 1rem) + 0.4rem);
+  border-radius: 8px;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.node-row:hover {
+  background: #eaf2e8;
+}
+
+.node-row.is-selected {
+  background: #dcebd7;
+}
+
+.chevron {
+  width: 1.1rem;
+  border: none;
+  background: transparent;
+  color: #3c4a38;
+  cursor: pointer;
+  padding: 0;
+}
+
+.chevron.spacer {
+  display: inline-block;
+}
+
+.error-icon {
+  width: 1rem;
+  color: transparent;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.error-icon.visible {
+  color: #b12222;
+}
+
+.node-row.has-error .label {
+  color: #b12222;
+}
+
+.label {
+  color: #1f2b1e;
+  font-size: 0.95rem;
+}

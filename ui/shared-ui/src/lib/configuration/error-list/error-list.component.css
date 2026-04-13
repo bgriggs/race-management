@@ -1,0 +1,48 @@
+.error-list {
+  border-top: 1px solid #d9dfd8;
+  padding-top: 0.75rem;
+}
+
+h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.empty {
+  margin: 0.6rem 0 0;
+  color: #3d4c3a;
+}
+
+.error-items {
+  list-style: none;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.error-items button {
+  width: 100%;
+  text-align: left;
+  border: 1px solid #e3cece;
+  border-radius: 8px;
+  background: #fff8f8;
+  padding: 0.5rem 0.65rem;
+  cursor: pointer;
+}
+
+.error-items button:hover {
+  background: #ffefef;
+}
+
+.page {
+  display: block;
+  color: #8d1e1e;
+  font-weight: 600;
+}
+
+.message {
+  display: block;
+  color: #4f2d2d;
+  margin-top: 0.1rem;
+}

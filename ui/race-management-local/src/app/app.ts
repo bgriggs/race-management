@@ -1,10 +1,16 @@
 import { Component } from '@angular/core';
-import { SharedBannerComponent } from '../../../shared-ui/src/lib/shared-banner.component';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-root',
-  imports: [SharedBannerComponent],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
-export class App {}
+export class App {
+  private readonly username: string | null = null;
+
+  get userDisplayName(): string {
+    return this.username ?? 'Guest';
+  }
+}

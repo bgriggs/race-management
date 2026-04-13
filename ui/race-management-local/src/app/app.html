@@ -1,6 +1,17 @@
-<main>
-  <rm-shared-banner
-    heading="Race Management Local"
-    subheading="This banner is provided by the shared-ui library."
-  />
+<header class="top-menu" aria-label="Primary">
+	<a class="brand" routerLink="/">RedMist-Race Management</a>
+
+	<nav class="menu-links" aria-label="Main navigation">
+		<a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
+		<a routerLink="/configuration" routerLinkActive="active">Configuration</a>
+	</nav>
+
+	<div class="user-info" aria-label="Current user">
+		<span class="user-icon" aria-hidden="true"></span>
+		<span class="username">{{ userDisplayName }}</span>
+	</div>
+</header>
+
+<main class="app-content">
+	<router-outlet></router-outlet>
 </main>

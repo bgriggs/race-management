@@ -1,0 +1,43 @@
+<nav class="tree" aria-label="Configuration navigation">
+  <ul class="tree-list">
+    <ng-container *ngTemplateOutlet="nodeTemplate; context: { $implicit: nodes(), level: 0 }" />
+  </ul>
+</nav>
+
+<ng-template #nodeTemplate let-nodeList let-level="level">
+  @for (node of nodeList; track node.id) {
+    @if (node.visible !== false) {
+      <li class="tree-item">
+        <div
+          class="node-row"
+          [class.is-selected]="selectedNodeId() === node.id"
+          [class.has-error]="hasNodeOrDescendantError(node)"
+          [style.--level]="level"
+          (click)="onSelect(node.id)">
+          @if (hasVisibleChildren(node)) {
+            <button
+              type="button"
+              class="chevron"
+              (click)="onToggle(node.id, $event)"
+              [attr.aria-expanded]="isExpanded(node.id)">
+              {{ isExpanded(node.id) ? '▾' : '▸' }}
+            </button>
+          } @else {
+            <span class="chevron spacer" aria-hidden="true"></span>
+          }
+
+          <span class="error-icon" [class.visible]="hasNodeOrDescendantError(node)" aria-hidden="true">
+            X
+          </span>
+          <span class="label">{{ node.label }}</span>
+        </div>
+
+        @if (hasVisibleChildren(node) && isExpanded(node.id)) {
+          <ul class="tree-list">
+            <ng-container *ngTemplateOutlet="nodeTemplate; context: { $implicit: node.children ?? [], level: level + 1 }" />
+          </ul>
+        }
+      </li>
+    }
+  }
+</ng-template>

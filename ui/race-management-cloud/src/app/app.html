@@ -1,6 +1,17 @@
-<main>
-  <rm-shared-banner
-    heading="Race Management Cloud"
-    subheading="This banner is provided by the shared-ui library."
-  />
+<header class="top-menu" aria-label="Primary">
+	<a class="brand" href="/">RedMist-Race Management</a>
+
+	<nav class="menu-links" aria-label="Main navigation">
+		<a href="/">Dashboard</a>
+		<a href="/">Configuration</a>
+	</nav>
+
+	<div class="user-info" aria-label="Current user">
+		<span class="user-icon" aria-hidden="true"></span>
+		<span class="username">Guest</span>
+	</div>
+</header>
+
+<main class="app-content">
+	<rm-car-configuration />
 </main>

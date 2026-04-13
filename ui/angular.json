@@ -64,7 +64,16 @@
           "defaultConfiguration": "development"
         },
         "test": {
-          "builder": "@angular/build:unit-test"
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "tsConfig": "race-management-cloud/tsconfig.spec.json",
+            "setupFiles": [
+              "race-management-cloud/src/test.ts"
+            ],
+            "include": [
+              "race-management-cloud/src/**/*.spec.ts"
+            ]
+          }
         }
       }
     },
@@ -126,7 +135,33 @@
           "defaultConfiguration": "development"
         },
         "test": {
-          "builder": "@angular/build:unit-test"
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "tsConfig": "race-management-local/tsconfig.spec.json",
+            "setupFiles": [
+              "race-management-local/src/test.ts"
+            ],
+            "include": [
+              "race-management-local/src/**/*.spec.ts"
+            ]
+          }
+        }
+      }
+    },
+    "shared-ui": {
+      "projectType": "library",
+      "root": "shared-ui",
+      "sourceRoot": "shared-ui/src",
+      "prefix": "lib",
+      "architect": {
+        "test": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "tsConfig": "shared-ui/tsconfig.spec.json",
+            "include": [
+              "shared-ui/src/**/*.spec.ts"
+            ]
+          }
         }
       }
     }
