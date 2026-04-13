@@ -22,6 +22,15 @@ public class Program
             // Add services to the container.
             builder.Services.AddControllers(options =>
                 options.Conventions.Add(new RouteTokenTransformerConvention(new KebabCaseParameterTransformer())));
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("LocalUi", policy =>
+                {
+                    policy.WithOrigins("http://localhost:4200")
+                        .AllowAnyHeader()
+                        .AllowAnyMethod();
+                });
+            });
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
 
@@ -51,6 +60,7 @@ public class Program
                 Console.Title = "Race Management";
             }
 
+            app.UseCors("LocalUi");
             app.UseAuthorization();
 
             app.MapControllers();
