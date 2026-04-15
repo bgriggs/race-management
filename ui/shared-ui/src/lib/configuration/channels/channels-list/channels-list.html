@@ -1,0 +1,36 @@
+@if (!hasChannels()) {
+	<p class="channels-empty">There are no channels configured.</p>
+} @else {
+	<div class="channels-table-wrap">
+		<table class="channels-table">
+			<thead>
+				<tr>
+					<th scope="col">Name</th>
+					<th scope="col">IsReserved</th>
+					<th scope="col">DataType</th>
+					<th scope="col">BaseUnits</th>
+					<th scope="col">OutputUnits</th>
+					<th scope="col">Category</th>
+					<th scope="col">GroupTag</th>
+				</tr>
+			</thead>
+			<tbody>
+				@for (channel of channels(); track channel.id) {
+					<tr>
+						<td>{{ channel.name }}</td>
+						<td class="checkmark-cell" [attr.aria-label]="channel.isReserved ? 'Reserved channel' : 'Not reserved'">
+							@if (channel.isReserved) {
+								<span class="checkmark" aria-hidden="true">✓</span>
+							}
+						</td>
+						<td>{{ channel.dataType }}</td>
+						<td>{{ channel.baseUnitType }}</td>
+						<td>{{ channel.outputUnitType }}</td>
+						<td>{{ channel.category }}</td>
+						<td>{{ channel.groupTag }}</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+}

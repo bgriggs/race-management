@@ -8,6 +8,7 @@ import {
 import { ManagementDataClient } from '../../../../shared-ui/src/lib/data/management-data-client';
 import { CarConfiguration } from '../../../../shared-ui/src/models/car-configuration';
 import { CarConfigurationSummary } from '../../../../shared-ui/src/models/car-configuration-summary';
+import { ChannelDefinition } from '../../../../shared-ui/src/models/channel-definition';
 
 @Injectable()
 export class LocalManagementDataClient implements ManagementDataClient {
@@ -21,6 +22,14 @@ export class LocalManagementDataClient implements ManagementDataClient {
     return await firstValueFrom(
       this.httpClient.get<CarConfigurationSummary[]>(
           this.buildActionUrl('load-car-configuration-summaries')
+      )
+    );
+  }
+
+  async loadReservedChannelDefinitionsAsync(): Promise<ChannelDefinition[]> {
+    return await firstValueFrom(
+      this.httpClient.get<ChannelDefinition[]>(
+        this.buildActionUrl('load-reserved-channel-definitions')
       )
     );
   }

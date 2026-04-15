@@ -1,0 +1,35 @@
+.channels-empty {
+	margin: 1rem 0;
+	color: #555;
+}
+
+.channels-table-wrap {
+	overflow-x: auto;
+}
+
+.channels-table {
+	width: 100%;
+	border-collapse: collapse;
+	margin-top: 0.5rem;
+}
+
+.channels-table th,
+.channels-table td {
+	border-bottom: 1px solid #ddd;
+	padding: 0.5rem 0.75rem;
+	text-align: left;
+	white-space: nowrap;
+}
+
+.channels-table th {
+	font-weight: 600;
+}
+
+.checkmark-cell {
+	text-align: center;
+}
+
+.checkmark {
+	font-size: 1rem;
+	font-weight: 700;
+}

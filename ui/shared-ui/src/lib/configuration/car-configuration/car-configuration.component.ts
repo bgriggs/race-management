@@ -6,6 +6,7 @@ import { NavigationTreeComponent, NavigationTreeNode } from '../navigation-tree/
 import { GeneralSettings } from '../general-settings/general-settings';
 import { CommunicationsSettings } from '../communications-settings/communications-settings';
 import { CloudConfiguration } from '../cloud-configuration/cloud-configuration';
+import { ChannelsList } from '../channels/channels-list/channels-list';
 import { MatIcon } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import {
@@ -29,6 +30,7 @@ import { CarConfiguration } from '../../../models/car-configuration';
     GeneralSettings,
     CommunicationsSettings,
     CloudConfiguration,
+    ChannelsList,
     MatIcon
   ],
   templateUrl: './car-configuration.component.html',
@@ -147,7 +149,7 @@ export class CarConfigurationComponent implements OnInit {
     },
     channels: {
       label: 'Channels',
-      description: 'Channel configuration editor will be added here.'
+      description: 'Review channels configured for this car.'
     },
     communications: {
       label: 'Communications',

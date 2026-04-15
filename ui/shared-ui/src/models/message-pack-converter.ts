@@ -117,6 +117,9 @@ export function channelDefinitionFromMessagePack(obj: Record<string, unknown>): 
         baseDecimalPlaces: obj["BaseDecimalPlaces"] as number,
         outputUnitType: obj["OutputUnitType"] as string,
         outputDecimalPlaces: obj["OutputDecimalPlaces"] as number,
+        lowRange: obj["LowRange"] as number,
+        highRange: obj["HighRange"] as number,
+        groupTag: obj["GroupTag"] as string,
     };
 }
 

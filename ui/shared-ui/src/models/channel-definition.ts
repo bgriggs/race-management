@@ -15,4 +15,7 @@ export interface ChannelDefinition {
     baseDecimalPlaces: number;
     outputUnitType: string;
     outputDecimalPlaces: number;
+    lowRange: number;
+    highRange: number;
+    groupTag: string;
 }

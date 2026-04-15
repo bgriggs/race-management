@@ -64,6 +64,7 @@ describe('CarConfigurationComponent', () => {
           lastUpdatedOnCarTimestamp: null
         }
       ]),
+      loadReservedChannelDefinitionsAsync: vi.fn().mockResolvedValue([]),
       loadCarConfigurationAsync: vi.fn().mockResolvedValue(buildConfig('Loaded Config')),
       saveCarConfigurationAsync: vi.fn(),
       transmitToCarAsync: vi.fn(),
@@ -104,6 +105,7 @@ describe('CarConfigurationComponent', () => {
   it('shows empty-state message when no configuration summaries exist', async () => {
     const emptyClient: ManagementDataClient = {
       loadCarConfigurationSummariesAsync: vi.fn().mockResolvedValue([]),
+      loadReservedChannelDefinitionsAsync: vi.fn().mockResolvedValue([]),
       loadCarConfigurationAsync: vi.fn().mockResolvedValue(buildConfig('Loaded Config')),
       saveCarConfigurationAsync: vi.fn(),
       transmitToCarAsync: vi.fn(),

@@ -49,6 +49,7 @@ describe('CarConfigurationComponent', () => {
           notes: 'A'
         }
       ]),
+      loadReservedChannelDefinitionsAsync: vi.fn().mockResolvedValue([]),
       loadCarConfigurationAsync: vi.fn().mockResolvedValue(buildConfig('Loaded Config')),
       saveCarConfigurationAsync: vi.fn(),
       transmitToCarAsync: vi.fn(),
