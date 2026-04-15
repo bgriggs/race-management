@@ -1,8 +1,10 @@
 using System.Text.Json;
+using Channels;
 using Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RaceManagementService.Data;
+using UnitsNet;
 
 namespace RaceManagementService.Controllers.V1;
 
@@ -141,5 +143,52 @@ public class DataController(RaceManagementDbContext db, ILogger<DataController> 
 
         // Return the fully update configuration with the new timestamps
         return Ok(carConfiguration);
+    }
+
+    [HttpGet]
+    [Produces("application/json", "application/x-msgpack")]
+    [ProducesResponseType<List<ChannelDefinition>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<List<ChannelDefinition>>> LoadReservedChannelDefinitionsAsync()
+    {
+        logger.LogInformation("{MethodName} called", nameof(LoadReservedChannelDefinitionsAsync));
+        var channels = new List<ChannelDefinition>
+        {
+            new() { Id = Guid.Parse("3b63f11f-224b-45d9-8b7a-12be256025a6"), Name = "CoolantTemp", IsReserved = true, Abbreviation = "COOLANT", BaseUnitType = "DegreeFahrenheit", BaseDecimalPlaces = 1 },
+            new() { Id = Guid.Parse("c6b14eae-9070-4c2a-91a9-2ce3984d30a7"), Name = "OilTemp", IsReserved = true, Abbreviation = "OILT", BaseUnitType = "DegreeFahrenheit", BaseDecimalPlaces = 1 },
+            new() { Id = Guid.Parse("5d7f1ae4-3a6f-45fe-94c2-905e07af4be1"), Name = "OilPress", IsReserved = true, Abbreviation = "OILP", BaseUnitType = "PoundForcePerSquareInch", BaseDecimalPlaces = 1 },
+            new() { Id = Guid.Parse("52cba3bc-c5f5-4fb2-8060-c2444eb448c3"), Name = "Battery", IsReserved = true, Abbreviation = "BATT", BaseUnitType = "Volts", BaseDecimalPlaces = 1 },
+            new() { Id = Guid.Parse("cf8698bf-3a17-4cb1-b993-c14937ad2fae"), Name = "GPSSpeed", IsReserved = true, Abbreviation = "GSP", BaseUnitType = "MilePerHour", BaseDecimalPlaces = 1 },
+            new() { Id = Guid.Parse("a2529acf-a7c6-449f-8a85-c7d76b35dbcb"), Name = "FuelLevel", IsReserved = true, Abbreviation = "FL", BaseUnitType = "UsGallon", BaseDecimalPlaces = 2 },
+            new() { Id = Guid.Parse("e5755aa0-3802-4729-9210-3c3e9dc8a644"), Name = "BrakePos", IsReserved = true, Abbreviation = "BP", BaseUnitType = "Percent", BaseDecimalPlaces = 2 },
+        };
+
+        return channels;
+    }
+
+    [HttpGet]
+    [Produces("application/json", "application/x-msgpack")]
+    [ProducesResponseType<List<string>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public ActionResult<List<string>> LoadAvailableUnitTypes(string dataType)
+    {
+        logger.LogInformation("{MethodName} called for DataType={DataType}", nameof(LoadAvailableUnitTypes), dataType);
+
+        if (string.IsNullOrWhiteSpace(dataType))
+            return NotFound();
+
+        var quantityInfo = Quantity.Infos.FirstOrDefault(q => q.Name.Equals(dataType, StringComparison.OrdinalIgnoreCase));
+        if (quantityInfo is null)
+        {
+            logger.LogWarning("UnitsNet quantity type not found for '{DataType}'.", dataType);
+            return NotFound();
+        }
+
+        var unitTypes = quantityInfo.UnitInfos
+            .Select(u => u.Name)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(n => n)
+            .ToList();
+
+        return Ok(unitTypes);
     }
 }

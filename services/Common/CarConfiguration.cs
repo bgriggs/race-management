@@ -33,12 +33,12 @@ public class CarConfiguration
     public required string ClientSecret { get; set; }
 
     public CanMessageConfig CanConfig { get; set; } = new();
-    public List<ChannelDefinition> ChannelDefinitions { get; } = [];
-    public List<CounterDefinition> CounterDefinitions { get; } = [];
-    public List<MathDefinition> MathDefinitions { get; } = [];
-    public List<TableDefinition> TableMappings { get; } = [];
-    public List<TimerDefinition> TimerDefinitions { get; } = [];
-    public List<ConditionDefinition> UserConditions { get; } = [];
+    public List<ChannelDefinition> ChannelDefinitions { get; set; } = [];
+    public List<CounterDefinition> CounterDefinitions { get; set; } = [];
+    public List<MathDefinition> MathDefinitions { get; set; } = [];
+    public List<TableDefinition> TableMappings { get; set; } = [];
+    public List<TimerDefinition> TimerDefinitions { get; set; } = [];
+    public List<ConditionDefinition> UserConditions { get; set; } = [];
 
 }
 

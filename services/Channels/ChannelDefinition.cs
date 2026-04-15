@@ -1,4 +1,6 @@
-﻿namespace Channels;
+﻿using UnitsNet;
+
+namespace Channels;
 
 /// <summary>
 /// Channel metadata definition, which defines the properties of a channel, such as its name, data type, and units.
@@ -14,11 +16,16 @@ public class ChannelDefinition
     public string Category { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string Abbreviation { get; set; } = string.Empty;
+    
     /// <summary>
-    /// Gets or sets the data type such as: "int", "float", "string", etc.
+    /// Non-numeric types such as enums and table strings.
+    /// </summary>
+    public bool IsStringValue { get; set; }
+
+    /// <summary>
+    /// Gets or sets the data type such as: Temperature, Length, Volume, VolumeFlow, Duration, Speed, Pressure, Force, Voltage, Mass, Ratio, Current, Resistance.
     /// </summary>
     public string DataType { get; set; } = string.Empty;
-    public bool IsStringValue => DataType.Equals("string", StringComparison.OrdinalIgnoreCase);
 
 
     /// <summary>
@@ -31,4 +38,8 @@ public class ChannelDefinition
     /// </summary>
     public string OutputUnitType { get; set; } = string.Empty;
     public int OutputDecimalPlaces { get; set; }
+
+    public double LowRange { get; set; }
+    public double HighRange { get; set; }
+    public string GroupTag { get; set; } = string.Empty;
 }
