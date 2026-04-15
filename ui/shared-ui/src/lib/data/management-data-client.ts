@@ -6,6 +6,7 @@ import { ChannelDefinition } from '../../models/channel-definition';
 export interface ManagementDataClient {
   loadCarConfigurationSummariesAsync(): Promise<CarConfigurationSummary[]>;
   loadReservedChannelDefinitionsAsync(): Promise<ChannelDefinition[]>;
+  loadAvailableUnitTypesAsync(dataType?: string): Promise<string[]>;
   loadCarConfigurationAsync(configId: string): Promise<CarConfiguration>;
   saveCarConfigurationAsync(carConfiguration: CarConfiguration): Promise<CarConfiguration>;
   transmitToCarAsync(carConfiguration: CarConfiguration): Promise<CarConfiguration>;

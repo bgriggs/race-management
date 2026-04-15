@@ -94,7 +94,10 @@
         }
 
         @if (selectedNodeId() === 'channels') {
-          <lib-channels-list [configuration]="activeConfiguration()" />
+          <lib-channels-list
+            [configuration]="activeConfiguration()"
+            (channelDefinitionsChange)="onChannelDefinitionsChange($event)"
+          />
         }
 
         @if (selectedNodeId() === 'communications') {

@@ -1,3 +1,7 @@
+<section class="channels-actions">
+	<button type="button" class="add-channel-button" (click)="startAdd()">Add Channel</button>
+</section>
+
 @if (!hasChannels()) {
 	<p class="channels-empty">There are no channels configured.</p>
 } @else {
@@ -5,18 +9,25 @@
 		<table class="channels-table">
 			<thead>
 				<tr>
+					<th scope="col" class="row-action-column"></th>
 					<th scope="col">Name</th>
-					<th scope="col">IsReserved</th>
-					<th scope="col">DataType</th>
-					<th scope="col">BaseUnits</th>
-					<th scope="col">OutputUnits</th>
+					<th scope="col">Reserved</th>
+					<th scope="col">Data Type</th>
+					<th scope="col">Base Units</th>
+					<th scope="col">Output Units</th>
 					<th scope="col">Category</th>
-					<th scope="col">GroupTag</th>
+					<th scope="col">Group Tag</th>
+					<th scope="col" class="row-action-column"></th>
 				</tr>
 			</thead>
 			<tbody>
 				@for (channel of channels(); track channel.id) {
 					<tr>
+						<td class="row-action-cell">
+							<button type="button" class="row-action-button" (click)="startEdit(channel.id)" aria-label="Edit channel">
+								<mat-icon aria-hidden="true">edit</mat-icon>
+							</button>
+						</td>
 						<td>{{ channel.name }}</td>
 						<td class="checkmark-cell" [attr.aria-label]="channel.isReserved ? 'Reserved channel' : 'Not reserved'">
 							@if (channel.isReserved) {
@@ -28,9 +39,31 @@
 						<td>{{ channel.outputUnitType }}</td>
 						<td>{{ channel.category }}</td>
 						<td>{{ channel.groupTag }}</td>
+						<td class="row-action-cell">
+							<button
+								type="button"
+								class="row-action-button delete"
+								(click)="deleteChannel(channel.id)"
+								aria-label="Delete channel"
+							>
+								<mat-icon aria-hidden="true">delete</mat-icon>
+							</button>
+						</td>
 					</tr>
 				}
 			</tbody>
 		</table>
+	</div>
+}
+
+@if (isEditing()) {
+	<div class="editor-backdrop" (click)="stopEdit()"></div>
+	<div class="editor-popup">
+		<lib-edit-channel
+			[channel]="editingChannel()"
+			[existingChannels]="channels()"
+			(save)="saveChannel($event)"
+			(cancel)="stopEdit()"
+		/>
 	</div>
 }

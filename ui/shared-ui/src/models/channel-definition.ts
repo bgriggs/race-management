@@ -9,8 +9,8 @@ export interface ChannelDefinition {
     category: string;
     name: string;
     abbreviation: string;
-    dataType: string;
     isStringValue: boolean;
+    dataType: string;
     baseUnitType: string;
     baseDecimalPlaces: number;
     outputUnitType: string;

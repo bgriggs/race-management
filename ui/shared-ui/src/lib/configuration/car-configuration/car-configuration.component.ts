@@ -19,6 +19,7 @@ import {
 } from '../../data/management-data-client';
 import { CarConfigurationSummary } from '../../../models/car-configuration-summary';
 import { CarConfiguration } from '../../../models/car-configuration';
+import { ChannelDefinition } from '../../../models/channel-definition';
 
 @Component({
   selector: 'rm-car-configuration',
@@ -310,6 +311,18 @@ export class CarConfigurationComponent implements OnInit {
     const current = this.activeConfiguration();
     if (!current) return;
     this.activeConfiguration.set({ ...current, ...data });
+  }
+
+  onChannelDefinitionsChange(channelDefinitions: ChannelDefinition[]): void {
+    const current = this.activeConfiguration();
+    if (!current) {
+      return;
+    }
+
+    this.activeConfiguration.set({
+      ...current,
+      channelDefinitions
+    });
   }
 
   navigateFromError(nodeId: string): void {

@@ -34,6 +34,20 @@ export class LocalManagementDataClient implements ManagementDataClient {
     );
   }
 
+  async loadAvailableUnitTypesAsync(dataType?: string): Promise<string[]> {
+    let params = new HttpParams();
+    if (dataType && dataType.trim().length > 0) {
+      params = params.set('dataType', dataType);
+    }
+
+    return await firstValueFrom(
+      this.httpClient.get<string[]>(
+        this.buildActionUrl('load-available-unit-types'),
+        { params }
+      )
+    );
+  }
+
   async loadCarConfigurationAsync(configId: string): Promise<CarConfiguration> {
     return await firstValueFrom(
         this.httpClient.get<CarConfiguration>(this.buildActionUrl('load-car-configuration'), {

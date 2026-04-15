@@ -65,6 +65,7 @@ describe('CarConfigurationComponent', () => {
         }
       ]),
       loadReservedChannelDefinitionsAsync: vi.fn().mockResolvedValue([]),
+      loadAvailableUnitTypesAsync: vi.fn().mockResolvedValue([]),
       loadCarConfigurationAsync: vi.fn().mockResolvedValue(buildConfig('Loaded Config')),
       saveCarConfigurationAsync: vi.fn(),
       transmitToCarAsync: vi.fn(),
@@ -106,6 +107,7 @@ describe('CarConfigurationComponent', () => {
     const emptyClient: ManagementDataClient = {
       loadCarConfigurationSummariesAsync: vi.fn().mockResolvedValue([]),
       loadReservedChannelDefinitionsAsync: vi.fn().mockResolvedValue([]),
+      loadAvailableUnitTypesAsync: vi.fn().mockResolvedValue([]),
       loadCarConfigurationAsync: vi.fn().mockResolvedValue(buildConfig('Loaded Config')),
       saveCarConfigurationAsync: vi.fn(),
       transmitToCarAsync: vi.fn(),
