@@ -32,7 +32,7 @@ public class CarConfiguration
     [MaxLength(32)]
     public required string ClientSecret { get; set; }
 
-    public CanMessageConfig CanConfig { get; set; } = new();
+    public CanBusConfig CanConfig { get; set; } = new();
     public List<ChannelDefinition> ChannelDefinitions { get; set; } = [];
     public List<CounterDefinition> CounterDefinitions { get; set; } = [];
     public List<MathDefinition> MathDefinitions { get; set; } = [];

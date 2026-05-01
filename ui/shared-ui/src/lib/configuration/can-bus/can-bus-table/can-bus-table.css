@@ -1,0 +1,225 @@
+.can-bus-table-settings {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
+	margin-bottom: 1rem;
+}
+
+.setting-field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.setting-toggle {
+	flex-direction: row;
+	align-items: center;
+	gap: 0.5rem;
+	align-self: flex-end;
+	padding-bottom: 0.4rem;
+}
+
+.setting-label {
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: #444;
+}
+
+.setting-input,
+.setting-select {
+	padding: 0.4rem 0.6rem;
+	border: 1px solid #ccc;
+	border-radius: 6px;
+	font-size: 0.9rem;
+}
+
+.setting-input:focus,
+.setting-select:focus {
+	outline: none;
+	border-color: #2f5d3a;
+	box-shadow: 0 0 0 2px rgba(47, 93, 58, 0.15);
+}
+
+.can-bus-table-actions {
+	display: flex;
+	justify-content: flex-start;
+	margin-bottom: 0.75rem;
+}
+
+.add-message-button {
+	border: 1px solid #2f5d3a;
+	background: #2f5d3a;
+	color: #fff;
+	border-radius: 8px;
+	padding: 0.4rem 0.8rem;
+	font-size: 0.9rem;
+	cursor: pointer;
+}
+
+.add-message-button:hover {
+	background: #244b2d;
+}
+
+.can-bus-table-wrap {
+	overflow-x: auto;
+}
+
+.can-bus-table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.can-bus-table th,
+.can-bus-table td {
+	border-bottom: 1px solid #ddd;
+	padding: 0.5rem 0.5rem;
+	text-align: left;
+	white-space: nowrap;
+}
+
+.can-bus-table th {
+	font-weight: 600;
+	font-size: 0.85rem;
+}
+
+.center-column {
+	text-align: center;
+}
+
+.center-cell {
+	text-align: center;
+}
+
+.row-action-column {
+	width: 2.75rem;
+}
+
+.row-action-cell {
+	text-align: center;
+}
+
+.row-action-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	border: none;
+	border-radius: 6px;
+	background: transparent;
+	color: #2f3d2c;
+	cursor: pointer;
+}
+
+.row-action-button:hover {
+	background: #eef3ed;
+}
+
+.row-action-button.delete {
+	color: #8b2d2d;
+}
+
+.row-action-button.delete:hover {
+	background: #ffecec;
+}
+
+.row-action-button mat-icon {
+	font-size: 1.1rem;
+	width: 1.1rem;
+	height: 1.1rem;
+}
+
+.byte-column {
+	min-width: 7rem;
+	text-align: center;
+}
+
+.byte-cell {
+	text-align: center;
+	padding: 0.35rem 0.25rem;
+}
+
+.byte-assign-button {
+	display: block;
+	width: 100%;
+	box-sizing: border-box;
+	padding: 0.3rem 0.5rem;
+	border: 1px solid #ccc;
+	border-radius: 6px;
+	background: #fff;
+	font-size: 0.8rem;
+	cursor: pointer;
+	white-space: nowrap;
+	min-width: 5rem;
+	text-align: center;
+	color: #222;
+}
+
+.byte-assign-button:hover {
+	border-color: #2f5d3a;
+	background: #f5faf6;
+}
+
+.byte-assign-button.unassigned {
+	color: #999;
+	font-style: italic;
+}
+
+.byte-disabled {
+	color: #bbb;
+}
+
+.empty-message {
+	color: #555;
+	text-align: center;
+	padding: 1.5rem 0.75rem;
+}
+
+.editor-backdrop {
+	position: fixed;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.45);
+	z-index: 1000;
+}
+
+.editor-popup {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	z-index: 1001;
+	background: #fff;
+	border-radius: 10px;
+	box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+	padding: 1.5rem;
+	max-height: 90vh;
+	max-width: 90vw;
+	overflow-y: auto;
+}
+
+.editor-popup-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 1rem;
+}
+
+.editor-popup-title {
+	margin: 0;
+	font-size: 1.1rem;
+	font-weight: 600;
+}
+
+.editor-close-button {
+	border: none;
+	background: transparent;
+	font-size: 1.2rem;
+	cursor: pointer;
+	color: #555;
+	padding: 0.25rem;
+	line-height: 1;
+}
+
+.editor-close-button:hover {
+	color: #222;
+}

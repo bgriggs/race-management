@@ -127,6 +127,31 @@
             (configurationChange)="onCloudConfigurationChange($event)"
           />
         }
+
+        @if (selectedNodeId() === 'can-bus') {
+          <lib-can-bus-config
+            [canBus1Enabled]="canBus1Enabled()"
+            [canBus2Enabled]="canBus2Enabled()"
+            (canBus1EnabledChange)="onCanBus1EnabledChange($event)"
+            (canBus2EnabledChange)="onCanBus2EnabledChange($event)"
+          />
+        }
+
+        @if (selectedNodeId() === 'can-bus-1') {
+          <lib-can-bus-table
+            [config]="canBus1Config()"
+            [channels]="activeConfiguration()!.channelDefinitions"
+            (configChange)="onCanBus1ConfigChange($event)"
+          />
+        }
+
+        @if (selectedNodeId() === 'can-bus-2') {
+          <lib-can-bus-table
+            [config]="canBus2Config()"
+            [channels]="activeConfiguration()!.channelDefinitions"
+            (configChange)="onCanBus2ConfigChange($event)"
+          />
+        }
       </article>
 
       <rm-error-list [items]="validationErrors()" (navigateToNode)="navigateFromError($event)" />

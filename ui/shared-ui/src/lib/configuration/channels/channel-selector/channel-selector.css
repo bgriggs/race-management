@@ -1,0 +1,85 @@
+.channel-selector-field {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.channel-display {
+	flex: 1;
+	padding: 0.45rem 0.75rem;
+	border: 1px solid #ccc;
+	border-radius: 6px;
+	font-size: 0.9rem;
+	background: #fff;
+	color: #333;
+	min-height: 1.4em;
+	-webkit-user-select: none;
+	user-select: none;
+}
+
+.select-channel-button {
+	border: 1px solid #2f5d3a;
+	background: #2f5d3a;
+	color: #fff;
+	border-radius: 8px;
+	padding: 0.45rem 0.85rem;
+	font-size: 0.9rem;
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+.select-channel-button:hover {
+	background: #244b2d;
+}
+
+.selector-backdrop {
+	position: fixed;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.45);
+	z-index: 1000;
+}
+
+.selector-popup {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	z-index: 1001;
+	background: #fff;
+	border-radius: 10px;
+	box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+	padding: 1.25rem 1.5rem;
+	max-height: 80vh;
+	max-width: 90vw;
+	min-width: 500px;
+	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
+}
+
+.selector-popup-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 0.75rem;
+}
+
+.selector-popup-title {
+	margin: 0;
+	font-size: 1.1rem;
+	font-weight: 600;
+}
+
+.selector-close-button {
+	border: none;
+	background: transparent;
+	font-size: 1.2rem;
+	cursor: pointer;
+	color: #555;
+	padding: 0.25rem;
+	line-height: 1;
+}
+
+.selector-close-button:hover {
+	color: #222;
+}

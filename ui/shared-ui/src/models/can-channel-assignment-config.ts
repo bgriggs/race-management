@@ -4,7 +4,7 @@
  */
 
 export interface CanChannelAssignmentConfig {
-    id: number;
+    id: string;
     offset: number;
     length: number;
     mask: number;

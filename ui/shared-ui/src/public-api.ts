@@ -6,3 +6,5 @@ export * from './lib/icons/trash-icon/trash-icon.component';
 export * from './lib/data/management-data-client';
 export * from './lib/data/management-data-client-settings';
 export * from './lib/dialogs/confirm-dialog/confirm-dialog.component';
+export * from './lib/configuration/channels/channel-selection-list/channel-selection-list';
+export * from './lib/configuration/channels/channel-selector/channel-selector';

@@ -1,0 +1,23 @@
+<div class="can-bus-toggles">
+	<div class="can-bus-toggle-row">
+		<mat-slide-toggle
+			[checked]="canBus1Enabled()"
+			(change)="onCanBus1Toggle($event.checked)"
+		/>
+		<div class="can-bus-toggle-info">
+			<span class="can-bus-toggle-label">CAN 1</span>
+			<span class="can-bus-toggle-description">Enable CAN Bus interface 1 (can0)</span>
+		</div>
+	</div>
+
+	<div class="can-bus-toggle-row">
+		<mat-slide-toggle
+			[checked]="canBus2Enabled()"
+			(change)="onCanBus2Toggle($event.checked)"
+		/>
+		<div class="can-bus-toggle-info">
+			<span class="can-bus-toggle-label">CAN 2</span>
+			<span class="can-bus-toggle-description">Enable CAN Bus interface 2 (can1)</span>
+		</div>
+	</div>
+</div>

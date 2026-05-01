@@ -1,0 +1,112 @@
+<div class="assignment-form">
+	<div class="form-row">
+		<label class="form-label">Channel</label>
+		<lib-channel-selector
+			[channels]="channels()"
+			[usedChannelIds]="usedChannelIds()"
+			[(channelId)]="channelId"
+		/>
+	</div>
+
+	<div class="form-row-group">
+		<div class="form-row">
+			<label class="form-label" for="offset">Offset</label>
+			<input
+				id="offset"
+				type="text"
+				class="form-input"
+				[value]="offset()"
+				readonly
+			/>
+		</div>
+
+		<div class="form-row">
+			<label class="form-label" for="length">Length (bytes)</label>
+			<select
+				id="length"
+				class="form-select"
+				[ngModel]="length()"
+				(ngModelChange)="onLengthChange(+$event)"
+			>
+				@for (l of lengthOptions(); track l) {
+					<option [value]="l">{{ l }}</option>
+				}
+			</select>
+		</div>
+	</div>
+
+	<div class="form-row">
+		<label class="form-label" for="mask">Mask (hex)</label>
+		<div class="hex-input-wrap">
+			<span class="hex-prefix">0x</span>
+			<input
+				id="mask"
+				type="text"
+				class="form-input hex-input"
+				[placeholder]="defaultMask()"
+				[ngModel]="maskHex()"
+				(ngModelChange)="maskHex.set($event)"
+			/>
+		</div>
+	</div>
+
+	<div class="form-row">
+		<label class="form-label">Signed</label>
+		<div class="toggle-field">
+			<span class="toggle-option" [class.active]="!isSigned()">Unsigned</span>
+			<mat-slide-toggle
+				[checked]="isSigned()"
+				(change)="isSigned.set($event.checked)"
+			/>
+			<span class="toggle-option" [class.active]="isSigned()">Signed</span>
+		</div>
+	</div>
+
+	<div class="form-row-group">
+		<div class="form-row">
+			<label class="form-label" for="multiplier">Multiplier</label>
+			<input
+				id="multiplier"
+				type="number"
+				class="form-input"
+				[ngModel]="multiplier()"
+				(ngModelChange)="multiplier.set(+$event)"
+			/>
+		</div>
+
+		<div class="form-row">
+			<label class="form-label" for="divider">Divisor</label>
+			<input
+				id="divider"
+				type="number"
+				class="form-input"
+				[ngModel]="divider()"
+				(ngModelChange)="divider.set(+$event)"
+			/>
+		</div>
+
+		<div class="form-row">
+			<label class="form-label" for="constant">Constant</label>
+			<input
+				id="constant"
+				type="number"
+				class="form-input"
+				[ngModel]="constant()"
+				(ngModelChange)="constant.set(+$event)"
+			/>
+		</div>
+	</div>
+
+	@if (overlapError()) {
+		<div class="overlap-error">{{ overlapError() }}</div>
+	}
+
+	<div class="form-actions">
+		@if (assignment()) {
+			<button type="button" class="btn btn-danger" (click)="onClear()">Unassign</button>
+		}
+		<span class="form-actions-spacer"></span>
+		<button type="button" class="btn btn-secondary" (click)="onCancel()">Cancel</button>
+		<button type="button" class="btn btn-primary" [disabled]="!isValid()" (click)="onSave()">OK</button>
+	</div>
+</div>

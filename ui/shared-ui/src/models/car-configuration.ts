@@ -3,7 +3,7 @@
  * Any changes made to this file can be lost when this file is regenerated.
  */
 
-import { CanMessageConfig } from "./can-message-config";
+import { CanBusConfig } from "./can-bus-config";
 import { ChannelDefinition } from "./channel-definition";
 import { CounterDefinition } from "./counter-definition";
 import { MathDefinition } from "./math-definition";
@@ -22,7 +22,7 @@ export interface CarConfiguration {
     isCloudConnectionEnabled: boolean;
     clientId: string;
     clientSecret: string;
-    canConfig: CanMessageConfig;
+    canConfig: CanBusConfig;
     channelDefinitions: ChannelDefinition[];
     counterDefinitions: CounterDefinition[];
     mathDefinitions: MathDefinition[];

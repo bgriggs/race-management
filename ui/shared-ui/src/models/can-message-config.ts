@@ -8,7 +8,6 @@ import { CanChannelAssignmentConfig } from "./can-channel-assignment-config";
 export interface CanMessageConfig {
     isEnabled: boolean;
     canId: number;
-    canBusId: number;
     isExtended: boolean;
     length: number;
     isBigEndian: boolean;

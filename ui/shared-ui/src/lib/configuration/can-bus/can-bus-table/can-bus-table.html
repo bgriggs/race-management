@@ -1,0 +1,149 @@
+<div class="can-bus-table-settings">
+	<div class="setting-field">
+		<label class="setting-label" for="interfaceName">Interface Name</label>
+		<input
+			id="interfaceName"
+			type="text"
+			class="setting-input"
+			[ngModel]="config().interfaceName"
+			(ngModelChange)="onInterfaceNameChange($event)"
+		/>
+	</div>
+
+	<div class="setting-field">
+		<label class="setting-label" for="bitRate">Bit Rate</label>
+		<select
+			id="bitRate"
+			class="setting-select"
+			[ngModel]="config().bitRate"
+			(ngModelChange)="onBitRateChange($event)"
+		>
+			@for (rate of bitRates; track rate.value) {
+				<option [value]="rate.value">{{ rate.label }}</option>
+			}
+		</select>
+	</div>
+
+	<div class="setting-field setting-toggle">
+		<mat-slide-toggle
+			[checked]="config().silentOnCanBus"
+			(change)="onSilentChange($event.checked)"
+		/>
+		<span class="setting-label">Silent on CAN Bus</span>
+	</div>
+</div>
+
+<div class="can-bus-table-actions">
+	<button type="button" class="add-message-button" (click)="addMessage()">Add Message</button>
+</div>
+
+<div class="can-bus-table-wrap">
+	<table class="can-bus-table">
+		<thead>
+			<tr>
+				<th scope="col" class="row-action-column"></th>
+				<th scope="col" class="center-column">On/Off</th>
+				<th scope="col">CAN ID</th>
+				<th scope="col">RX/TX</th>
+				<th scope="col">Byte Order</th>
+				<th scope="col">DLC</th>
+				@for (b of byteIndices; track b) {
+					<th scope="col" class="byte-column">Byte {{ b + 1 }}</th>
+				}
+				<th scope="col" class="row-action-column"></th>
+			</tr>
+		</thead>
+		<tbody>
+			@for (msg of config().messages; track $index; let i = $index) {
+				<tr>
+					<td class="row-action-cell">
+						<button type="button" class="row-action-button" (click)="startEditMessage(i)" aria-label="Edit message">
+							<mat-icon aria-hidden="true">edit</mat-icon>
+						</button>
+					</td>
+					<td class="center-cell">
+						<mat-slide-toggle
+							[checked]="msg.isEnabled"
+							(change)="onMessageEnabledChange(i, $event.checked)"
+						/>
+					</td>
+					<td>{{ formatCanId(msg) }}</td>
+					<td>{{ msg.isReceive ? 'RX' : 'TX' }}</td>
+					<td>{{ msg.isBigEndian ? 'Big Endian' : 'Little Endian' }}</td>
+					<td>{{ msg.length }}</td>
+					@for (cell of getByteLayout(msg); track cell.byteIndex) {
+						@if (cell.type === 'assigned') {
+							<td class="byte-cell" [attr.colspan]="cell.colspan">
+								<button
+									type="button"
+									class="byte-assign-button"
+									(click)="startEditAssignment(i, cell.byteIndex)"
+								>{{ cell.channelName }}</button>
+							</td>
+						} @else if (cell.type === 'unassigned') {
+							<td class="byte-cell">
+								<button
+									type="button"
+									class="byte-assign-button unassigned"
+									(click)="startEditAssignment(i, cell.byteIndex)"
+								>Unassigned</button>
+							</td>
+						} @else {
+							<td class="byte-cell">
+								<span class="byte-disabled">—</span>
+							</td>
+						}
+					}
+					<td class="row-action-cell">
+						<button
+							type="button"
+							class="row-action-button delete"
+							(click)="deleteMessage(i)"
+							aria-label="Delete message"
+						>
+							<mat-icon aria-hidden="true">delete</mat-icon>
+						</button>
+					</td>
+				</tr>
+			} @empty {
+				<tr>
+					<td colspan="15" class="empty-message">No messages configured. Click "Add Message" to add one.</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+</div>
+
+@if (isEditing()) {
+	<div class="editor-backdrop" (click)="stopEditMessage()"></div>
+	<div class="editor-popup">
+		<div class="editor-popup-header">
+			<h3 class="editor-popup-title">{{ editingMessageIndex() === 'new' ? 'Add Message' : 'Edit Message' }}</h3>
+			<button type="button" class="editor-close-button" (click)="stopEditMessage()" aria-label="Close">✕</button>
+		</div>
+		<lib-can-bus-edit-message
+			[message]="editingMessage()"
+			(save)="saveMessage($event)"
+			(cancel)="stopEditMessage()"
+		/>
+	</div>
+}
+
+@if (isEditingAssignment()) {
+	<div class="editor-backdrop" (click)="stopEditAssignment()"></div>
+	<div class="editor-popup">
+		<div class="editor-popup-header">
+			<h3 class="editor-popup-title">Channel Assignment — Byte {{ editingAssignment()!.byteIndex + 1 }}</h3>
+			<button type="button" class="editor-close-button" (click)="stopEditAssignment()" aria-label="Close">✕</button>
+		</div>
+		<lib-can-bus-channel-assignment
+			[assignment]="editingAssignmentConfig()"
+			[byteIndex]="editingAssignment()!.byteIndex"
+			[channels]="channels()"
+			[usedChannelIds]="usedChannelIds()"
+			[siblingAssignments]="editingMessageAssignments()"
+			(save)="saveAssignment($event)"
+			(cancel)="stopEditAssignment()"
+		/>
+	</div>
+}

@@ -5,7 +5,7 @@
 /// </summary>
 public class CanChannelAssignmentConfig
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public int Offset { get; set; }
     public int Length { get; set; } = 1;
     public ulong Mask { get; set; } = 0xFF;

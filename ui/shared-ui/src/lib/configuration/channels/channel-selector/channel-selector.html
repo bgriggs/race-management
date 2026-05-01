@@ -1,0 +1,19 @@
+<div class="channel-selector-field">
+	<div class="channel-display">{{ selectedChannelName() || 'No channel selected' }}</div>
+	<button type="button" class="select-channel-button" (click)="openList()">Select Channel</button>
+</div>
+
+@if (showList()) {
+	<div class="selector-backdrop" (click)="closeList()"></div>
+	<div class="selector-popup">
+		<div class="selector-popup-header">
+			<h3 class="selector-popup-title">Select a Channel</h3>
+			<button type="button" class="selector-close-button" (click)="closeList()" aria-label="Close">✕</button>
+		</div>
+		<lib-channel-selection-list
+			[channels]="channels()"
+			[usedChannelIds]="usedChannelIds()"
+			(channelSelected)="onChannelSelected($event)"
+		/>
+	</div>
+}

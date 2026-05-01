@@ -29,15 +29,21 @@ function buildConfig(name: string): CarConfiguration {
     clientId: 'client-id',
     clientSecret: 'client-secret',
     canConfig: {
-      isEnabled: false,
-      canId: 0,
-      canBusId: 0,
-      isExtended: false,
-      length: 8,
-      isBigEndian: true,
-      isReceive: true,
-      transmitRate: '00:00:01',
-      channelAssignments: []
+      canBusEnabled: [false, false],
+      interfaces: [
+        {
+          interfaceName: 'can0',
+          bitRate: 1000000,
+          silentOnCanBus: false,
+          messages: []
+        },
+        {
+          interfaceName: 'can1',
+          bitRate: 1000000,
+          silentOnCanBus: false,
+          messages: []
+        }
+      ]
     },
     channelDefinitions: [],
     counterDefinitions: [],
@@ -101,6 +107,26 @@ describe('CarConfigurationComponent', () => {
 
     expect(mockClient.loadCarConfigurationAsync).toHaveBeenCalledWith('cfg-1');
     expect(component.activeConfiguration()?.name).toBe('Loaded Config');
+  });
+
+  it('adds two empty can interfaces when a loaded configuration has none', async () => {
+    const fixture = TestBed.createComponent(CarConfigurationComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    mockClient.loadCarConfigurationAsync = vi.fn().mockResolvedValue({
+      ...buildConfig('Loaded Config'),
+      canConfig: {
+        canBusEnabled: [],
+        interfaces: []
+      }
+    });
+
+    const component = fixture.componentInstance;
+    await component.openConfiguration('cfg-1');
+
+    expect(component.activeConfiguration()?.canConfig.interfaces.map((item) => item.interfaceName)).toEqual(['can0', 'can1']);
+    expect(component.activeConfiguration()?.canConfig.canBusEnabled).toEqual([false, false]);
   });
 
   it('shows empty-state message when no configuration summaries exist', async () => {

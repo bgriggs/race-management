@@ -13,11 +13,6 @@ public class CanMessageConfig
     public int CanId { get; set; }
 
     /// <summary>
-    /// CAN interface port, such as can0, can1, etc.
-    /// </summary>
-    public int CanBusId { get; set; }
-
-    /// <summary>
     /// True if the message is an extended message 29-bit.
     /// </summary>
     public bool IsExtended { get; set; }
@@ -30,5 +25,5 @@ public class CanMessageConfig
     public bool IsReceive { get; set; } = true;
     public TimeSpan TransmitRate { get; set; } = TimeSpan.FromMilliseconds(1000);
 
-    public List<CanChannelAssignmentConfig> ChannelAssignments { get; } = [];
+    public List<CanChannelAssignmentConfig> ChannelAssignments { get; set; } = [];
 }

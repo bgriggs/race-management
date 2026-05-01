@@ -1,0 +1,87 @@
+.selection-list-controls {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	margin-bottom: 0.75rem;
+}
+
+.search-input {
+	flex: 1;
+	padding: 0.45rem 0.75rem;
+	border: 1px solid #ccc;
+	border-radius: 6px;
+	font-size: 0.9rem;
+	outline: none;
+}
+
+.search-input:focus {
+	border-color: #2f5d3a;
+	box-shadow: 0 0 0 2px rgba(47, 93, 58, 0.15);
+}
+
+.unused-toggle {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.toggle-label {
+	font-size: 0.85rem;
+	color: #444;
+}
+
+.selection-list-table-wrap {
+	overflow-x: auto;
+	max-height: 350px;
+	overflow-y: auto;
+}
+
+.selection-list-table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.selection-list-table th,
+.selection-list-table td {
+	border-bottom: 1px solid #ddd;
+	padding: 0.5rem 0.75rem;
+	text-align: left;
+	white-space: nowrap;
+}
+
+.selection-list-table th {
+	font-weight: 600;
+	position: sticky;
+	top: 0;
+	background: #fff;
+	z-index: 1;
+}
+
+.center-column {
+	text-align: center;
+}
+
+.center-cell {
+	text-align: center;
+}
+
+.selectable-row {
+	cursor: pointer;
+}
+
+.selectable-row:hover {
+	background: #eef3ed;
+}
+
+.checkmark {
+	font-size: 1rem;
+	font-weight: 700;
+}
+
+.empty-message {
+	color: #555;
+	text-align: center;
+	padding: 1.5rem 0.75rem;
+}

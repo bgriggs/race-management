@@ -28,6 +28,7 @@ public class ModelGenerationSpec : GenerationSpec
         typeof(CarConfiguration),
         typeof(CanMessageConfig),
         typeof(CanBusConfig),
+        typeof(CanBusInterfaceConfig),
         typeof(CanChannelAssignmentConfig),
         typeof(ChannelDefinition),
         typeof(CounterDefinition),

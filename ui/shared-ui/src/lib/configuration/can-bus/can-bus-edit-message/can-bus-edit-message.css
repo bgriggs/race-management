@@ -1,0 +1,113 @@
+.edit-message-form {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	min-width: 360px;
+}
+
+.form-row {
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+}
+
+.form-label {
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: #444;
+}
+
+.form-input,
+.form-select {
+	padding: 0.45rem 0.65rem;
+	border: 1px solid #ccc;
+	border-radius: 6px;
+	font-size: 0.9rem;
+}
+
+.form-input:focus,
+.form-select:focus {
+	outline: none;
+	border-color: #2f5d3a;
+	box-shadow: 0 0 0 2px rgba(47, 93, 58, 0.15);
+}
+
+.hex-input-wrap {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+}
+
+.hex-prefix {
+	font-family: monospace;
+	font-size: 0.9rem;
+	color: #666;
+}
+
+.hex-input {
+	font-family: monospace;
+	text-transform: uppercase;
+	width: 12ch;
+}
+
+.toggle-field {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.toggle-option {
+	font-size: 0.85rem;
+	color: #999;
+	transition: color 0.15s;
+}
+
+.toggle-option.active {
+	color: #222;
+	font-weight: 600;
+}
+
+.field-error {
+	font-size: 0.8rem;
+	color: #c33;
+}
+
+.form-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.5rem;
+	margin-top: 0.5rem;
+}
+
+.btn {
+	padding: 0.45rem 1rem;
+	border-radius: 8px;
+	font-size: 0.9rem;
+	cursor: pointer;
+	border: 1px solid transparent;
+}
+
+.btn-primary {
+	background: #2f5d3a;
+	color: #fff;
+	border-color: #2f5d3a;
+}
+
+.btn-primary:hover:not(:disabled) {
+	background: #244b2d;
+}
+
+.btn-primary:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.btn-secondary {
+	background: #fff;
+	color: #444;
+	border-color: #ccc;
+}
+
+.btn-secondary:hover {
+	background: #f5f5f5;
+}

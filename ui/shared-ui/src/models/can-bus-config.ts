@@ -3,11 +3,9 @@
  * Any changes made to this file can be lost when this file is regenerated.
  */
 
-import { CanMessageConfig } from "./can-message-config";
+import { CanBusInterfaceConfig } from "./can-bus-interface-config";
 
 export interface CanBusConfig {
-    interfaceName: string;
-    bitRate: number;
-    silentOnCanBus: boolean;
-    messages: CanMessageConfig[];
+    canBusEnabled: boolean[];
+    interfaces: CanBusInterfaceConfig[];
 }

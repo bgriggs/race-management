@@ -7,6 +7,7 @@ import { decode, encode } from "@msgpack/msgpack";
 import { CarConfiguration } from "./car-configuration";
 import { CanMessageConfig } from "./can-message-config";
 import { CanBusConfig } from "./can-bus-config";
+import { CanBusInterfaceConfig } from "./can-bus-interface-config";
 import { CanChannelAssignmentConfig } from "./can-channel-assignment-config";
 import { ChannelDefinition } from "./channel-definition";
 import { CounterDefinition } from "./counter-definition";
@@ -42,7 +43,7 @@ export function carConfigurationFromMessagePack(obj: Record<string, unknown>): C
         isCloudConnectionEnabled: obj["IsCloudConnectionEnabled"] as boolean,
         clientId: obj["ClientId"] as string,
         clientSecret: obj["ClientSecret"] as string,
-        canConfig: canMessageConfigFromMessagePack(obj["CanConfig"] as Record<string, unknown>),
+        canConfig: canBusConfigFromMessagePack(obj["CanConfig"] as Record<string, unknown>),
         channelDefinitions: (obj["ChannelDefinitions"] as unknown[]).map(v => channelDefinitionFromMessagePack(v as Record<string, unknown>)),
         counterDefinitions: (obj["CounterDefinitions"] as unknown[]).map(v => counterDefinitionFromMessagePack(v as Record<string, unknown>)),
         mathDefinitions: (obj["MathDefinitions"] as unknown[]).map(v => mathDefinitionFromMessagePack(v as Record<string, unknown>)),
@@ -60,7 +61,6 @@ export function canMessageConfigFromMessagePack(obj: Record<string, unknown>): C
     return {
         isEnabled: obj["IsEnabled"] as boolean,
         canId: obj["CanId"] as number,
-        canBusId: obj["CanBusId"] as number,
         isExtended: obj["IsExtended"] as boolean,
         length: obj["Length"] as number,
         isBigEndian: obj["IsBigEndian"] as boolean,
@@ -76,10 +76,8 @@ export function decodeCanMessageConfigMessagePack(bytes: Uint8Array): CanMessage
 
 export function canBusConfigFromMessagePack(obj: Record<string, unknown>): CanBusConfig {
     return {
-        interfaceName: obj["InterfaceName"] as string,
-        bitRate: obj["BitRate"] as number,
-        silentOnCanBus: obj["SilentOnCanBus"] as boolean,
-        messages: (obj["Messages"] as unknown[]).map(v => canMessageConfigFromMessagePack(v as Record<string, unknown>)),
+        canBusEnabled: (obj["CanBusEnabled"] as unknown[]).map(v => v as boolean),
+        interfaces: (obj["Interfaces"] as unknown[]).map(v => canBusInterfaceConfigFromMessagePack(v as Record<string, unknown>)),
     };
 }
 
@@ -87,9 +85,22 @@ export function decodeCanBusConfigMessagePack(bytes: Uint8Array): CanBusConfig {
     return canBusConfigFromMessagePack(decode(bytes) as Record<string, unknown>);
 }
 
+export function canBusInterfaceConfigFromMessagePack(obj: Record<string, unknown>): CanBusInterfaceConfig {
+    return {
+        interfaceName: obj["InterfaceName"] as string,
+        bitRate: obj["BitRate"] as number,
+        silentOnCanBus: obj["SilentOnCanBus"] as boolean,
+        messages: (obj["Messages"] as unknown[]).map(v => canMessageConfigFromMessagePack(v as Record<string, unknown>)),
+    };
+}
+
+export function decodeCanBusInterfaceConfigMessagePack(bytes: Uint8Array): CanBusInterfaceConfig {
+    return canBusInterfaceConfigFromMessagePack(decode(bytes) as Record<string, unknown>);
+}
+
 export function canChannelAssignmentConfigFromMessagePack(obj: Record<string, unknown>): CanChannelAssignmentConfig {
     return {
-        id: obj["Id"] as number,
+        id: obj["Id"] as string,
         offset: obj["Offset"] as number,
         length: obj["Length"] as number,
         mask: obj["Mask"] as number,

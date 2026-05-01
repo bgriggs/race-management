@@ -18,15 +18,21 @@ function buildConfigurationWithChannels(channelCount: number): CarConfiguration 
     clientId: '',
     clientSecret: '',
     canConfig: {
-      isEnabled: false,
-      canId: 0,
-      canBusId: 0,
-      isExtended: false,
-      length: 8,
-      isBigEndian: true,
-      isReceive: true,
-      transmitRate: '00:00:01',
-      channelAssignments: []
+      canBusEnabled: [false, false],
+      interfaces: [
+        {
+          interfaceName: 'can0',
+          bitRate: 1000000,
+          silentOnCanBus: false,
+          messages: []
+        },
+        {
+          interfaceName: 'can1',
+          bitRate: 1000000,
+          silentOnCanBus: false,
+          messages: []
+        }
+      ]
     },
     channelDefinitions: Array.from({ length: channelCount }, (_, index) => ({
       id: `channel-${index + 1}`,

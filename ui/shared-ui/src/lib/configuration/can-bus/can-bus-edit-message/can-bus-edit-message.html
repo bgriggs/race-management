@@ -1,0 +1,90 @@
+<div class="edit-message-form">
+	<div class="form-row">
+		<label class="form-label">ID Type</label>
+		<div class="toggle-field">
+			<span class="toggle-option" [class.active]="!isExtended()">Standard (11-bit)</span>
+			<mat-slide-toggle
+				[checked]="isExtended()"
+				(change)="onExtendedToggle($event.checked)"
+			/>
+			<span class="toggle-option" [class.active]="isExtended()">Extended (29-bit)</span>
+		</div>
+	</div>
+
+	<div class="form-row">
+		<label class="form-label" for="canId">CAN ID (hex)</label>
+		<div class="hex-input-wrap">
+			<span class="hex-prefix">0x</span>
+			<input
+				id="canId"
+				type="text"
+				class="form-input hex-input"
+				[maxlength]="canIdMaxLength()"
+				[ngModel]="canIdHex()"
+				(ngModelChange)="canIdHex.set($event)"
+			/>
+		</div>
+		@if (canIdError()) {
+			<span class="field-error">{{ canIdError() }}</span>
+		}
+	</div>
+
+	<div class="form-row">
+		<label class="form-label" for="dlc">DLC</label>
+		<select
+			id="dlc"
+			class="form-select"
+			[ngModel]="dlc()"
+			(ngModelChange)="dlc.set(+$event)"
+		>
+			@for (d of dlcOptions; track d) {
+				<option [value]="d">{{ d }}</option>
+			}
+		</select>
+	</div>
+
+	<div class="form-row">
+		<label class="form-label">Byte Order</label>
+		<div class="toggle-field">
+			<span class="toggle-option" [class.active]="isBigEndian()">Big Endian / Normal</span>
+			<mat-slide-toggle
+				[checked]="!isBigEndian()"
+				(change)="isBigEndian.set(!$event.checked)"
+			/>
+			<span class="toggle-option" [class.active]="!isBigEndian()">Little Endian / Word Swap</span>
+		</div>
+	</div>
+
+	<div class="form-row">
+		<label class="form-label">RX / TX</label>
+		<div class="toggle-field">
+			<span class="toggle-option" [class.active]="isReceive()">Receive</span>
+			<mat-slide-toggle
+				[checked]="!isReceive()"
+				(change)="isReceive.set(!$event.checked)"
+			/>
+			<span class="toggle-option" [class.active]="!isReceive()">Transmit</span>
+		</div>
+	</div>
+
+	@if (!isReceive()) {
+		<div class="form-row">
+			<label class="form-label" for="transmitFrequency">Transmit Frequency</label>
+			<select
+				id="transmitFrequency"
+				class="form-select"
+				[ngModel]="transmitRate()"
+				(ngModelChange)="transmitRate.set($event)"
+			>
+				@for (option of transmitFrequencyOptions; track option.value) {
+					<option [value]="option.value">{{ option.label }}</option>
+				}
+			</select>
+		</div>
+	}
+
+	<div class="form-actions">
+		<button type="button" class="btn btn-secondary" (click)="onCancel()">Cancel</button>
+		<button type="button" class="btn btn-primary" [disabled]="!isValid()" (click)="onSave()">OK</button>
+	</div>
+</div>
