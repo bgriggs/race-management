@@ -7,8 +7,8 @@ namespace ChannelsTests.UserConditions;
 [TestClass]
 public class ConditionEvaluationTests
 {
-    private static readonly Guid Ch1   = new("00000000-0000-0000-0000-000000000001");
-    private static readonly Guid ChOut  = new("00000000-0000-0000-0000-000000000010");
+    private static readonly Guid Ch1 = new("00000000-0000-0000-0000-000000000001");
+    private static readonly Guid ChOut = new("00000000-0000-0000-0000-000000000010");
     private static readonly Guid ChOut2 = new("00000000-0000-0000-0000-000000000014");
 
     // -------------------------------------------------------------------------
@@ -44,7 +44,7 @@ public class ConditionEvaluationTests
 
     private void AddCondition(int id, Guid outputChannelId, params StatementDefinition[] statementDefinitions)
     {
-        var def = new ConditionDefinition { Id = ConditionId(id), OutputChannelId = outputChannelId };
+        var def = new ConditionDefinition { Id = ConditionId(id), Name = "n", OutputChannelId = outputChannelId };
         def.Statements.AddRange(statementDefinitions);
         conditionRepo.Add(def);
         foreach (var statementDefinition in statementDefinitions)
@@ -172,7 +172,7 @@ public class ConditionEvaluationTests
     [TestMethod]
     public async Task MultipleConditions_EachWritesToOwnOutputChannel()
     {
-        AddCondition(id: 1, outputChannelId: ChOut,  AlwaysTrueStatement(1));
+        AddCondition(id: 1, outputChannelId: ChOut, AlwaysTrueStatement(1));
         AddCondition(id: 2, outputChannelId: ChOut2, AlwaysFalseStatement(2));
 
         await CreateEvaluation().UpdateAsync();
@@ -184,7 +184,7 @@ public class ConditionEvaluationTests
     [TestMethod]
     public async Task MultipleConditions_StatesStoredIndependently()
     {
-        AddCondition(id: 1, outputChannelId: ChOut,  AlwaysTrueStatement(1));
+        AddCondition(id: 1, outputChannelId: ChOut, AlwaysTrueStatement(1));
         AddCondition(id: 2, outputChannelId: ChOut2, AlwaysFalseStatement(2));
 
         await CreateEvaluation().UpdateAsync();

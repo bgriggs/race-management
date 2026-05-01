@@ -1,0 +1,31 @@
+<section class="user-condition-editor">
+	<section class="editor-section">
+		<label for="condition-name">Name</label>
+		<input
+			id="condition-name"
+			type="text"
+			[value]="condition().name"
+			(input)="onNameChanged($any($event.target).value)"
+		/>
+	</section>
+
+	<section class="editor-section">
+		<h3>Statements</h3>
+		<lib-edit-statements
+			[channels]="channels()"
+			[usedChannelIds]="usedChannelIds()"
+			[statement]="firstStatement()"
+			(statementChange)="onStatementChanged($event)"
+		/>
+	</section>
+
+	<section class="editor-section output-section">
+		<label>Output Channel</label>
+		<lib-channel-selector
+			[channels]="channels()"
+			[usedChannelIds]="usedChannelIds()"
+			[channelId]="condition().outputChannelId || null"
+			(channelIdChange)="onOutputChannelChanged($event)"
+		/>
+	</section>
+</section>

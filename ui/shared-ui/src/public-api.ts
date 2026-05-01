@@ -8,3 +8,8 @@ export * from './lib/data/management-data-client-settings';
 export * from './lib/dialogs/confirm-dialog/confirm-dialog.component';
 export * from './lib/configuration/channels/channel-selection-list/channel-selection-list';
 export * from './lib/configuration/channels/channel-selector/channel-selector';
+export * from './lib/configuration/logic/edit-comparison/edit-comparison';
+export * from './lib/configuration/logic/edit-comparisons-list/edit-comparisons-list';
+export * from './lib/configuration/logic/edit-statements/edit-statements';
+export * from './lib/configuration/user-conditions/edit-user-condition/edit-user-condition';
+export * from './lib/configuration/user-conditions/user-conditions-list/user-conditions-list';

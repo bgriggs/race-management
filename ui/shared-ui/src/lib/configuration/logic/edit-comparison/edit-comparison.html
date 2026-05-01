@@ -1,0 +1,94 @@
+<form class="comparison-form" (submit)="$event.preventDefault()">
+	<section class="field">
+		<label>Input Channel</label>
+		<lib-channel-selector
+			[channels]="channels()"
+			[usedChannelIds]="inputChannelUsedIds()"
+			[channelId]="comparison().channelId || null"
+			(channelIdChange)="onInputChannelChanged($event)"
+		/>
+	</section>
+
+	<section class="field">
+		<label for="logic-type">Logic Type</label>
+		<select id="logic-type" (change)="onLogicChanged($any($event.target).value)">
+			@for (option of logicOptions; track option.value) {
+				<option [value]="option.value" [selected]="option.value === comparison().logic">{{ option.label }}</option>
+			}
+		</select>
+	</section>
+
+	<section class="field-group" [class.disabled-group]="comparisonSourceDisabled()">
+		<h3>Comparison Source</h3>
+
+		<label class="option-row">
+			<input
+				type="radio"
+				name="comparison-source"
+				[checked]="comparison().useStaticComparison"
+				(change)="onComparisonModeChanged(true)"
+			/>
+			<span>Constant Value</span>
+		</label>
+
+		<div class="option-content" [class.inactive]="!comparison().useStaticComparison">
+			<label for="static-value">Value</label>
+			<input
+				id="static-value"
+				type="text"
+				[value]="comparison().staticValueComparison"
+				[disabled]="!comparison().useStaticComparison"
+				(input)="onStaticValueChanged($any($event.target).value)"
+			/>
+		</div>
+
+		<label class="option-row">
+			<input
+				type="radio"
+				name="comparison-source"
+				[checked]="!comparison().useStaticComparison"
+				(change)="onComparisonModeChanged(false)"
+			/>
+			<span>Channel Comparison</span>
+		</label>
+
+		<div class="option-content" [class.inactive]="comparison().useStaticComparison">
+			<label>Comparison Channel</label>
+			<lib-channel-selector
+				[channels]="channels()"
+				[usedChannelIds]="comparisonChannelUsedIds()"
+				[channelId]="comparison().channelComparisonId"
+				(channelIdChange)="onComparisonChannelChanged($event)"
+			/>
+		</div>
+	</section>
+
+	<div class="inline-fields-row">
+		<section class="field field-inline">
+			<label for="for-ms">For (ms)</label>
+			<input
+				id="for-ms"
+				type="number"
+				min="0"
+				step="1"
+				[value]="comparison().forMs || ''"
+				(input)="onForMsChanged($any($event.target).value)"
+			/>
+		</section>
+
+		<section class="field">
+			<label class="toggle-row" for="reverse-result">
+				<span>Reverse Result</span>
+				<span class="switch">
+					<input
+						id="reverse-result"
+						type="checkbox"
+						[checked]="comparison().reverseResult"
+						(change)="onReverseResultChanged($any($event.target).checked)"
+					/>
+					<span class="slider" aria-hidden="true"></span>
+				</span>
+			</label>
+		</section>
+	</div>
+</form>

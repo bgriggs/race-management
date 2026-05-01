@@ -217,6 +217,7 @@ export function decodeTimerDefinitionMessagePack(bytes: Uint8Array): TimerDefini
 export function conditionDefinitionFromMessagePack(obj: Record<string, unknown>): ConditionDefinition {
     return {
         id: obj["Id"] as string,
+        name: obj["Name"] as string,
         statements: (obj["Statements"] as unknown[]).map(v => statementDefinitionFromMessagePack(v as Record<string, unknown>)),
         outputChannelId: obj["OutputChannelId"] as string,
     };

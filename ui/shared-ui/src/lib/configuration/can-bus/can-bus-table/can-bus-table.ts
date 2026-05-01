@@ -1,4 +1,4 @@
-import { Component, computed, input, output, signal } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatIcon } from '@angular/material/icon';
@@ -8,6 +8,7 @@ import { CanChannelAssignmentConfig } from '../../../../models/can-channel-assig
 import { ChannelDefinition } from '../../../../models/channel-definition';
 import { CanBusChannelAssignment } from '../can-bus-channel-assignment/can-bus-channel-assignment';
 import { CanBusEditMessage } from '../can-bus-edit-message/can-bus-edit-message';
+import { ChannelUsageService } from '../../channels/channel-usage.service';
 
 const BIT_RATES: { label: string; value: number }[] = [
   { label: '1 Mbs', value: 1000000 },
@@ -28,6 +29,8 @@ const BIT_RATES: { label: string; value: number }[] = [
   styleUrl: './can-bus-table.css',
 })
 export class CanBusTable {
+  private readonly channelUsageService = inject(ChannelUsageService);
+
   readonly config = input.required<CanBusInterfaceConfig>();
   readonly channels = input<ChannelDefinition[]>([]);
   readonly configChange = output<CanBusInterfaceConfig>();
@@ -70,13 +73,7 @@ export class CanBusTable {
   readonly isEditingAssignment = computed(() => this.editingAssignment() !== null);
 
   readonly usedChannelIds = computed(() => {
-    const ids: string[] = [];
-    for (const msg of this.config().messages) {
-      for (const assignment of msg.channelAssignments) {
-        ids.push(assignment.id);
-      }
-    }
-    return ids;
+    return this.channelUsageService.getUsedChannelIdsFromCanInterfaces([this.config()]);
   });
 
   onInterfaceNameChange(value: string): void {

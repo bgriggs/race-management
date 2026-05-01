@@ -22,27 +22,27 @@
         <div class="summary-list" role="list" aria-label="Saved configurations">
           @for (summary of configurationSummaries(); track summary.id) {
           <div class="summary-item" role="listitem">
-            <button type="button" class="summary-open" (click)="openConfiguration(summary.id)">
-              <div class="summary-text">
-                <span class="summary-name">
-                  {{ summary.name || '(Unnamed configuration)' }}
-                  <span class="summary-car">Car: {{ summary.car || '-' }}</span>
-                </span>
-                <span class="summary-notes">{{ summary.notes || 'No notes' }}</span>
-              </div>
-              <span
+            <div class="summary-item-actions">
+              <button type="button" class="summary-open" (click)="openConfiguration(summary.id)">
+                <div class="summary-text">
+                  <span class="summary-name">
+                    {{ summary.name || '(Unnamed configuration)' }}
+                    <span class="summary-car">Car: {{ summary.car || '-' }}</span>
+                  </span>
+                  <span class="summary-notes">{{ summary.notes || 'No notes' }}</span>
+                </div>
+              </button>
+
+              <button
+                type="button"
                 class="summary-delete"
-                role="button"
-                tabindex="0"
-                (click)="deleteConfiguration(summary.id); $event.stopPropagation()"
-                (keydown.enter)="deleteConfiguration(summary.id); $event.stopPropagation()"
-                (keydown.space)="deleteConfiguration(summary.id); $event.stopPropagation()"
+                (click)="deleteConfiguration(summary.id)"
                 aria-label="Delete configuration"
                 title="Delete configuration"
               >
                 <mat-icon>delete</mat-icon>
-              </span>
-            </button>
+              </button>
+            </div>
           </div>
           }
         </div>
@@ -150,6 +150,13 @@
             [config]="canBus2Config()"
             [channels]="activeConfiguration()!.channelDefinitions"
             (configChange)="onCanBus2ConfigChange($event)"
+          />
+        }
+
+        @if (selectedNodeId() === 'user-conditions') {
+          <lib-user-conditions-list
+            [configuration]="activeConfiguration()"
+            (userConditionsChange)="onUserConditionsChange($event)"
           />
         }
       </article>

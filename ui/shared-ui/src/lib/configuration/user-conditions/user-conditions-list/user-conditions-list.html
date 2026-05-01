@@ -1,0 +1,64 @@
+<section class="conditions-actions">
+	<button type="button" class="add-condition-button" (click)="startAdd()">Add Condition</button>
+</section>
+
+@if (!hasConditions()) {
+	<p class="conditions-empty">There are no user conditions configured.</p>
+} @else {
+	<div class="conditions-table-wrap">
+		<table class="conditions-table">
+			<thead>
+				<tr>
+					<th scope="col" class="number-column">#</th>
+					<th scope="col">Name</th>
+					<th scope="col">Output Channel Name</th>
+					<th scope="col" class="row-action-column"></th>
+					<th scope="col" class="row-action-column"></th>
+				</tr>
+			</thead>
+			<tbody>
+				@for (condition of conditions(); track condition.id || $index) {
+					<tr>
+						<td>{{ $index + 1 }}</td>
+						<td>{{ condition.name || '(Unnamed condition)' }}</td>
+						<td>{{ getOutputChannelName(condition.outputChannelId) }}</td>
+						<td class="row-action-cell">
+							<button type="button" class="row-action-button" (click)="startEdit(condition.id)" aria-label="Edit condition">
+								<mat-icon aria-hidden="true">edit</mat-icon>
+							</button>
+						</td>
+						<td class="row-action-cell">
+							<button
+								type="button"
+								class="row-action-button delete"
+								(click)="deleteCondition(condition.id)"
+								aria-label="Delete condition"
+							>
+								<mat-icon aria-hidden="true">delete</mat-icon>
+							</button>
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+}
+
+@if (isEditing()) {
+	<div class="editor-backdrop" (click)="stopEdit()"></div>
+	<div class="editor-popup">
+		@if (draftCondition(); as currentDraft) {
+			<lib-edit-user-condition
+				[channels]="channels()"
+				[usedChannelIds]="outputChannelUsedIds()"
+				[condition]="currentDraft"
+				(conditionChange)="onDraftConditionChanged($event)"
+			/>
+		}
+
+		<section class="editor-actions">
+			<button type="button" class="secondary" (click)="stopEdit()">Cancel</button>
+			<button type="button" class="primary" (click)="saveDraft()">OK</button>
+		</section>
+	</div>
+}

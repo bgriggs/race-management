@@ -1,0 +1,71 @@
+<section class="comparisons-actions">
+	<button type="button" class="add-comparison-button" (click)="startAdd()">Add Comparison</button>
+</section>
+
+@if (!hasComparisons()) {
+	<p class="comparisons-empty">There are no comparisons configured.</p>
+} @else {
+	<div class="comparisons-table-wrap">
+		<table class="comparisons-table">
+			<thead>
+				<tr>
+					<th scope="col" class="number-column">#</th>
+					<th scope="col">Input Channel</th>
+					<th scope="col">Condition</th>
+					<th scope="col">Comparison</th>
+					<th scope="col" class="row-action-column"></th>
+					<th scope="col" class="row-action-column"></th>
+				</tr>
+			</thead>
+			<tbody>
+				@for (comparison of comparisons(); track comparison.id || $index) {
+					<tr>
+						<td>{{ $index + 1 }}</td>
+						<td>{{ getChannelName(comparison.channelId) }}</td>
+						<td>{{ getConditionLabel(comparison.logic) }}</td>
+						<td>{{ getComparisonTargetLabel(comparison) }}</td>
+						<td class="row-action-cell">
+							<button
+								type="button"
+								class="row-action-button"
+								(click)="startEdit($index)"
+								aria-label="Edit comparison"
+							>
+								<mat-icon aria-hidden="true">edit</mat-icon>
+							</button>
+						</td>
+						<td class="row-action-cell">
+							<button
+								type="button"
+								class="row-action-button delete"
+								(click)="deleteComparison($index)"
+								aria-label="Delete comparison"
+							>
+								<mat-icon aria-hidden="true">delete</mat-icon>
+							</button>
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+}
+
+@if (isEditing()) {
+	<div class="editor-backdrop" (click)="stopEdit()"></div>
+	<div class="editor-popup">
+		@if (draftComparison(); as currentDraft) {
+			<lib-edit-comparison
+				[channels]="channels()"
+				[usedChannelIds]="editorUsedChannelIds()"
+				[comparison]="currentDraft"
+				(comparisonChange)="onDraftComparisonChanged($event)"
+			/>
+		}
+
+		<section class="editor-actions">
+			<button type="button" class="secondary" (click)="stopEdit()">Cancel</button>
+			<button type="button" class="primary" (click)="saveDraft()">OK</button>
+		</section>
+	</div>
+}

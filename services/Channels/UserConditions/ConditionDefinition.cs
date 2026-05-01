@@ -8,8 +8,9 @@ namespace Channels.UserConditions;
 public class ConditionDefinition
 {
     public Guid Id { get; set; }
+    public required string Name { get; set; }
 
-    public List<StatementDefinition> Statements { get; } = [];
+    public List<StatementDefinition> Statements { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the identifier of the output channel associated with this instance. This will be 0 or 1.

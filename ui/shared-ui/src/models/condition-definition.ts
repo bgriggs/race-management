@@ -7,6 +7,7 @@ import { StatementDefinition } from "./statement-definition";
 
 export interface ConditionDefinition {
     id: string;
+    name: string;
     statements: StatementDefinition[];
     outputChannelId: string;
 }

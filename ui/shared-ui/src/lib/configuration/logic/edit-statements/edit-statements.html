@@ -1,0 +1,45 @@
+<section class="statement-editor">
+	<section class="mode-selector" role="radiogroup" aria-label="Statement Mode">
+		<label>
+			<input
+				type="radio"
+				name="statement-mode"
+				[checked]="mode() === 'momentary'"
+				(change)="onModeChanged('momentary')"
+			/>
+			Momentary
+		</label>
+
+		<label>
+			<input
+				type="radio"
+				name="statement-mode"
+				[checked]="mode() === 'activateDeactivate'"
+				(change)="onModeChanged('activateDeactivate')"
+			/>
+			Activate/Deactivate
+		</label>
+	</section>
+
+	<section class="table-section">
+		<h3>Activate Comparisons</h3>
+		<lib-edit-comparisons-list
+			[channels]="channels()"
+			[usedChannelIds]="usedChannelIds()"
+			[comparisons]="activateComparisons()"
+			(comparisonsChange)="onActivateComparisonsChanged($event)"
+		/>
+	</section>
+
+	@if (mode() === 'activateDeactivate') {
+		<section class="table-section">
+			<h3>Deactivate Comparisons</h3>
+			<lib-edit-comparisons-list
+				[channels]="channels()"
+				[usedChannelIds]="usedChannelIds()"
+				[comparisons]="deactivateComparisons()"
+				(comparisonsChange)="onDeactivateComparisonsChanged($event)"
+			/>
+		</section>
+	}
+</section>
