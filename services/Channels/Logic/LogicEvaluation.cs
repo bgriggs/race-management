@@ -6,7 +6,6 @@ namespace Channels.Logic;
 public class LogicEvaluation(
     IChannelRepository channelRepository,
     IChannelDefinitionRepository channelDefinitionRepository,
-    IStatementRepository statementRepository,
     IStatementStateRepository? statementStateRepository = null,
     IComparisonDurationRepository? comparisonDurationRepository = null,
     IPreviousChannelValueRepository? previousChannelValueRepository = null,
@@ -17,13 +16,8 @@ public class LogicEvaluation(
     private readonly IPreviousChannelValueRepository previousChannelValueRepository = previousChannelValueRepository ?? new PreviousChannelValueMemoryRepository();
     private readonly TimeProvider timeProvider = timeProvider ?? TimeProvider.System;
 
-    public Task<bool> EvaluateAsync(int statementId) =>
-        EvaluateAsync(StatementIdFromLegacyInt(statementId));
-
-    public async Task<bool> EvaluateAsync(Guid statementId)
+    public async Task<bool> EvaluateAsync(StatementDefinition statementDefinition)
     {
-        var statementDefinition = await statementRepository.GetStatementDefinitionAsync(statementId);
-
         if (statementDefinition.DeactivateComparisons is { Count: > 0 })
         {
             // With separate deactivate comparisons, deactivation takes priority.
@@ -57,7 +51,7 @@ public class LogicEvaluation(
     /// Evaluates comparison groups with OR logic across groups and AND logic within each group.
     /// Any single group evaluating to true causes the overall result to be true.
     /// </summary>
-    private async Task<bool> EvaluateComparisonsAsync(List<List<ComparisonDefinition>> comparisonGroups)
+    public async Task<bool> EvaluateComparisonsAsync(List<List<ComparisonDefinition>> comparisonGroups)
     {
         foreach (var group in comparisonGroups)
         {
@@ -254,8 +248,5 @@ public class LogicEvaluation(
         LogicType.EqualTo => left == right,
         _ => throw new InvalidOperationException($"Unsupported relational logic type: {logic}"),
     };
-
-    private static Guid StatementIdFromLegacyInt(int id) =>
-        new($"00000000-0000-0000-0001-{id:000000000000}");
 }
 

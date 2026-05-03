@@ -7,19 +7,17 @@ public class ConditionEvaluation
     private readonly IConditionRepository conditionRepository;
     private readonly IChannelRepository channelRepository;
     private readonly TimeProvider timeProvider;
-    private readonly IStatementRepository statementRepository;
     private readonly LogicEvaluation logicEvaluation;
 
 
     public ConditionEvaluation(IConditionRepository conditionRepository, IChannelRepository channelRepository, IChannelDefinitionRepository channelDefinitionRepository,
-        IStatementRepository statementRepository, TimeProvider? timeProvider = null)
+        TimeProvider? timeProvider = null)
     {
         this.conditionRepository = conditionRepository;
         this.channelRepository = channelRepository;
-        this.statementRepository = statementRepository;
 
         this.timeProvider = timeProvider ?? TimeProvider.System;
-        logicEvaluation = new LogicEvaluation(channelRepository, channelDefinitionRepository, statementRepository, timeProvider: this.timeProvider);
+        logicEvaluation = new LogicEvaluation(channelRepository, channelDefinitionRepository, timeProvider: this.timeProvider);
     }
 
     public async Task UpdateAsync()
@@ -31,7 +29,7 @@ public class ConditionEvaluation
             bool result = true;
             foreach (var statementDefinition in conditionDefinition.Statements)
             {
-                if (!await logicEvaluation.EvaluateAsync(statementDefinition.Id))
+                if (!await logicEvaluation.EvaluateAsync(statementDefinition))
                 {
                     result = false;
                     break;

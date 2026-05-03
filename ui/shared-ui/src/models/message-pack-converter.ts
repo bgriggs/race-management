@@ -197,9 +197,9 @@ export function decodeTableDefinitionMessagePack(bytes: Uint8Array): TableDefini
 export function timerDefinitionFromMessagePack(obj: Record<string, unknown>): TimerDefinition {
     return {
         id: obj["Id"] as string,
+        name: obj["Name"] as string,
         outputChId: obj["OutputChId"] as string,
-        startStatementId: obj["StartStatementId"] as string,
-        stopStatementId: obj["StopStatementId"] as string,
+        statement: statementDefinitionFromMessagePack(obj["Statement"] as Record<string, unknown>),
         countDown: obj["CountDown"] as boolean,
         enableRollover: obj["EnableRollover"] as boolean,
         rolloverSeconds: obj["RolloverSeconds"] as number,

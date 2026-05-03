@@ -159,6 +159,13 @@
             (userConditionsChange)="onUserConditionsChange($event)"
           />
         }
+
+        @if (selectedNodeId() === 'timers') {
+          <lib-timers-list
+            [configuration]="activeConfiguration()"
+            (timerDefinitionsChange)="onTimerDefinitionsChange($event)"
+          />
+        }
       </article>
 
       <rm-error-list [items]="validationErrors()" (navigateToNode)="navigateFromError($event)" />

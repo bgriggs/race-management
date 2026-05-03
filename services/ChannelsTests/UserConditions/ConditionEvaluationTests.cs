@@ -18,7 +18,6 @@ public class ConditionEvaluationTests
     private ConditionMemoryRepository conditionRepo = null!;
     private ChannelMemoryRepository channelRepo = null!;
     private ChannelDefinitionMemoryRepository channelDefRepo = null!;
-    private StatementMemoryRepository statementRepo = null!;
 
     [TestInitialize]
     public void Setup()
@@ -26,11 +25,10 @@ public class ConditionEvaluationTests
         conditionRepo = new ConditionMemoryRepository();
         channelRepo = new ChannelMemoryRepository();
         channelDefRepo = new ChannelDefinitionMemoryRepository();
-        statementRepo = new StatementMemoryRepository();
     }
 
     private ConditionEvaluation CreateEvaluation() =>
-        new(conditionRepo, channelRepo, channelDefRepo, statementRepo);
+        new(conditionRepo, channelRepo, channelDefRepo);
 
     private static Guid ConditionId(int id) => new($"00000000-0000-0000-0004-{id:000000000000}");
     private static Guid StatementId(int id) => new($"00000000-0000-0000-0001-{id:000000000000}");
@@ -47,8 +45,6 @@ public class ConditionEvaluationTests
         var def = new ConditionDefinition { Id = ConditionId(id), Name = "n", OutputChannelId = outputChannelId };
         def.Statements.AddRange(statementDefinitions);
         conditionRepo.Add(def);
-        foreach (var statementDefinition in statementDefinitions)
-            statementRepo.Add(statementDefinition);
     }
 
     private string GetChannelValue(Guid channelId) => channelRepo.Get(channelId).Value;

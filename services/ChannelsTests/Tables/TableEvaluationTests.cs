@@ -33,7 +33,7 @@ public class TableEvaluationTests
 
     // Channel definition factory helpers.
     private static ChannelDefinition StringDef(Guid id) =>
-        new() { Id = id, DataType = "string" };
+        new() { Id = id, DataType = "string", IsStringValue = true };
 
     private static ChannelDefinition IntDef(Guid id) =>
         new() { Id = id, DataType = "int", BaseDecimalPlaces = 0 };

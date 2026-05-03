@@ -1,11 +1,15 @@
-﻿namespace Channels.Timers;
+﻿using Channels.Logic;
+using System.ComponentModel.DataAnnotations;
+
+namespace Channels.Timers;
 
 public class TimerDefinition
 {
     public Guid Id { get; set; }
+    [MaxLength(20)]
+    public required string Name { get; set; }
     public Guid OutputChId { get; set; }
-    public Guid StartStatementId { get; set; }
-    public Guid StopStatementId { get; set; }
+    public required StatementDefinition Statement { get; set; }
     public bool CountDown { get; set; }
     public bool EnableRollover { get; set; }
     public int RolloverSeconds { get; set; }

@@ -1,0 +1,64 @@
+<section class="timers-actions">
+	<button type="button" class="add-timer-button" (click)="startAdd()">Add Timer</button>
+</section>
+
+@if (!hasTimers()) {
+	<p class="timers-empty">There are no timers configured.</p>
+} @else {
+	<div class="timers-table-wrap">
+		<table class="timers-table">
+			<thead>
+				<tr>
+					<th scope="col" class="number-column">#</th>
+					<th scope="col">Name</th>
+					<th scope="col">Output Channel Name</th>
+					<th scope="col" class="row-action-column"></th>
+					<th scope="col" class="row-action-column"></th>
+				</tr>
+			</thead>
+			<tbody>
+				@for (timer of timers(); track timer.id || $index) {
+					<tr>
+						<td>{{ $index + 1 }}</td>
+						<td>{{ timer.name || '(Unnamed timer)' }}</td>
+						<td>{{ getOutputChannelName(timer.outputChId) }}</td>
+						<td class="row-action-cell">
+							<button type="button" class="row-action-button" (click)="startEdit(timer.id)" aria-label="Edit timer">
+								<mat-icon aria-hidden="true">edit</mat-icon>
+							</button>
+						</td>
+						<td class="row-action-cell">
+							<button
+								type="button"
+								class="row-action-button delete"
+								(click)="deleteTimer(timer.id)"
+								aria-label="Delete timer"
+							>
+								<mat-icon aria-hidden="true">delete</mat-icon>
+							</button>
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+}
+
+@if (isEditing()) {
+	<div class="editor-backdrop" (click)="stopEdit()"></div>
+	<div class="editor-popup">
+		@if (draftTimer(); as currentDraft) {
+			<lib-edit-timer
+				[channels]="channels()"
+				[usedChannelIds]="outputChannelUsedIds()"
+				[timer]="currentDraft"
+				(timerChange)="onDraftTimerChanged($event)"
+			/>
+		}
+
+		<section class="editor-actions">
+			<button type="button" class="secondary" (click)="stopEdit()">Cancel</button>
+			<button type="button" class="primary" (click)="saveDraft()">OK</button>
+		</section>
+	</div>
+}

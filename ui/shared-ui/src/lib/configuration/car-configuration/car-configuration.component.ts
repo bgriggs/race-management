@@ -9,6 +9,7 @@ import { CloudConfiguration } from '../cloud-configuration/cloud-configuration';
 import { ChannelsList } from '../channels/channels-list/channels-list';
 import { CanBusConfig } from '../can-bus/can-bus-config/can-bus-config';
 import { CanBusTable } from '../can-bus/can-bus-table/can-bus-table';
+import { TimersList } from '../timers/timers-list/timers-list';
 import { UserConditionsList } from '../user-conditions/user-conditions-list/user-conditions-list';
 import { MatIcon } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
@@ -39,6 +40,7 @@ import { CanBusInterfaceConfig } from '../../../models/can-bus-interface-config'
     ChannelsList,
     CanBusConfig,
     CanBusTable,
+    TimersList,
     UserConditionsList,
     MatIcon
   ],
@@ -440,6 +442,18 @@ export class CarConfigurationComponent implements OnInit {
     });
   }
 
+  onTimerDefinitionsChange(timerDefinitions: CarConfiguration['timerDefinitions']): void {
+    const current = this.activeConfiguration();
+    if (!current) {
+      return;
+    }
+
+    this.activeConfiguration.set({
+      ...current,
+      timerDefinitions
+    });
+  }
+
   private buildTreeNodes(): NavigationTreeNode[] {
     return [
       { id: 'general-settings', label: 'General Settings' },
@@ -470,7 +484,8 @@ export class CarConfigurationComponent implements OnInit {
       { id: 'timers', label: 'Timers' },
       { id: 'math', label: 'Math' },
       { id: 'user-conditions', label: 'User Conditions' },
-      { id: 'counters', label: 'Counters' }
+      { id: 'counters', label: 'Counters' },
+      { id: 'enumerations', label: 'Enumerations' }
     ];
   }
 

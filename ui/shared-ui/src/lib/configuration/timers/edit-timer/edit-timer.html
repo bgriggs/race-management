@@ -1,0 +1,31 @@
+<section class="timer-editor">
+	<section class="editor-section">
+		<label for="timer-name">Name</label>
+		<input
+			id="timer-name"
+			type="text"
+			[value]="timer().name"
+			(input)="onNameChanged($any($event.target).value)"
+		/>
+	</section>
+
+	<section class="editor-section output-section">
+		<label>Output Channel</label>
+		<lib-channel-selector
+			[channels]="channels()"
+			[usedChannelIds]="usedChannelIds()"
+			[channelId]="timer().outputChId || null"
+			(channelIdChange)="onOutputChannelChanged($event)"
+		/>
+	</section>
+
+	<section class="editor-section">
+		<h3>Statement</h3>
+		<lib-edit-statements
+			[channels]="channels()"
+			[usedChannelIds]="usedChannelIds()"
+			[statement]="timer().statement"
+			(statementChange)="onStatementChanged($event)"
+		/>
+	</section>
+</section>

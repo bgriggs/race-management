@@ -6,7 +6,6 @@ public class AlarmEvaluation
 {
     private readonly IAlarmRepository alarmRepository;
     private readonly IChannelRepository channelRepository;
-    private readonly IStatementRepository statementRepository;
     private readonly TimeProvider timeProvider;
     private readonly LogicEvaluation logicEvaluation;
 
@@ -14,15 +13,13 @@ public class AlarmEvaluation
         IAlarmRepository alarmRepository,
         IChannelRepository channelRepository,
         IChannelDefinitionRepository channelDefinitionRepository,
-        IStatementRepository statementRepository,
         TimeProvider? timeProvider = null)
     {
         this.alarmRepository = alarmRepository;
         this.channelRepository = channelRepository;
-        this.statementRepository = statementRepository;
         this.timeProvider = timeProvider ?? TimeProvider.System;
 
-        logicEvaluation = new LogicEvaluation(channelRepository, channelDefinitionRepository, statementRepository, timeProvider: this.timeProvider);
+        logicEvaluation = new LogicEvaluation(channelRepository, channelDefinitionRepository, timeProvider: this.timeProvider);
     }
 
     public async Task UpdateAlarmsAsync()
@@ -76,8 +73,7 @@ public class AlarmEvaluation
 
         foreach (var statementDefinition in statements)
         {
-            await statementRepository.SetStatementDefinitionAsync(statementDefinition);
-            if (!await logicEvaluation.EvaluateAsync(statementDefinition.Id))
+            if (!await logicEvaluation.EvaluateAsync(statementDefinition))
             {
                 return false;
             }

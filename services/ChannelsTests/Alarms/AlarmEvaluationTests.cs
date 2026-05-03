@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Channels;
+﻿using Channels;
 using Channels.Alarms;
 using Channels.Logic;
 
@@ -26,7 +23,6 @@ public class AlarmEvaluationTests
     private AlarmMemoryRepository alarmRepo = null!;
     private ChannelMemoryRepository channelRepo = null!;
     private ChannelDefinitionMemoryRepository channelDefRepo = null!;
-    private StatementMemoryRepository statementRepo = null!;
     private FakeTimeProvider timeProvider = null!;
 
     [TestInitialize]
@@ -35,12 +31,11 @@ public class AlarmEvaluationTests
         alarmRepo = new AlarmMemoryRepository();
         channelRepo = new ChannelMemoryRepository();
         channelDefRepo = new ChannelDefinitionMemoryRepository();
-        statementRepo = new StatementMemoryRepository();
         timeProvider = new FakeTimeProvider(new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero));
     }
 
     private AlarmEvaluation CreateEvaluation() =>
-        new(alarmRepo, channelRepo, channelDefRepo, statementRepo, timeProvider);
+        new(alarmRepo, channelRepo, channelDefRepo, timeProvider);
 
     private static Guid StatementId(int id) => new($"00000000-0000-0000-0001-{id:000000000000}");
     private static Guid ComparisonId(int id) => new($"00000000-0000-0000-0000-{id:000000000000}");

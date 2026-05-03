@@ -1,4 +1,5 @@
 ﻿using Channels.Logic;
+using System.ComponentModel.DataAnnotations;
 
 namespace Channels.UserConditions;
 
@@ -8,6 +9,7 @@ namespace Channels.UserConditions;
 public class ConditionDefinition
 {
     public Guid Id { get; set; }
+    [MaxLength(20)]
     public required string Name { get; set; }
 
     public List<StatementDefinition> Statements { get; set; } = [];

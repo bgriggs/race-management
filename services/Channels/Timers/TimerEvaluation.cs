@@ -8,19 +8,17 @@ public class TimerEvaluation
     private readonly ITimerRepository timerRepository;
     private readonly IChannelRepository channelRepository;
     private readonly TimeProvider timeProvider;
-    private readonly IStatementRepository statementRepository;
     private readonly LogicEvaluation logicEvaluation;
 
 
     public TimerEvaluation(ITimerRepository timerRepository, IChannelRepository channelRepository, IChannelDefinitionRepository channelDefinitionRepository,
-        IStatementRepository statementRepository, TimeProvider? timeProvider = null)
+        TimeProvider? timeProvider = null)
     {
         this.timerRepository = timerRepository;
         this.channelRepository = channelRepository;
-        this.statementRepository = statementRepository;
 
         this.timeProvider = timeProvider ?? TimeProvider.System;
-        logicEvaluation = new LogicEvaluation(channelRepository, channelDefinitionRepository, statementRepository, timeProvider: this.timeProvider);
+        logicEvaluation = new LogicEvaluation(channelRepository, channelDefinitionRepository, timeProvider: this.timeProvider);
     }
 
 
@@ -37,9 +35,24 @@ public class TimerEvaluation
         {
             var timerState = await timerRepository.GetTimerStateAsync(definition.Id);
 
-            // Always evaluate both conditions for edge detection, regardless of timer state.
-            bool currentStart = await logicEvaluation.EvaluateAsync(definition.StartStatementId);
-            bool currentStop = await logicEvaluation.EvaluateAsync(definition.StopStatementId);
+            // Evaluate start condition from ActivateComparisons and stop condition from DeactivateComparisons.
+            // Each is edge-sensitive. Comparison groups are evaluated directly since TimerEvaluation
+            // manages its own edge state (PreviousStartResult/PreviousStopResult).
+            //
+            // When DeactivateComparisons is null, ActivateComparisons drives both:
+            //   start = false→true on ActivateComparisons
+            //   stop  = true→false on ActivateComparisons (i.e. !currentStart)
+            bool currentStart = await logicEvaluation.EvaluateComparisonsAsync(definition.Statement.ActivateComparisons);
+
+            bool currentStop;
+            if (definition.Statement.DeactivateComparisons is { Count: > 0 })
+            {
+                currentStop = await logicEvaluation.EvaluateComparisonsAsync(definition.Statement.DeactivateComparisons);
+            }
+            else
+            {
+                currentStop = !currentStart;
+            }
 
             // Detect edges: false → true transitions
             bool startEdge = !timerState.PreviousStartResult && currentStart;
