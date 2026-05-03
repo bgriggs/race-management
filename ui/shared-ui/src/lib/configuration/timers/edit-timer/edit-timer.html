@@ -4,9 +4,14 @@
 		<input
 			id="timer-name"
 			type="text"
+			maxlength="20"
+			[attr.aria-invalid]="!isNameValid()"
 			[value]="timer().name"
 			(input)="onNameChanged($any($event.target).value)"
 		/>
+		@if (!isNameValid()) {
+			<p class="validation-message">Name is required and must be 20 characters or fewer.</p>
+		}
 	</section>
 
 	<section class="editor-section output-section">
@@ -27,5 +32,87 @@
 			[statement]="timer().statement"
 			(statementChange)="onStatementChanged($event)"
 		/>
+	</section>
+
+	<section class="editor-section settings-section">
+		<h3>Timer Settings</h3>
+
+		<label class="checkbox-field">
+			<input
+				type="checkbox"
+				[checked]="timer().countDown"
+				(change)="onCountDownChanged($any($event.target).checked)"
+			/>
+			<span>Count Down</span>
+		</label>
+
+		<section class="toggle-number-group">
+			<label class="checkbox-field">
+				<input
+					type="checkbox"
+					[checked]="timer().enableRollover"
+					(change)="onEnableRolloverChanged($any($event.target).checked)"
+				/>
+				<span>Enable Rollover</span>
+			</label>
+
+			<label class="number-field">
+				<span>Rollover Seconds</span>
+				<input
+					type="number"
+					min="0"
+					inputmode="numeric"
+					[value]="timer().rolloverSeconds"
+					[disabled]="!timer().enableRollover"
+					(input)="onRolloverSecondsChanged(+$any($event.target).value || 0)"
+				/>
+			</label>
+		</section>
+
+		<section class="toggle-number-group">
+			<label class="checkbox-field">
+				<input
+					type="checkbox"
+					[checked]="timer().enableStartSeconds"
+					(change)="onEnableStartSecondsChanged($any($event.target).checked)"
+				/>
+				<span>Enable Start Seconds</span>
+			</label>
+
+			<label class="number-field">
+				<span>Start Seconds</span>
+				<input
+					type="number"
+					min="0"
+					inputmode="numeric"
+					[value]="timer().startSeconds"
+					[disabled]="!timer().enableStartSeconds"
+					(input)="onStartSecondsChanged(+$any($event.target).value || 0)"
+				/>
+			</label>
+		</section>
+
+		<section class="toggle-number-group">
+			<label class="checkbox-field">
+				<input
+					type="checkbox"
+					[checked]="timer().enableStopSeconds"
+					(change)="onEnableStopSecondsChanged($any($event.target).checked)"
+				/>
+				<span>Enable Stop Seconds</span>
+			</label>
+
+			<label class="number-field">
+				<span>Stop Seconds</span>
+				<input
+					type="number"
+					min="0"
+					inputmode="numeric"
+					[value]="timer().stopSeconds"
+					[disabled]="!timer().enableStopSeconds"
+					(input)="onStopSecondsChanged(+$any($event.target).value || 0)"
+				/>
+			</label>
+		</section>
 	</section>
 </section>

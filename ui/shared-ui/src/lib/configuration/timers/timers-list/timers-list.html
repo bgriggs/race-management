@@ -58,7 +58,7 @@
 
 		<section class="editor-actions">
 			<button type="button" class="secondary" (click)="stopEdit()">Cancel</button>
-			<button type="button" class="primary" (click)="saveDraft()">OK</button>
+			<button type="button" class="primary" (click)="saveDraft()" [disabled]="!isDraftNameValid()">OK</button>
 		</section>
 	</div>
 }

@@ -30,6 +30,15 @@ export class TimersList {
       .map((timer) => timer.outputChId)
       .filter((channelId) => !!channelId);
   });
+  readonly isDraftNameValid = computed(() => {
+    const draft = this.draftTimer();
+    if (!draft) {
+      return false;
+    }
+
+    const trimmedLength = draft.name.trim().length;
+    return trimmedLength >= 1 && trimmedLength <= 20;
+  });
   readonly hasTimers = computed(() => this.timers().length > 0);
   readonly isEditing = computed(() => this.editingTimerId() !== null);
 
@@ -59,7 +68,7 @@ export class TimersList {
 
   saveDraft(): void {
     const draft = this.draftTimer();
-    if (!draft) {
+    if (!draft || !this.isDraftNameValid()) {
       return;
     }
 

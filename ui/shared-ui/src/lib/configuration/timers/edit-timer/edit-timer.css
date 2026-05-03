@@ -17,10 +17,34 @@
 	background: #fff;
 }
 
+.editor-section input[type='number'] {
+	width: 100%;
+	border: 1px solid #d1d5db;
+	border-radius: 8px;
+	padding: 0.48rem 0.65rem;
+	font-size: 0.95rem;
+	background: #fff;
+}
+
+.editor-section input[type='number']:disabled {
+	background: #f3f4f6;
+	color: #6b7280;
+}
+
+.editor-section input[aria-invalid='true'] {
+	border-color: #b91c1c;
+}
+
 .editor-section h3 {
 	margin: 0;
 	font-size: 1rem;
 	color: #111827;
+}
+
+.validation-message {
+	margin: 0;
+	color: #b91c1c;
+	font-size: 0.85rem;
 }
 
 .output-section {
@@ -30,6 +54,43 @@
 
 .output-section label {
 	color: #1f2937;
+	font-size: 0.92rem;
+	font-weight: 600;
+}
+
+.settings-section {
+	border-top: 1px solid #e5e7eb;
+	padding-top: 0.8rem;
+}
+
+.checkbox-field {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.55rem;
+	color: #1f2937;
+	font-size: 0.95rem;
+}
+
+.checkbox-field input[type='checkbox'] {
+	margin: 0;
+	width: 1rem;
+	height: 1rem;
+	accent-color: #2f5d3a;
+}
+
+.toggle-number-group {
+	display: grid;
+	gap: 0.65rem;
+	padding: 0.8rem;
+	border: 1px solid #e5e7eb;
+	border-radius: 10px;
+	background: #fafafa;
+}
+
+.number-field {
+	display: grid;
+	gap: 0.4rem;
+	color: #374151;
 	font-size: 0.92rem;
 	font-weight: 600;
 }

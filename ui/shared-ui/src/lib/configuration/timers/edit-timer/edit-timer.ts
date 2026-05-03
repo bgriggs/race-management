@@ -1,4 +1,4 @@
-import { Component, input, model } from '@angular/core';
+import { Component, computed, input, model } from '@angular/core';
 import { ChannelDefinition } from '../../../../models/channel-definition';
 import { StatementDefinition } from '../../../../models/statement-definition';
 import { TimerDefinition } from '../../../../models/timer-definition';
@@ -17,6 +17,10 @@ export class EditTimer {
   readonly usedChannelIds = input<string[]>([]);
 
   readonly timer = model<TimerDefinition>(this.createEmptyTimer());
+  readonly isNameValid = computed(() => {
+    const trimmedLength = this.timer().name.trim().length;
+    return trimmedLength >= 1 && trimmedLength <= 20;
+  });
 
   onNameChanged(value: string): void {
     this.timer.set({
@@ -36,6 +40,55 @@ export class EditTimer {
     this.timer.set({
       ...this.timer(),
       statement: this.normalizeStatement(statement),
+    });
+  }
+
+  onCountDownChanged(value: boolean): void {
+    this.timer.set({
+      ...this.timer(),
+      countDown: value,
+    });
+  }
+
+  onEnableRolloverChanged(value: boolean): void {
+    this.timer.set({
+      ...this.timer(),
+      enableRollover: value,
+    });
+  }
+
+  onRolloverSecondsChanged(value: number): void {
+    this.timer.set({
+      ...this.timer(),
+      rolloverSeconds: value,
+    });
+  }
+
+  onEnableStartSecondsChanged(value: boolean): void {
+    this.timer.set({
+      ...this.timer(),
+      enableStartSeconds: value,
+    });
+  }
+
+  onStartSecondsChanged(value: number): void {
+    this.timer.set({
+      ...this.timer(),
+      startSeconds: value,
+    });
+  }
+
+  onEnableStopSecondsChanged(value: boolean): void {
+    this.timer.set({
+      ...this.timer(),
+      enableStopSeconds: value,
+    });
+  }
+
+  onStopSecondsChanged(value: number): void {
+    this.timer.set({
+      ...this.timer(),
+      stopSeconds: value,
     });
   }
 
