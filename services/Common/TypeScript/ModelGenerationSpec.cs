@@ -1,4 +1,5 @@
 using Channels;
+using Channels.Alarms;
 using Channels.Counters;
 using Channels.Logic;
 using Channels.Math;
@@ -38,7 +39,8 @@ public class ModelGenerationSpec : GenerationSpec
         typeof(ConditionDefinition),
         typeof(StatementDefinition),
         typeof(ComparisonDefinition),
-        typeof(CarConfigurationSummary)
+        typeof(CarConfigurationSummary),
+        typeof(AlarmDefinition)
     ];
 
     private static readonly Type[] EnumTypes =
@@ -74,6 +76,8 @@ public class ModelGenerationSpec : GenerationSpec
             if (FilesToOmit.Contains(name, StringComparer.OrdinalIgnoreCase) && File.Exists(file))
                 File.Delete(file);
         }
+
+        XmlDocJsDocInjector.InjectJsDocs(InterfaceTypes.Concat(EnumTypes), OutputPath);
 
         var tableDefinitionPath = generatedFiles
             .FirstOrDefault(f => string.Equals(Path.GetFileName(f), "table-definition.ts", StringComparison.OrdinalIgnoreCase));

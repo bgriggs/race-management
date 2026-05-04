@@ -11,6 +11,9 @@ import { TableDefinition } from "./table-definition";
 import { TimerDefinition } from "./timer-definition";
 import { ConditionDefinition } from "./condition-definition";
 
+/**
+ * Configuration settings for the service running in the car, such as on a Raspberry Pi.
+ */
 export interface CarConfiguration {
     configurationId: string;
     configurationSchemaVersion: number;

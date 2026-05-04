@@ -18,6 +18,7 @@ import { ConditionDefinition } from "./condition-definition";
 import { StatementDefinition } from "./statement-definition";
 import { ComparisonDefinition } from "./comparison-definition";
 import { CarConfigurationSummary } from "./car-configuration-summary";
+import { AlarmDefinition } from "./alarm-definition";
 import { InterpolationType } from "./interpolation-type";
 import { LogicType } from "./logic-type";
 import { MathType } from "./math-type";
@@ -271,5 +272,19 @@ export function carConfigurationSummaryFromMessagePack(obj: Record<string, unkno
 
 export function decodeCarConfigurationSummaryMessagePack(bytes: Uint8Array): CarConfigurationSummary {
     return carConfigurationSummaryFromMessagePack(decode(bytes) as Record<string, unknown>);
+}
+
+export function alarmDefinitionFromMessagePack(obj: Record<string, unknown>): AlarmDefinition {
+    return {
+        id: obj["Id"] as string,
+        statements: (obj["Statements"] as unknown[]).map(v => statementDefinitionFromMessagePack(v as Record<string, unknown>)),
+        messsage: obj["Messsage"] as string,
+        displayChannelSourceColorHex: obj["DisplayChannelSourceColorHex"] as string,
+        alarmStatusChannelId: obj["AlarmStatusChannelId"] != null ? obj["AlarmStatusChannelId"] as string : null,
+    };
+}
+
+export function decodeAlarmDefinitionMessagePack(bytes: Uint8Array): AlarmDefinition {
+    return alarmDefinitionFromMessagePack(decode(bytes) as Record<string, unknown>);
 }
 

@@ -13,6 +13,9 @@ export interface MathDefinition {
     a: number;
     b: number;
     channel1Id: string;
+    /**
+     * Second input channel. Use @see {@link System.Guid.Empty} to use constant @see {@link Channels.Math.MathDefinition.A} instead.
+     */
     channel2Id: string;
     outputChannelId: string;
     simpleOperationType: SimpleOperationType;
