@@ -5,6 +5,7 @@
 
 import { CanBusConfig } from "./can-bus-config";
 import { ChannelDefinition } from "./channel-definition";
+import { AlarmDefinition } from "./alarm-definition";
 import { CounterDefinition } from "./counter-definition";
 import { MathDefinition } from "./math-definition";
 import { TableDefinition } from "./table-definition";
@@ -27,6 +28,7 @@ export interface CarConfiguration {
     clientSecret: string;
     canConfig: CanBusConfig;
     channelDefinitions: ChannelDefinition[];
+    alarmDefinitions: AlarmDefinition[];
     counterDefinitions: CounterDefinition[];
     mathDefinitions: MathDefinition[];
     tableMappings: TableDefinition[];

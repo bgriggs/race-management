@@ -5,16 +5,22 @@
 
 import { StatementDefinition } from "./statement-definition";
 
+/**
+ * Model for an alarm definition, which includes the statements that control when the alarm is active, as well as optional display and output settings.
+ */
 export interface AlarmDefinition {
     /**
-     * Specifies the number of seconds to wait before displaying alarm again after it has been acknowledged.
+     * Gets or sets the unique identifier.
      */
-    timeAfterAckToDisplaySecs: number;
     id: string;
     /**
-     * Statements that control alarm activation state. Each statement can define activate/deactivate comparisons.
+     * Gets or sets the name. Maximum length is 20 characters.
      */
-    statements: StatementDefinition[];
+    name: string;
+    /**
+     * Statement that controls alarm activation state. The statement can define activate/deactivate comparisons.
+     */
+    statement: StatementDefinition;
     /**
      * Optional message to display.
      */
@@ -23,6 +29,10 @@ export interface AlarmDefinition {
      * Optional color to make the source channel value on displays, like the dashboard.
      */
     displayChannelSourceColorHex: string;
+    /**
+     * Specifies the number of seconds to wait before displaying alarm again after it has been acknowledged.
+     */
+    timeAfterAckToDisplaySecs: number;
     /**
      * Optional output channel to write the alarm status to as 0 or 1. This allows for the alarm status to be used in other logic, such as to disable other alarms when this alarm is active.
      */

@@ -46,6 +46,7 @@ export function carConfigurationFromMessagePack(obj: Record<string, unknown>): C
         clientSecret: obj["ClientSecret"] as string,
         canConfig: canBusConfigFromMessagePack(obj["CanConfig"] as Record<string, unknown>),
         channelDefinitions: (obj["ChannelDefinitions"] as unknown[]).map(v => channelDefinitionFromMessagePack(v as Record<string, unknown>)),
+        alarmDefinitions: (obj["AlarmDefinitions"] as unknown[]).map(v => alarmDefinitionFromMessagePack(v as Record<string, unknown>)),
         counterDefinitions: (obj["CounterDefinitions"] as unknown[]).map(v => counterDefinitionFromMessagePack(v as Record<string, unknown>)),
         mathDefinitions: (obj["MathDefinitions"] as unknown[]).map(v => mathDefinitionFromMessagePack(v as Record<string, unknown>)),
         tableMappings: (obj["TableMappings"] as unknown[]).map(v => tableDefinitionFromMessagePack(v as Record<string, unknown>)),
@@ -277,9 +278,11 @@ export function decodeCarConfigurationSummaryMessagePack(bytes: Uint8Array): Car
 export function alarmDefinitionFromMessagePack(obj: Record<string, unknown>): AlarmDefinition {
     return {
         id: obj["Id"] as string,
-        statements: (obj["Statements"] as unknown[]).map(v => statementDefinitionFromMessagePack(v as Record<string, unknown>)),
+        name: obj["Name"] as string,
+        statement: statementDefinitionFromMessagePack(obj["Statement"] as Record<string, unknown>),
         messsage: obj["Messsage"] as string,
         displayChannelSourceColorHex: obj["DisplayChannelSourceColorHex"] as string,
+        timeAfterAckToDisplaySecs: obj["TimeAfterAckToDisplaySecs"] as number,
         alarmStatusChannelId: obj["AlarmStatusChannelId"] != null ? obj["AlarmStatusChannelId"] as string : null,
     };
 }

@@ -173,6 +173,13 @@
             (counterDefinitionsChange)="onCounterDefinitionsChange($event)"
           />
         }
+
+        @if (selectedNodeId() === 'alarms') {
+          <lib-alarm-list
+            [configuration]="activeConfiguration()"
+            (alarmDefinitionsChange)="onAlarmDefinitionsChange($event)"
+          />
+        }
       </article>
 
       <rm-error-list [items]="validationErrors()" (navigateToNode)="navigateFromError($event)" />

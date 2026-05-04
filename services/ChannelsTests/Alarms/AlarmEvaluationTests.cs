@@ -49,8 +49,7 @@ public class AlarmEvaluationTests
     [TestMethod]
     public async Task ActivateTrue_SetsAlarmActive_AndWritesStatusChannel()
     {
-        var alarm = new AlarmDefinition { Id = AlarmId, AlarmStatusChannelId = StatusCh };
-        alarm.Statements.Add(AlwaysTrueStatement(1));
+        var alarm = new AlarmDefinition { Id = AlarmId, Name = "Alarm", AlarmStatusChannelId = StatusCh, Statement = AlwaysTrueStatement(1) };
         alarmRepo.Add(alarm);
 
         await CreateEvaluation().UpdateAlarmsAsync();
@@ -62,8 +61,7 @@ public class AlarmEvaluationTests
     [TestMethod]
     public async Task NoDeactivateStatements_ActivateFalse_DeactivatesAlarm_AndClearsAcknowledged()
     {
-        var alarm = new AlarmDefinition { Id = AlarmId, AlarmStatusChannelId = StatusCh };
-        alarm.Statements.Add(AlwaysFalseStatement(1));
+        var alarm = new AlarmDefinition { Id = AlarmId, Name = "Alarm", AlarmStatusChannelId = StatusCh, Statement = AlwaysFalseStatement(1) };
         alarmRepo.Add(alarm);
         alarmRepo.SetState(new AlarmState
         {
@@ -88,8 +86,7 @@ public class AlarmEvaluationTests
         var statement = AlwaysFalseStatement(1);
         statement.DeactivateComparisons = [[new ComparisonDefinition { Id = ComparisonId(2), ChannelId = TriggerCh, Logic = LogicType.True }]];
 
-        var alarm = new AlarmDefinition { Id = AlarmId };
-        alarm.Statements.Add(statement);
+        var alarm = new AlarmDefinition { Id = AlarmId, Name = "Alarm", Statement = statement };
         alarmRepo.Add(alarm);
         alarmRepo.SetState(new AlarmState { Id = AlarmId, IsActive = true });
 
@@ -101,8 +98,7 @@ public class AlarmEvaluationTests
     [TestMethod]
     public async Task ActiveAndAcknowledged_PastAckDelay_ClearsAcknowledged()
     {
-        var alarm = new AlarmDefinition { Id = AlarmId, TimeAfterAckToDisplaySecs = 10 };
-        alarm.Statements.Add(AlwaysTrueStatement(1));
+        var alarm = new AlarmDefinition { Id = AlarmId, Name = "Alarm", TimeAfterAckToDisplaySecs = 10, Statement = AlwaysTrueStatement(1) };
         alarmRepo.Add(alarm);
         alarmRepo.SetState(new AlarmState
         {

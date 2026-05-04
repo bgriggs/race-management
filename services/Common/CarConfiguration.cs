@@ -1,4 +1,5 @@
 using Channels;
+using Channels.Alarms;
 using Channels.Counters;
 using Channels.Math;
 using Channels.Tables;
@@ -34,6 +35,7 @@ public class CarConfiguration
 
     public CanBusConfig CanConfig { get; set; } = new();
     public List<ChannelDefinition> ChannelDefinitions { get; set; } = [];
+    public List<AlarmDefinition> AlarmDefinitions { get; set; } = [];
     public List<CounterDefinition> CounterDefinitions { get; set; } = [];
     public List<MathDefinition> MathDefinitions { get; set; } = [];
     public List<TableDefinition> TableMappings { get; set; } = [];

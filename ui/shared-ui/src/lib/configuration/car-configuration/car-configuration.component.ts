@@ -12,6 +12,7 @@ import { CanBusTable } from '../can-bus/can-bus-table/can-bus-table';
 import { CounterList } from '../counters/counter-list/counter-list';
 import { TimersList } from '../timers/timers-list/timers-list';
 import { UserConditionsList } from '../user-conditions/user-conditions-list/user-conditions-list';
+import { AlarmList } from '../alarms/alarm-list/alarm-list';
 import { MatIcon } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import {
@@ -44,6 +45,7 @@ import { CanBusInterfaceConfig } from '../../../models/can-bus-interface-config'
     CounterList,
     TimersList,
     UserConditionsList,
+    AlarmList,
     MatIcon
   ],
   templateUrl: './car-configuration.component.html',
@@ -468,6 +470,18 @@ export class CarConfigurationComponent implements OnInit {
     });
   }
 
+  onAlarmDefinitionsChange(alarmDefinitions: CarConfiguration['alarmDefinitions']): void {
+    const current = this.activeConfiguration();
+    if (!current) {
+      return;
+    }
+
+    this.activeConfiguration.set({
+      ...current,
+      alarmDefinitions
+    });
+  }
+
   private buildTreeNodes(): NavigationTreeNode[] {
     return [
       { id: 'general-settings', label: 'General Settings' },
@@ -614,6 +628,7 @@ export class CarConfigurationComponent implements OnInit {
       clientSecret: '',
       canConfig: this.normalizeCanBusConfig(this.emptyCanBusConfig),
       channelDefinitions: [],
+      alarmDefinitions: [],
       counterDefinitions: [],
       mathDefinitions: [],
       tableMappings: [],

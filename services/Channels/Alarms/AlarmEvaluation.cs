@@ -2,6 +2,9 @@
 
 namespace Channels.Alarms;
 
+/// <summary>
+/// Runs the evaluation of alarm statements and updates alarm states accordingly. This includes edge detection for activating/deactivating alarms, managing acknowledgment state and timing, and writing to optional status channels.
+/// </summary>
 public class AlarmEvaluation
 {
     private readonly IAlarmRepository alarmRepository;
@@ -9,6 +12,9 @@ public class AlarmEvaluation
     private readonly TimeProvider timeProvider;
     private readonly LogicEvaluation logicEvaluation;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AlarmEvaluation"/> class.
+    /// </summary>
     public AlarmEvaluation(
         IAlarmRepository alarmRepository,
         IChannelRepository channelRepository,
@@ -22,6 +28,10 @@ public class AlarmEvaluation
         logicEvaluation = new LogicEvaluation(channelRepository, channelDefinitionRepository, timeProvider: this.timeProvider);
     }
 
+    /// <summary>
+    /// Checks the current state of all alarm definitions, evaluates their statements, and updates their active/acknowledged states accordingly. 
+    /// Also handles writing to alarm status channels if configured. This method should be called periodically to ensure alarms are evaluated in a timely manner.
+    /// </summary>
     public async Task UpdateAlarmsAsync()
     {
         var alarmDefinitions = await alarmRepository.GetAlarmDefinitionsAsync();
@@ -31,7 +41,7 @@ public class AlarmEvaluation
         {
             var alarmState = await alarmRepository.GetAlarmStateAsync(alarmDefinition.Id);
 
-            bool shouldBeActive = await EvaluateStatementsAsync(alarmDefinition.Statements);
+            bool shouldBeActive = await logicEvaluation.EvaluateAsync(alarmDefinition.Statement);
 
             if (shouldBeActive && !alarmState.IsActive)
             {
@@ -66,19 +76,4 @@ public class AlarmEvaluation
         }
     }
 
-    private async Task<bool> EvaluateStatementsAsync(List<StatementDefinition> statements)
-    {
-        if (statements.Count == 0)
-            return false;
-
-        foreach (var statementDefinition in statements)
-        {
-            if (!await logicEvaluation.EvaluateAsync(statementDefinition))
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
 }

@@ -1,0 +1,101 @@
+<section class="alarm-editor">
+	<section class="editor-section">
+		<label for="alarm-name">Name</label>
+		<input
+			id="alarm-name"
+			type="text"
+			maxlength="20"
+			[attr.aria-invalid]="isNameDirty() && !isNameValid()"
+			[value]="alarm().name"
+			(input)="onNameChanged($any($event.target).value)"
+		/>
+		@if (isNameDirty() && !isNameValid()) {
+			<p class="validation-message">Name is required and must be 20 characters or fewer.</p>
+		}
+	</section>
+
+	<section class="editor-section">
+		<label for="alarm-message">Message</label>
+		<input
+			id="alarm-message"
+			type="text"
+			maxlength="20"
+			[attr.aria-invalid]="!isMessageValid()"
+			[value]="alarm().messsage"
+			(input)="onMessageChanged($any($event.target).value)"
+		/>
+		@if (!isMessageValid()) {
+			<p class="validation-message">Message must be 20 characters or fewer.</p>
+		}
+	</section>
+
+	<section class="editor-section">
+		<h3>Statement</h3>
+		<lib-edit-statements
+			[channels]="channels()"
+			[usedChannelIds]="usedChannelIds()"
+			[statement]="alarm().statement"
+			(statementChange)="onStatementChanged($event)"
+		/>
+	</section>
+
+	<section class="editor-section settings-section">
+		<h3>Alarm Settings</h3>
+
+		<label class="number-field">
+			<span>Seconds After Ack to Re-display</span>
+			<input
+				type="number"
+				min="0"
+				inputmode="numeric"
+				[value]="alarm().timeAfterAckToDisplaySecs"
+				(input)="onTimeAfterAckChanged(+$any($event.target).value || 0)"
+			/>
+		</label>
+
+		<section class="editor-section output-section">
+			<label>Alarm Status Channel</label>
+			<lib-channel-selector
+				[channels]="channels()"
+				[usedChannelIds]="usedChannelIds()"
+				[channelId]="alarm().alarmStatusChannelId"
+				(channelIdChange)="onAlarmStatusChannelChanged($event)"
+			/>
+		</section>
+
+		<section class="color-field-group">
+			<label class="checkbox-field">
+				<input
+					type="checkbox"
+					[checked]="isColorEnabled()"
+					(change)="onColorEnabledChanged($any($event.target).checked)"
+				/>
+				<span>Display Color</span>
+			</label>
+
+			@if (isColorEnabled()) {
+				<section class="color-controls">
+					<input
+						type="color"
+						class="color-swatch"
+						aria-label="Display color"
+						[value]="colorRgbHex()"
+						(input)="onColorRgbChanged($any($event.target).value)"
+					/>
+					<label class="number-field">
+						<span>Opacity (%)</span>
+						<input
+							type="number"
+							min="0"
+							max="100"
+							inputmode="numeric"
+							[value]="colorAlphaPercent()"
+							(input)="onColorAlphaChanged(+$any($event.target).value || 0)"
+						/>
+					</label>
+					<span class="color-hex-preview">{{ alarm().displayChannelSourceColorHex }}</span>
+				</section>
+			}
+		</section>
+	</section>
+</section>

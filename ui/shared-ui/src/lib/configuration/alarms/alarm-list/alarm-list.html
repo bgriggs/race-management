@@ -1,0 +1,61 @@
+<section class="list-actions">
+	<button type="button" class="primary" (click)="startAdd()">Add Alarm</button>
+</section>
+
+@if (!hasAlarms()) {
+	<p class="list-empty">There are no alarms configured.</p>
+} @else {
+	<div class="list-table-wrap">
+		<table class="list-table">
+			<thead>
+				<tr>
+					<th scope="col" class="number-column">#</th>
+					<th scope="col">Name</th>
+					<th scope="col" class="row-action-column"></th>
+					<th scope="col" class="row-action-column"></th>
+				</tr>
+			</thead>
+			<tbody>
+				@for (alarm of alarms(); track alarm.id || $index) {
+					<tr>
+						<td>{{ $index + 1 }}</td>
+						<td>{{ alarm.name || '(Unnamed alarm)' }}</td>
+						<td class="row-action-cell">
+							<button type="button" class="row-action-button" (click)="startEdit(alarm.id)" aria-label="Edit alarm">
+								<mat-icon aria-hidden="true">edit</mat-icon>
+							</button>
+						</td>
+						<td class="row-action-cell">
+							<button
+								type="button"
+								class="row-action-button delete"
+								(click)="deleteAlarm(alarm.id)"
+								aria-label="Delete alarm"
+							>
+								<mat-icon aria-hidden="true">delete</mat-icon>
+							</button>
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+}
+
+@if (isEditing()) {
+	<div class="editor-backdrop" (click)="stopEdit()"></div>
+	<div class="editor-popup">
+		@if (draftAlarm(); as currentDraft) {
+			<lib-edit-alarm
+				[channels]="channels()"
+				[alarm]="currentDraft"
+				(alarmChange)="onDraftAlarmChanged($event)"
+			/>
+		}
+
+		<section class="editor-actions">
+			<button type="button" class="secondary" (click)="stopEdit()">Cancel</button>
+			<button type="button" class="primary" (click)="saveDraft()" [disabled]="!isDraftNameValid()">OK</button>
+		</section>
+	</div>
+}
