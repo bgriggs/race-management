@@ -166,6 +166,13 @@
             (timerDefinitionsChange)="onTimerDefinitionsChange($event)"
           />
         }
+
+        @if (selectedNodeId() === 'counters') {
+          <lib-counter-list
+            [configuration]="activeConfiguration()"
+            (counterDefinitionsChange)="onCounterDefinitionsChange($event)"
+          />
+        }
       </article>
 
       <rm-error-list [items]="validationErrors()" (navigateToNode)="navigateFromError($event)" />

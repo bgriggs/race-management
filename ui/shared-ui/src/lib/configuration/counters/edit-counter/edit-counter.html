@@ -1,0 +1,121 @@
+<section class="counter-editor">
+	<section class="editor-section">
+		<label for="counter-name">Name</label>
+		<input
+			id="counter-name"
+			type="text"
+			maxlength="20"
+			[attr.aria-invalid]="isNameDirty() && !isNameValid()"
+			[value]="counter().name"
+			(input)="onNameChanged($any($event.target).value)"
+		/>
+		@if (isNameDirty() && !isNameValid()) {
+			<p class="validation-message">Name is required and must be 20 characters or fewer.</p>
+		}
+	</section>
+
+	<section class="editor-section output-section">
+		<label>Output Channel</label>
+		<lib-channel-selector
+			[channels]="channels()"
+			[usedChannelIds]="usedChannelIds()"
+			[channelId]="counter().outputChId || null"
+			(channelIdChange)="onOutputChannelChanged($event)"
+		/>
+	</section>
+
+	<section class="editor-section channel-inputs-section">
+		<h3>Channel Inputs</h3>
+
+		<section class="channel-input-group">
+			<label>Up Channel</label>
+			<lib-channel-selector
+				[channels]="channels()"
+				[channelId]="counter().upChId || null"
+				(channelIdChange)="onUpChannelChanged($event)"
+			/>
+		</section>
+
+		<section class="channel-input-group">
+			<label>Down Channel</label>
+			<lib-channel-selector
+				[channels]="channels()"
+				[channelId]="counter().downChId || null"
+				(channelIdChange)="onDownChannelChanged($event)"
+			/>
+		</section>
+
+		<section class="channel-input-group">
+			<label>Reset Channel</label>
+			<lib-channel-selector
+				[channels]="channels()"
+				[channelId]="counter().resetChId || null"
+				(channelIdChange)="onResetChannelChanged($event)"
+			/>
+		</section>
+	</section>
+
+	<section class="editor-section settings-section">
+		<h3>Counter Settings</h3>
+
+		<section class="number-row">
+			<label class="number-field">
+				<span>Min Value</span>
+				<input
+					type="number"
+					inputmode="numeric"
+					min="-2147483648"
+					[attr.aria-invalid]="!isMinValueValid()"
+					[value]="counter().minValue"
+					(input)="onMinValueChanged(+$any($event.target).value || 0)"
+				/>
+				@if (!isMinValueValid()) {
+					<p class="validation-message">Must be ≥ -2147483648.</p>
+				}
+			</label>
+
+			<label class="number-field">
+				<span>Max Value</span>
+				<input
+					type="number"
+					inputmode="numeric"
+					max="2147483647"
+					[attr.aria-invalid]="!isMaxValueValid()"
+					[value]="counter().maxValue"
+					(input)="onMaxValueChanged(+$any($event.target).value || 0)"
+				/>
+				@if (!isMaxValueValid()) {
+					<p class="validation-message">Must be ≤ 2147483647.</p>
+				}
+			</label>
+
+			<label class="number-field">
+				<span>Start Value</span>
+				<input
+					type="number"
+					inputmode="numeric"
+					[value]="counter().startValue"
+					(input)="onStartValueChanged(+$any($event.target).value || 0)"
+				/>
+			</label>
+		</section>
+
+		<label class="checkbox-field">
+			<input
+				type="checkbox"
+				[checked]="counter().rollAtLimit"
+				(change)="onRollAtLimitChanged($any($event.target).checked)"
+			/>
+			<span>Roll at Limit</span>
+		</label>
+
+		<label class="checkbox-field">
+			<input
+				type="checkbox"
+				[checked]="counter().persistValue"
+				(change)="onPersistValueChanged($any($event.target).checked)"
+			/>
+			<span>Persist Value</span>
+		</label>
+	</section>
+</section>

@@ -4,9 +4,14 @@
 		<input
 			id="condition-name"
 			type="text"
+			maxlength="20"
+			[attr.aria-invalid]="isNameDirty() && !isNameValid()"
 			[value]="condition().name"
 			(input)="onNameChanged($any($event.target).value)"
 		/>
+		@if (isNameDirty() && !isNameValid()) {
+			<p class="validation-message">Name is required and must be 20 characters or fewer.</p>
+		}
 	</section>
 
 	<section class="editor-section">

@@ -5,11 +5,11 @@
 			id="timer-name"
 			type="text"
 			maxlength="20"
-			[attr.aria-invalid]="!isNameValid()"
+			[attr.aria-invalid]="isNameDirty() && !isNameValid()"
 			[value]="timer().name"
 			(input)="onNameChanged($any($event.target).value)"
 		/>
-		@if (!isNameValid()) {
+		@if (isNameDirty() && !isNameValid()) {
 			<p class="validation-message">Name is required and must be 20 characters or fewer.</p>
 		}
 	</section>

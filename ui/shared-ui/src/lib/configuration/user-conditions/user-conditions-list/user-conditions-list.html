@@ -1,12 +1,12 @@
-<section class="conditions-actions">
-	<button type="button" class="add-condition-button" (click)="startAdd()">Add Condition</button>
+<section class="list-actions">
+	<button type="button" class="primary" (click)="startAdd()">Add Condition</button>
 </section>
 
 @if (!hasConditions()) {
-	<p class="conditions-empty">There are no user conditions configured.</p>
+	<p class="list-empty">There are no user conditions configured.</p>
 } @else {
-	<div class="conditions-table-wrap">
-		<table class="conditions-table">
+	<div class="list-table-wrap">
+		<table class="list-table">
 			<thead>
 				<tr>
 					<th scope="col" class="number-column">#</th>

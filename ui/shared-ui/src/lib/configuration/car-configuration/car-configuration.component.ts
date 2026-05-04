@@ -9,6 +9,7 @@ import { CloudConfiguration } from '../cloud-configuration/cloud-configuration';
 import { ChannelsList } from '../channels/channels-list/channels-list';
 import { CanBusConfig } from '../can-bus/can-bus-config/can-bus-config';
 import { CanBusTable } from '../can-bus/can-bus-table/can-bus-table';
+import { CounterList } from '../counters/counter-list/counter-list';
 import { TimersList } from '../timers/timers-list/timers-list';
 import { UserConditionsList } from '../user-conditions/user-conditions-list/user-conditions-list';
 import { MatIcon } from '@angular/material/icon';
@@ -40,6 +41,7 @@ import { CanBusInterfaceConfig } from '../../../models/can-bus-interface-config'
     ChannelsList,
     CanBusConfig,
     CanBusTable,
+    CounterList,
     TimersList,
     UserConditionsList,
     MatIcon
@@ -451,6 +453,18 @@ export class CarConfigurationComponent implements OnInit {
     this.activeConfiguration.set({
       ...current,
       timerDefinitions
+    });
+  }
+
+  onCounterDefinitionsChange(counterDefinitions: CarConfiguration['counterDefinitions']): void {
+    const current = this.activeConfiguration();
+    if (!current) {
+      return;
+    }
+
+    this.activeConfiguration.set({
+      ...current,
+      counterDefinitions
     });
   }
 

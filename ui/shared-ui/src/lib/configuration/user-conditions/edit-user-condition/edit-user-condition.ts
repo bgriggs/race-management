@@ -1,4 +1,4 @@
-import { Component, computed, input, model } from '@angular/core';
+import { Component, computed, input, model, signal } from '@angular/core';
 import { ChannelDefinition } from '../../../../models/channel-definition';
 import { ConditionDefinition } from '../../../../models/condition-definition';
 import { StatementDefinition } from '../../../../models/statement-definition';
@@ -17,6 +17,12 @@ export class EditUserCondition {
   readonly usedChannelIds = input<string[]>([]);
 
   readonly condition = model<ConditionDefinition>(this.createEmptyCondition());
+
+  readonly isNameDirty = signal(false);
+  readonly isNameValid = computed(() => {
+    const trimmedLength = this.condition().name.trim().length;
+    return trimmedLength >= 1 && trimmedLength <= 20;
+  });
 
   readonly firstStatement = computed<StatementDefinition>(() => {
     const statement = this.condition().statements[0];
@@ -38,6 +44,7 @@ export class EditUserCondition {
   }
 
   onNameChanged(value: string): void {
+    this.isNameDirty.set(true);
     this.condition.set({
       ...this.condition(),
       name: value,

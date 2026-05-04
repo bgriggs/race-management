@@ -141,6 +141,7 @@ export function decodeChannelDefinitionMessagePack(bytes: Uint8Array): ChannelDe
 export function counterDefinitionFromMessagePack(obj: Record<string, unknown>): CounterDefinition {
     return {
         id: obj["Id"] as string,
+        name: obj["Name"] as string,
         outputChId: obj["OutputChId"] as string,
         upChId: obj["UpChId"] as string,
         downChId: obj["DownChId"] as string,

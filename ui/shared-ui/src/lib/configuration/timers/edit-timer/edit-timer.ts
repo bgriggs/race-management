@@ -1,4 +1,4 @@
-import { Component, computed, input, model } from '@angular/core';
+import { Component, computed, input, model, signal } from '@angular/core';
 import { ChannelDefinition } from '../../../../models/channel-definition';
 import { StatementDefinition } from '../../../../models/statement-definition';
 import { TimerDefinition } from '../../../../models/timer-definition';
@@ -17,12 +17,14 @@ export class EditTimer {
   readonly usedChannelIds = input<string[]>([]);
 
   readonly timer = model<TimerDefinition>(this.createEmptyTimer());
+  readonly isNameDirty = signal(false);
   readonly isNameValid = computed(() => {
     const trimmedLength = this.timer().name.trim().length;
     return trimmedLength >= 1 && trimmedLength <= 20;
   });
 
   onNameChanged(value: string): void {
+    this.isNameDirty.set(true);
     this.timer.set({
       ...this.timer(),
       name: value,

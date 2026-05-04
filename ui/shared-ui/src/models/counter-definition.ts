@@ -5,6 +5,7 @@
 
 export interface CounterDefinition {
     id: string;
+    name: string;
     outputChId: string;
     upChId: string;
     downChId: string;

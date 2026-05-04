@@ -1,9 +1,9 @@
 <section class="list-actions">
-	<button type="button" class="primary" (click)="startAdd()">Add Timer</button>
+	<button type="button" class="primary" (click)="startAdd()">Add Counter</button>
 </section>
 
-@if (!hasTimers()) {
-	<p class="list-empty">There are no timers configured.</p>
+@if (!hasCounters()) {
+	<p class="list-empty">There are no counters configured.</p>
 } @else {
 	<div class="list-table-wrap">
 		<table class="list-table">
@@ -17,13 +17,13 @@
 				</tr>
 			</thead>
 			<tbody>
-				@for (timer of timers(); track timer.id || $index) {
+				@for (counter of counters(); track counter.id || $index) {
 					<tr>
 						<td>{{ $index + 1 }}</td>
-						<td>{{ timer.name || '(Unnamed timer)' }}</td>
-						<td>{{ getOutputChannelName(timer.outputChId) }}</td>
+						<td>{{ counter.name || '(Unnamed counter)' }}</td>
+						<td>{{ getOutputChannelName(counter.outputChId) }}</td>
 						<td class="row-action-cell">
-							<button type="button" class="row-action-button" (click)="startEdit(timer.id)" aria-label="Edit timer">
+							<button type="button" class="row-action-button" (click)="startEdit(counter.id)" aria-label="Edit counter">
 								<mat-icon aria-hidden="true">edit</mat-icon>
 							</button>
 						</td>
@@ -31,8 +31,8 @@
 							<button
 								type="button"
 								class="row-action-button delete"
-								(click)="deleteTimer(timer.id)"
-								aria-label="Delete timer"
+								(click)="deleteCounter(counter.id)"
+								aria-label="Delete counter"
 							>
 								<mat-icon aria-hidden="true">delete</mat-icon>
 							</button>
@@ -47,12 +47,12 @@
 @if (isEditing()) {
 	<div class="editor-backdrop" (click)="stopEdit()"></div>
 	<div class="editor-popup">
-		@if (draftTimer(); as currentDraft) {
-			<lib-edit-timer
+		@if (draftCounter(); as currentDraft) {
+			<lib-edit-counter
 				[channels]="channels()"
 				[usedChannelIds]="outputChannelUsedIds()"
-				[timer]="currentDraft"
-				(timerChange)="onDraftTimerChanged($event)"
+				[counter]="currentDraft"
+				(counterChange)="onDraftCounterChanged($event)"
 			/>
 		}
 

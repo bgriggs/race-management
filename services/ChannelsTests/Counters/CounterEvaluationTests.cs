@@ -36,6 +36,7 @@ public class CounterEvaluationTests
         return new CounterDefinition
         {
             Id = id == default ? Counter1 : id,
+            Name = "Counter",
             OutputChId = outputChId == default ? ChOut : outputChId,
             UpChId     = upChId    == default ? Ch1   : upChId,
             DownChId   = downChId  == default ? Ch2   : downChId,
@@ -406,8 +407,8 @@ public class CounterEvaluationTests
     [TestMethod]
     public async Task MultipleCounters_IndependentlyEvaluated()
     {
-        var c1 = new CounterDefinition { Id = Counter1, OutputChId = ChOut,  UpChId = Ch1,       DownChId = Guid.Empty, ResetChId = Guid.Empty, MinValue = 0, MaxValue = 100, StartValue = 0 };
-        var c2 = new CounterDefinition { Id = Counter2, OutputChId = ChOut2, UpChId = Guid.Empty, DownChId = Ch2,       ResetChId = Guid.Empty, MinValue = 0, MaxValue = 100, StartValue = 50 };
+        var c1 = new CounterDefinition { Id = Counter1, Name = "Counter1", OutputChId = ChOut,  UpChId = Ch1,       DownChId = Guid.Empty, ResetChId = Guid.Empty, MinValue = 0, MaxValue = 100, StartValue = 0 };
+        var c2 = new CounterDefinition { Id = Counter2, Name = "Counter2", OutputChId = ChOut2, UpChId = Guid.Empty, DownChId = Ch2,       ResetChId = Guid.Empty, MinValue = 0, MaxValue = 100, StartValue = 50 };
         counterRepo.Add(c1);
         counterRepo.Add(c2);
         channelRepo.Set(Ch1, "0");
