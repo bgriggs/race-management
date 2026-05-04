@@ -8,7 +8,7 @@ import { SimpleOperationType } from "./simple-operation-type";
 
 export interface MathDefinition {
     id: string;
-    order: number;
+    name: string;
     type: MathType;
     a: number;
     b: number;
@@ -16,7 +16,10 @@ export interface MathDefinition {
     /**
      * Second input channel. Use @see {@link System.Guid.Empty} to use constant @see {@link Channels.Math.MathDefinition.A} instead.
      */
-    channel2Id: string;
+    channel2Id: string | null;
     outputChannelId: string;
+    /**
+     * This is used when Type is SimpleOperation. It is otherwise ignored.
+     */
     simpleOperationType: SimpleOperationType;
 }

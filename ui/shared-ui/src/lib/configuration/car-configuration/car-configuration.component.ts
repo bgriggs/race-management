@@ -13,6 +13,7 @@ import { CounterList } from '../counters/counter-list/counter-list';
 import { TimersList } from '../timers/timers-list/timers-list';
 import { UserConditionsList } from '../user-conditions/user-conditions-list/user-conditions-list';
 import { AlarmList } from '../alarms/alarm-list/alarm-list';
+import { MathList } from '../math/math-list/math-list';
 import { MatIcon } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import {
@@ -46,6 +47,7 @@ import { CanBusInterfaceConfig } from '../../../models/can-bus-interface-config'
     TimersList,
     UserConditionsList,
     AlarmList,
+    MathList,
     MatIcon
   ],
   templateUrl: './car-configuration.component.html',
@@ -467,6 +469,18 @@ export class CarConfigurationComponent implements OnInit {
     this.activeConfiguration.set({
       ...current,
       counterDefinitions
+    });
+  }
+
+  onMathDefinitionsChange(mathDefinitions: CarConfiguration['mathDefinitions']): void {
+    const current = this.activeConfiguration();
+    if (!current) {
+      return;
+    }
+
+    this.activeConfiguration.set({
+      ...current,
+      mathDefinitions
     });
   }
 

@@ -163,12 +163,12 @@ export function decodeCounterDefinitionMessagePack(bytes: Uint8Array): CounterDe
 export function mathDefinitionFromMessagePack(obj: Record<string, unknown>): MathDefinition {
     return {
         id: obj["Id"] as string,
-        order: obj["Order"] as number,
+        name: obj["Name"] as string,
         type: obj["Type"] as MathType,
         a: obj["A"] as number,
         b: obj["B"] as number,
         channel1Id: obj["Channel1Id"] as string,
-        channel2Id: obj["Channel2Id"] as string,
+        channel2Id: obj["Channel2Id"] != null ? obj["Channel2Id"] as string : null,
         outputChannelId: obj["OutputChannelId"] as string,
         simpleOperationType: obj["SimpleOperationType"] as SimpleOperationType,
     };

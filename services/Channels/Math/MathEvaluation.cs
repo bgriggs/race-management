@@ -21,7 +21,7 @@ public class MathEvaluation
     {
         var definitions = await mathRepository.GetDefinitionsAsync();
 
-        foreach (var definition in definitions.OrderBy(d => d.Order))
+        foreach (var definition in definitions)
         {
             double output = 0;
             var channel1 = await GetChannelQuantity(definition.Channel1Id) ?? throw new InvalidOperationException($"Channel {definition.Channel1Id} not found");
@@ -29,7 +29,7 @@ public class MathEvaluation
             {
                 // Output = value1 / (value1 + value2)
                 case MathType.Bias:
-                    var channel2 = await GetChannelQuantity(definition.Channel2Id) ?? throw new InvalidOperationException($"Channel {definition.Channel2Id} not found");
+                    var channel2 = await GetChannelQuantity(definition.Channel2Id ?? Guid.Empty) ?? throw new InvalidOperationException($"Channel {definition.Channel2Id} not found");
                     output = (double)channel1.Value / ((double)channel1.Value + (double)channel2.Value);
                     break;
 
@@ -49,7 +49,7 @@ public class MathEvaluation
                     double value2 = (double)definition.A;
                     if (definition.Channel2Id != Guid.Empty)
                     {
-                        var ch2 = await GetChannelQuantity(definition.Channel2Id) ?? throw new InvalidOperationException($"Channel {definition.Channel2Id} not found");
+                        var ch2 = await GetChannelQuantity(definition.Channel2Id ?? Guid.Empty) ?? throw new InvalidOperationException($"Channel {definition.Channel2Id} not found");
                         value2 = (double)ch2.Value;
                     }
                     switch (definition.SimpleOperationType)

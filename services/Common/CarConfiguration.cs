@@ -43,4 +43,3 @@ public class CarConfiguration
     public List<ConditionDefinition> UserConditions { get; set; } = [];
 
 }
-

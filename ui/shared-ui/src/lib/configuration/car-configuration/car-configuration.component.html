@@ -180,6 +180,13 @@
             (alarmDefinitionsChange)="onAlarmDefinitionsChange($event)"
           />
         }
+
+        @if (selectedNodeId() === 'math') {
+          <lib-math-list
+            [configuration]="activeConfiguration()"
+            (mathDefinitionsChange)="onMathDefinitionsChange($event)"
+          />
+        }
       </article>
 
       <rm-error-list [items]="validationErrors()" (navigateToNode)="navigateFromError($event)" />

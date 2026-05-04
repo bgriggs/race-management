@@ -1,0 +1,106 @@
+<section class="math-editor">
+	<section class="editor-section">
+		<label for="math-name">Name</label>
+		<input
+			id="math-name"
+			type="text"
+			maxlength="20"
+			[attr.aria-invalid]="isNameDirty() && !isNameValid()"
+			[value]="math().name"
+			(input)="onNameChanged($any($event.target).value)"
+		/>
+		@if (isNameDirty() && !isNameValid()) {
+			<p class="validation-message">Name is required and must be 20 characters or fewer.</p>
+		}
+	</section>
+
+	<section class="editor-section">
+		<label for="math-type">Type</label>
+		<select id="math-type" [ngModel]="math().type" (ngModelChange)="onTypeChanged($event)">
+			@for (typeOption of mathTypes; track typeOption.value) {
+				<option [ngValue]="typeOption.value">{{ typeOption.label }}</option>
+			}
+		</select>
+	</section>
+
+	<section class="editor-section output-section">
+		<label>Output Channel</label>
+		<lib-channel-selector
+			[channels]="channels()"
+			[usedChannelIds]="usedChannelIds()"
+			[channelId]="math().outputChannelId || null"
+			(channelIdChange)="onOutputChannelChanged($event)"
+		/>
+	</section>
+
+	<section class="editor-section channel-inputs-section">
+		<h3>Input Channels</h3>
+
+		<section class="channel-input-group">
+			<label>Channel 1</label>
+			<lib-channel-selector
+				[channels]="channels()"
+				[channelId]="math().channel1Id || null"
+				(channelIdChange)="onChannel1Changed($event)"
+			/>
+		</section>
+
+		@if (showChannel2()) {
+			<section class="channel-input-group">
+				<label>Channel 2</label>
+				<lib-channel-selector
+					[channels]="channels()"
+					[channelId]="math().channel2Id"
+					(channelIdChange)="onChannel2Changed($event)"
+				/>
+			</section>
+		}
+	</section>
+
+	@if (showA() || showB()) {
+		<section class="editor-section settings-section">
+			<h3>Constants</h3>
+
+			<section class="number-row">
+				@if (showA()) {
+					<label class="number-field">
+						<span>A</span>
+						<input
+							type="number"
+							inputmode="decimal"
+							[value]="math().a"
+							(input)="onAChanged(+$any($event.target).value || 0)"
+						/>
+					</label>
+				}
+
+				@if (showB()) {
+					<label class="number-field">
+						<span>B</span>
+						<input
+							type="number"
+							inputmode="decimal"
+							[value]="math().b"
+							(input)="onBChanged(+$any($event.target).value || 0)"
+						/>
+					</label>
+				}
+			</section>
+		</section>
+	}
+
+	@if (isSimpleOperation()) {
+		<section class="editor-section settings-section">
+			<label for="simple-operation-type">Operation</label>
+			<select
+				id="simple-operation-type"
+				[ngModel]="math().simpleOperationType"
+				(ngModelChange)="onSimpleOperationTypeChanged($event)"
+			>
+				@for (operation of simpleOperationTypes; track operation.value) {
+					<option [ngValue]="operation.value">{{ operation.label }}</option>
+				}
+			</select>
+		</section>
+	}
+</section>

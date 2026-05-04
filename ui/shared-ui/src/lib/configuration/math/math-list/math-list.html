@@ -1,0 +1,64 @@
+<section class="list-actions">
+	<button type="button" class="primary" (click)="startAdd()">Add Math</button>
+</section>
+
+@if (!hasMathDefinitions()) {
+	<p class="list-empty">There are no math definitions configured.</p>
+} @else {
+	<div class="list-table-wrap">
+		<table class="list-table">
+			<thead>
+				<tr>
+					<th scope="col" class="number-column">#</th>
+					<th scope="col">Name</th>
+					<th scope="col">Output Channel Name</th>
+					<th scope="col" class="row-action-column"></th>
+					<th scope="col" class="row-action-column"></th>
+				</tr>
+			</thead>
+			<tbody>
+				@for (math of mathDefinitions(); track math.id || $index) {
+					<tr>
+						<td>{{ $index + 1 }}</td>
+						<td>{{ math.name || '(Unnamed math)' }}</td>
+						<td>{{ getOutputChannelName(math.outputChannelId) }}</td>
+						<td class="row-action-cell">
+							<button type="button" class="row-action-button" (click)="startEdit(math.id)" aria-label="Edit math">
+								<mat-icon aria-hidden="true">edit</mat-icon>
+							</button>
+						</td>
+						<td class="row-action-cell">
+							<button
+								type="button"
+								class="row-action-button delete"
+								(click)="deleteMath(math.id)"
+								aria-label="Delete math"
+							>
+								<mat-icon aria-hidden="true">delete</mat-icon>
+							</button>
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+}
+
+@if (isEditing()) {
+	<div class="editor-backdrop" (click)="stopEdit()"></div>
+	<div class="editor-popup">
+		@if (draftMath(); as currentDraft) {
+			<lib-edit-math
+				[channels]="channels()"
+				[usedChannelIds]="outputChannelUsedIds()"
+				[math]="currentDraft"
+				(mathChange)="onDraftMathChanged($event)"
+			/>
+		}
+
+		<section class="editor-actions">
+			<button type="button" class="secondary" (click)="stopEdit()">Cancel</button>
+			<button type="button" class="primary" (click)="saveDraft()" [disabled]="!isDraftNameValid()">OK</button>
+		</section>
+	</div>
+}
