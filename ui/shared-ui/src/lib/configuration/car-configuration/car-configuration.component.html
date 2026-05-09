@@ -188,6 +188,13 @@
           />
         }
 
+        @if (selectedNodeId() === 'logging') {
+          <lib-log-list
+            [configuration]="activeConfiguration()"
+            (loggingDefinitionsChange)="onLoggingDefinitionsChange($event)"
+          />
+        }
+
         @if (selectedNodeId() === 'enumerations') {
           <lib-enum-list
             [configuration]="activeConfiguration()"

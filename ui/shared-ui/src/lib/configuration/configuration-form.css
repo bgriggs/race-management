@@ -107,6 +107,7 @@
 	gap: 0.55rem;
 }
 
+.editor-section select,
 .editor-section input[type='text'],
 .editor-section input[type='number'] {
 	width: 100%;

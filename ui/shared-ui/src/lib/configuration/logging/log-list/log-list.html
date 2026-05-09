@@ -1,0 +1,61 @@
+<section class="list-actions">
+	<button type="button" class="primary" (click)="startAdd()">Add Log</button>
+</section>
+
+@if (!hasLogs()) {
+	<p class="list-empty">There are no logging entries configured.</p>
+} @else {
+	<div class="list-table-wrap">
+		<table class="list-table">
+			<thead>
+				<tr>
+					<th scope="col" class="number-column">#</th>
+					<th scope="col">Channel Name</th>
+					<th scope="col">Logging Frequency</th>
+					<th scope="col" class="row-action-column"></th>
+					<th scope="col" class="row-action-column"></th>
+				</tr>
+			</thead>
+			<tbody>
+				@for (log of logs(); track log.id || $index) {
+					<tr>
+						<td>{{ $index + 1 }}</td>
+						<td>{{ getChannelName(log.channelId) }}</td>
+						<td>{{ getFrequencyLabel(log.frequency) }}</td>
+						<td class="row-action-cell">						<button type="button" class="row-action-button" (click)="startEdit(log.id)" aria-label="Edit log entry">
+							<mat-icon aria-hidden="true">edit</mat-icon>
+						</button>
+					</td>
+					<td class="row-action-cell">							<button
+								type="button"
+								class="row-action-button delete"
+								(click)="deleteLog(log.id)"
+								aria-label="Delete log entry"
+							>
+								<mat-icon aria-hidden="true">delete</mat-icon>
+							</button>
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+}
+
+@if (isEditing()) {
+	<div class="editor-backdrop" (click)="stopEdit()"></div>
+	<div class="editor-popup">
+		@if (draftLog(); as currentDraft) {
+			<lib-edit-log-entry
+				[channels]="channels()"
+				[entry]="currentDraft"
+				(entryChange)="onDraftChanged($event)"
+			/>
+		}
+
+		<section class="editor-actions">
+			<button type="button" class="secondary" (click)="stopEdit()">Cancel</button>
+			<button type="button" class="primary" (click)="saveDraft()" [disabled]="!isDraftValid()">OK</button>
+		</section>
+	</div>
+}

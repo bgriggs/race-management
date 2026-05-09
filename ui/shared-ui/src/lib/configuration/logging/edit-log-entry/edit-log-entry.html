@@ -1,0 +1,21 @@
+<section class="editor-section">
+	<label>Channel</label>
+	<lib-channel-selector
+		[channels]="channels()"
+		[channelId]="entry().channelId || null"
+		(channelIdChange)="onChannelChanged($event)"
+	/>
+</section>
+
+<section class="editor-section">
+	<label for="log-frequency">Logging Frequency</label>
+	<select
+		id="log-frequency"
+		[value]="entry().frequency"
+		(change)="onFrequencyChanged($any($event.target).value)"
+	>
+		@for (option of frequencyOptions; track option.value) {
+			<option [value]="option.value">{{ option.label }}</option>
+		}
+	</select>
+</section>
