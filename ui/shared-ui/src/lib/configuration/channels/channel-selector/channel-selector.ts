@@ -15,11 +15,20 @@ export class ChannelSelector {
 
   readonly showList = signal(false);
 
-  readonly selectedChannelName = computed(() => {
+  readonly selectedChannel = computed(() => {
     const id = this.channelId();
-    if (!id) return '';
-    const ch = this.channels().find(c => c.id === id);
+    if (!id) return null;
+    return this.channels().find(c => c.id === id) ?? null;
+  });
+
+  readonly selectedChannelName = computed(() => {
+    const ch = this.selectedChannel();
     return ch?.name ?? '';
+  });
+
+  readonly isReservedSelected = computed(() => {
+    const ch = this.selectedChannel();
+    return !!ch?.isReserved;
   });
 
   openList(): void {

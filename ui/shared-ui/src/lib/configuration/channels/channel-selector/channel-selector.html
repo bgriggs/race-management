@@ -1,6 +1,14 @@
+
 <div class="channel-selector-field">
-	<div class="channel-display">{{ selectedChannelName() || 'No channel selected' }}</div>
-	<button type="button" class="select-channel-button" (click)="openList()">Select Channel</button>
+	<div class="channel-display channel-display--clickable" (click)="openList()" tabindex="0" role="button" aria-label="Select Channel">
+		@if (isReservedSelected()) {
+			<span class="material-icons bolt-icon" aria-label="Reserved Channel">bolt</span>
+		}
+		{{ selectedChannelName() || 'No channel selected' }}
+	</div>
+	<button type="button" class="select-channel-button icon-button" (click)="openList()" aria-label="Select Channel">
+		<span class="material-icons">open_in_new</span>
+	</button>
 </div>
 
 @if (showList()) {

@@ -1,3 +1,10 @@
+.bolt-icon {
+	font-family: 'Material Icons';
+	font-size: 1.1em;
+	color: #e6b800;
+	vertical-align: middle;
+	margin-right: 0.4em;
+}
 .channel-selector-field {
 	display: flex;
 	align-items: center;
@@ -17,19 +24,38 @@
 	user-select: none;
 }
 
-.select-channel-button {
-	border: 1px solid #2f5d3a;
-	background: #2f5d3a;
-	color: #fff;
-	border-radius: 8px;
-	padding: 0.45rem 0.85rem;
-	font-size: 0.9rem;
+.channel-display--clickable {
 	cursor: pointer;
-	white-space: nowrap;
+	transition: background 0.15s;
+}
+.channel-display--clickable:hover,
+.channel-display--clickable:focus {
+	background: #f3f7f3;
+	outline: 2px solid #2f5d3a;
 }
 
-.select-channel-button:hover {
-	background: #244b2d;
+.select-channel-button {
+	border: none;
+	background: transparent;
+	color: #2f5d3a;
+	border-radius: 50%;
+	padding: 0.35rem;
+	font-size: 1.3rem;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: background 0.15s;
+}
+
+.select-channel-button:hover, .select-channel-button:focus {
+	background: #eaf3ea;
+	outline: 2px solid #2f5d3a;
+}
+
+.select-channel-button .material-icons {
+	font-size: 1.3em;
+	vertical-align: middle;
 }
 
 .selector-backdrop {
