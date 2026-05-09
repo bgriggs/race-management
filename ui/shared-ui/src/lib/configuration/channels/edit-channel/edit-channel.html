@@ -153,6 +153,16 @@
 		</section>
 	}
 
+	<section class="field">
+		<label for="channel-enum-conversion">Enumeration</label>
+		<select id="channel-enum-conversion" formControlName="enumConversion">
+			<option value="">None</option>
+			@for (enumDefinition of enumDefinitions(); track enumDefinition.id) {
+				<option [value]="enumDefinition.id">{{ enumDefinition.name }}</option>
+			}
+		</select>
+	</section>
+
 	<section class="channel-form-actions">
 		<button type="button" class="secondary" (click)="dismiss()">Cancel</button>
 		<button type="submit" class="primary">Save Channel</button>

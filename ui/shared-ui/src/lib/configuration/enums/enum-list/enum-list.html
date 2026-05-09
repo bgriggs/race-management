@@ -1,0 +1,62 @@
+<section class="list-actions">
+	<button type="button" class="primary" (click)="startAdd()">Add Enum</button>
+</section>
+
+@if (!hasEnums()) {
+	<p class="list-empty">There are no enumerations configured.</p>
+} @else {
+	<div class="list-table-wrap">
+		<table class="list-table">
+			<thead>
+				<tr>
+					<th scope="col" class="number-column">#</th>
+					<th scope="col">Name</th>
+					<th scope="col">Values</th>
+					<th scope="col" class="row-action-column"></th>
+					<th scope="col" class="row-action-column"></th>
+				</tr>
+			</thead>
+			<tbody>
+				@for (enumDef of enums(); track enumDef.id || $index) {
+					<tr>
+						<td>{{ $index + 1 }}</td>
+						<td>{{ enumDef.name || '(Unnamed enum)' }}</td>
+						<td>{{ getValuesSummary(enumDef.values) }}</td>
+						<td class="row-action-cell">
+							<button type="button" class="row-action-button" (click)="startEdit(enumDef.id)" aria-label="Edit enum">
+								<mat-icon aria-hidden="true">edit</mat-icon>
+							</button>
+						</td>
+						<td class="row-action-cell">
+							<button
+								type="button"
+								class="row-action-button delete"
+								(click)="deleteEnum(enumDef.id)"
+								aria-label="Delete enum"
+							>
+								<mat-icon aria-hidden="true">delete</mat-icon>
+							</button>
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+}
+
+@if (isEditing()) {
+	<div class="editor-backdrop" (click)="stopEdit()"></div>
+	<div class="editor-popup">
+		@if (draftEnum(); as currentDraft) {
+			<lib-edit-enum
+				[enumDefinition]="currentDraft"
+				(enumDefinitionChange)="onDraftEnumChanged($event)"
+			></lib-edit-enum>
+		}
+
+		<section class="editor-actions">
+			<button type="button" class="secondary" (click)="stopEdit()">Cancel</button>
+			<button type="button" class="primary" (click)="saveDraft()" [disabled]="!isDraftValid()">OK</button>
+		</section>
+	</div>
+}

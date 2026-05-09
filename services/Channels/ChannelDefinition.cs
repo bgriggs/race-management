@@ -27,7 +27,6 @@ public class ChannelDefinition
     /// </summary>
     public string DataType { get; set; } = string.Empty;
 
-
     /// <summary>
     /// Gets or sets the base unit type for the channel, such as degrees, feet, etc. When the value is set, this is its units.
     /// </summary>
@@ -42,4 +41,11 @@ public class ChannelDefinition
     public double LowRange { get; set; }
     public double HighRange { get; set; }
     public string GroupTag { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Optional conversion from the value to specified string enum values, stored as a reference to a separate enum conversion definition. 
+    /// This allows for mapping numeric values to human-readable strings, such as mapping 0, 1, 2 to "Off", "On", "Auto" for a channel that
+    /// represents a mode setting. The enum conversion definition would define the mapping of numeric values to string values for the channel.
+    /// </summary>
+    public Guid? EnumConversion { get; set; }
 }

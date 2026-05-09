@@ -62,6 +62,7 @@
 		<lib-edit-channel
 			[channel]="editingChannel()"
 			[existingChannels]="channels()"
+			[enumDefinitions]="enumDefinitions()"
 			(save)="saveChannel($event)"
 			(cancel)="stopEdit()"
 		/>

@@ -1,0 +1,21 @@
+@import '../../configuration-form.css';
+
+.enum-editor {
+	display: grid;
+	gap: 1rem;
+}
+
+.table-actions {
+	display: flex;
+	justify-content: flex-start;
+	margin-bottom: 0.8rem;
+}
+
+.list-table input {
+	width: 100%;
+}
+
+.list-table {
+	width: auto;
+	table-layout: fixed;
+}

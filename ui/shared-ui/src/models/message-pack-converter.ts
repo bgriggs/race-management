@@ -52,6 +52,8 @@ export function carConfigurationFromMessagePack(obj: Record<string, unknown>): C
         tableMappings: (obj["TableMappings"] as unknown[]).map(v => tableDefinitionFromMessagePack(v as Record<string, unknown>)),
         timerDefinitions: (obj["TimerDefinitions"] as unknown[]).map(v => timerDefinitionFromMessagePack(v as Record<string, unknown>)),
         userConditions: (obj["UserConditions"] as unknown[]).map(v => conditionDefinitionFromMessagePack(v as Record<string, unknown>)),
+        loggingDefinitions: (obj["LoggingDefinitions"] as unknown[]).map(v => v as LoggingDefinition),
+        enumDefinitions: (obj["EnumDefinitions"] as unknown[]).map(v => v as EnumDefinition),
     };
 }
 
@@ -133,6 +135,7 @@ export function channelDefinitionFromMessagePack(obj: Record<string, unknown>): 
         lowRange: obj["LowRange"] as number,
         highRange: obj["HighRange"] as number,
         groupTag: obj["GroupTag"] as string,
+        enumConversion: obj["EnumConversion"] != null ? obj["EnumConversion"] as string : null,
     };
 }
 

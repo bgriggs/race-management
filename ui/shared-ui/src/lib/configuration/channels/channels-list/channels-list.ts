@@ -2,6 +2,7 @@ import { Component, computed, input, output, signal } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { CarConfiguration } from '../../../../models/car-configuration';
 import { ChannelDefinition } from '../../../../models/channel-definition';
+import { EnumDefinition } from '../../../../models/enum-definition';
 import { EditChannel } from '../edit-channel/edit-channel';
 
 @Component({
@@ -18,6 +19,7 @@ export class ChannelsList {
   readonly editingChannelId = signal<string | null>(null);
 
   readonly channels = computed<ChannelDefinition[]>(() => this.configuration()?.channelDefinitions ?? []);
+  readonly enumDefinitions = computed<EnumDefinition[]>(() => this.configuration()?.enumDefinitions ?? []);
 
   readonly hasChannels = computed(() => this.channels().length > 0);
 

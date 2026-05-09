@@ -37,4 +37,10 @@ export interface ChannelDefinition {
     lowRange: number;
     highRange: number;
     groupTag: string;
+    /**
+     * Optional conversion from the value to specified string enum values, stored as a reference to a separate enum conversion definition. 
+     * This allows for mapping numeric values to human-readable strings, such as mapping 0, 1, 2 to "Off", "On", "Auto" for a channel that
+     * represents a mode setting. The enum conversion definition would define the mapping of numeric values to string values for the channel.
+     */
+    enumConversion: string | null;
 }

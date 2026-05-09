@@ -4,6 +4,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MANAGEMENT_DATA_CLIENT } from '../../../data/management-data-client';
 import { ChannelDefinition } from '../../../../models/channel-definition';
+import { EnumDefinition } from '../../../../models/enum-definition';
 
 type ChannelKind = 'reserved' | 'custom';
 type ChannelDataType =
@@ -33,6 +34,7 @@ export class EditChannel implements OnInit {
 
   readonly channel = input<ChannelDefinition | null>(null);
   readonly existingChannels = input<ChannelDefinition[]>([]);
+  readonly enumDefinitions = input<EnumDefinition[]>([]);
 
   readonly save = output<ChannelDefinition>();
   readonly cancel = output<void>();
@@ -85,6 +87,7 @@ export class EditChannel implements OnInit {
       validators: [Validators.maxLength(16)],
       nonNullable: true
     }),
+    enumConversion: new FormControl('', { nonNullable: true }),
     lowRange: new FormControl(0, { nonNullable: true }),
     highRange: new FormControl(100, { nonNullable: true })
   });
@@ -123,6 +126,7 @@ export class EditChannel implements OnInit {
           outputDecimalPlaces: incomingChannel?.outputDecimalPlaces ?? 1,
           category: incomingChannel?.category ?? '',
           groupTag: incomingChannel?.groupTag ?? '',
+          enumConversion: incomingChannel?.enumConversion ?? '',
           lowRange: incomingChannel?.lowRange ?? 0,
           highRange: incomingChannel?.highRange ?? 100
         },
@@ -218,7 +222,8 @@ export class EditChannel implements OnInit {
       outputDecimalPlaces: isStringValue ? 0 : Number(this.form.controls.outputDecimalPlaces.value),
       lowRange: isStringValue ? 0 : Number(this.form.controls.lowRange.value),
       highRange: isStringValue ? 0 : Number(this.form.controls.highRange.value),
-      groupTag: this.form.controls.groupTag.value.trim()
+      groupTag: this.form.controls.groupTag.value.trim(),
+      enumConversion: this.form.controls.enumConversion.value || null
     };
 
     if (isReserved && selectedReservedChannel) {
@@ -234,6 +239,7 @@ export class EditChannel implements OnInit {
       channel.lowRange = channel.isStringValue ? 0 : selectedReservedChannel.lowRange;
       channel.highRange = channel.isStringValue ? 0 : selectedReservedChannel.highRange;
       channel.groupTag = selectedReservedChannel.groupTag;
+      channel.enumConversion = selectedReservedChannel.enumConversion;
     }
 
     this.save.emit(channel);

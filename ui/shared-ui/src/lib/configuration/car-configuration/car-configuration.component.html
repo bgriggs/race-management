@@ -187,6 +187,13 @@
             (mathDefinitionsChange)="onMathDefinitionsChange($event)"
           />
         }
+
+        @if (selectedNodeId() === 'enumerations') {
+          <lib-enum-list
+            [configuration]="activeConfiguration()"
+            (enumDefinitionsChange)="onEnumDefinitionsChange($event)"
+          />
+        }
       </article>
 
       <rm-error-list [items]="validationErrors()" (navigateToNode)="navigateFromError($event)" />

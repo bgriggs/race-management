@@ -1,0 +1,79 @@
+<section class="enum-editor">
+	<section class="editor-section">
+		<label for="enum-name">Name</label>
+		<input
+			id="enum-name"
+			type="text"
+			maxlength="20"
+			[attr.aria-invalid]="isNameDirty() && !isNameValid()"
+			[value]="enumDefinition().name"
+			(input)="onNameChanged($any($event.target).value)"
+		/>
+		@if (isNameDirty() && !isNameValid()) {
+			<p class="validation-message">Name is required and must be 20 characters or fewer.</p>
+		}
+	</section>
+
+	<section class="editor-section">
+		<section class="table-actions">
+			<button type="button" class="secondary" (click)="addRow()">Add Value</button>
+		</section>
+
+		<div class="list-table-wrap">
+			<table class="list-table">
+				<colgroup>
+					<col style="width: 50px" />
+					<col style="width: 120px" />
+					<col />
+				</colgroup>
+				<thead>
+					<tr>
+						<th scope="col">Numeric</th>
+						<th scope="col">String</th>
+						<th scope="col" class="row-action-column"></th>
+					</tr>
+				</thead>
+				<tbody>
+					@for (row of enumDefinition().values; track $index) {
+						<tr>
+							<td>
+								<input
+									type="number"
+									aria-label="Numeric value"
+									inputmode="numeric"
+									step="1"
+									[value]="row.value"
+									(input)="onNumericValueChanged($index, $any($event.target).value)"
+								/>
+							</td>
+							<td>
+								<input
+									type="text"
+									aria-label="String value"
+									maxlength="10"
+									[attr.aria-invalid]="row.source.trim().length < 1 || row.source.trim().length > 10"
+									[value]="row.source"
+									(input)="onStringValueChanged($index, $any($event.target).value)"
+								/>
+							</td>
+							<td class="row-action-cell">
+								<button
+									type="button"
+									class="row-action-button delete"
+									(click)="removeRow($index)"
+									aria-label="Delete enum value"
+								>
+									<mat-icon aria-hidden="true">delete</mat-icon>
+								</button>
+							</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		</div>
+
+		@if (!areValuesValid()) {
+			<p class="validation-message">Each string value must be 1 to 10 characters, and each numeric value must be an integer.</p>
+		}
+	</section>
+</section>

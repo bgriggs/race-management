@@ -14,6 +14,7 @@ import { TimersList } from '../timers/timers-list/timers-list';
 import { UserConditionsList } from '../user-conditions/user-conditions-list/user-conditions-list';
 import { AlarmList } from '../alarms/alarm-list/alarm-list';
 import { MathList } from '../math/math-list/math-list';
+import { EnumList } from '../enums/enum-list/enum-list';
 import { MatIcon } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import {
@@ -48,6 +49,7 @@ import { CanBusInterfaceConfig } from '../../../models/can-bus-interface-config'
     UserConditionsList,
     AlarmList,
     MathList,
+    EnumList,
     MatIcon
   ],
   templateUrl: './car-configuration.component.html',
@@ -219,6 +221,10 @@ export class CarConfigurationComponent implements OnInit {
     counters: {
       label: 'Counters',
       description: 'Counter configuration content will be added here.'
+    },
+    enumerations: {
+      label: 'Enumerations',
+      description: 'Define enumerations that can change a numeric value to text. For example, gear can be converted from a value of 0 to N, etc.'
     }
   };
 
@@ -496,6 +502,18 @@ export class CarConfigurationComponent implements OnInit {
     });
   }
 
+  onEnumDefinitionsChange(enumDefinitions: CarConfiguration['enumDefinitions']): void {
+    const current = this.activeConfiguration();
+    if (!current) {
+      return;
+    }
+
+    this.activeConfiguration.set({
+      ...current,
+      enumDefinitions
+    });
+  }
+
   private buildTreeNodes(): NavigationTreeNode[] {
     return [
       { id: 'general-settings', label: 'General Settings' },
@@ -647,7 +665,9 @@ export class CarConfigurationComponent implements OnInit {
       mathDefinitions: [],
       tableMappings: [],
       timerDefinitions: [],
-      userConditions: []
+      userConditions: [],
+      loggingDefinitions: [],
+      enumDefinitions: []
     };
   }
 }
