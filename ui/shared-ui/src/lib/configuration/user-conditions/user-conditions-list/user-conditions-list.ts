@@ -1,4 +1,5 @@
 import { Component, computed, inject, input, output, signal } from '@angular/core';
+import { createGuid } from '../../../utils/guid';
 import { MatIcon } from '@angular/material/icon';
 import { CarConfiguration } from '../../../../models/car-configuration';
 import { ComparisonDefinition } from '../../../../models/comparison-definition';
@@ -70,7 +71,7 @@ export class UserConditionsList {
 
     const normalized = this.normalizeCondition({
       ...draft,
-      id: draft.id || this.createGuid(),
+      id: draft.id || createGuid(),
       name: draft.name.trim(),
     });
 
@@ -106,7 +107,7 @@ export class UserConditionsList {
   private normalizeCondition(condition: ConditionDefinition): ConditionDefinition {
     return {
       ...condition,
-      id: condition.id || this.createGuid(),
+      id: condition.id || createGuid(),
       outputChannelId: condition.outputChannelId || EMPTY_GUID,
       statements: condition.statements.map((statement) => this.normalizeStatement(statement)),
     };
@@ -115,7 +116,7 @@ export class UserConditionsList {
   private normalizeStatement(statement: StatementDefinition): StatementDefinition {
     return {
       ...statement,
-      id: statement.id || this.createGuid(),
+      id: statement.id || createGuid(),
       activateComparisons: statement.activateComparisons.map((group) =>
         group.map((comparison) => this.normalizeComparison(comparison))
       ),
@@ -130,7 +131,7 @@ export class UserConditionsList {
   private normalizeComparison(comparison: ComparisonDefinition): ComparisonDefinition {
     return {
       ...comparison,
-      id: comparison.id || this.createGuid(),
+      id: comparison.id || createGuid(),
       channelId: comparison.channelId || EMPTY_GUID,
       channelComparisonId: comparison.channelComparisonId || null,
     };
@@ -157,18 +158,6 @@ export class UserConditionsList {
     }
 
     return JSON.parse(JSON.stringify(condition)) as ConditionDefinition;
-  }
-
-  private createGuid(): string {
-    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-      return crypto.randomUUID();
-    }
-
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-      const r = Math.floor(Math.random() * 16);
-      const v = c === 'x' ? r : (r & 0x3) | 0x8;
-      return v.toString(16);
-    });
   }
 
 }

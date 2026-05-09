@@ -1,4 +1,5 @@
 import { Component, computed, input, output, signal } from '@angular/core';
+import { createGuid } from '../../../utils/guid';
 import { MatIcon } from '@angular/material/icon';
 import { CarConfiguration } from '../../../../models/car-configuration';
 import { StatementDefinition } from '../../../../models/statement-definition';
@@ -74,7 +75,7 @@ export class TimersList {
 
     const normalized = this.normalizeTimer({
       ...draft,
-      id: draft.id || this.createGuid(),
+      id: draft.id || createGuid(),
       name: draft.name.trim(),
     });
 
@@ -107,7 +108,7 @@ export class TimersList {
   private normalizeTimer(timer: TimerDefinition): TimerDefinition {
     return {
       ...timer,
-      id: timer.id || this.createGuid(),
+      id: timer.id || createGuid(),
       outputChId: timer.outputChId || EMPTY_GUID,
     };
   }
@@ -142,18 +143,6 @@ export class TimersList {
     }
 
     return JSON.parse(JSON.stringify(timer)) as TimerDefinition;
-  }
-
-  private createGuid(): string {
-    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-      return crypto.randomUUID();
-    }
-
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-      const r = Math.floor(Math.random() * 16);
-      const v = c === 'x' ? r : (r & 0x3) | 0x8;
-      return v.toString(16);
-    });
   }
 
 }

@@ -1,4 +1,5 @@
 import { Component, computed, input, model, signal } from '@angular/core';
+import { createGuid } from '../../../utils/guid';
 import { MatIcon } from '@angular/material/icon';
 import { ChannelDefinition } from '../../../../models/channel-definition';
 import { ComparisonDefinition } from '../../../../models/comparison-definition';
@@ -80,7 +81,7 @@ export class EditComparisonsList {
 
     const normalized = {
       ...draft,
-      id: draft.id || this.createGuid(),
+      id: draft.id || createGuid(),
     };
 
     const currentComparisons = this.comparisons();
@@ -160,18 +161,6 @@ export class EditComparisonsList {
       forMs: 0,
       reverseResult: false,
     };
-  }
-
-  private createGuid(): string {
-    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-      return crypto.randomUUID();
-    }
-
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-      const r = Math.floor(Math.random() * 16);
-      const v = c === 'x' ? r : (r & 0x3) | 0x8;
-      return v.toString(16);
-    });
   }
 
 }

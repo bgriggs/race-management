@@ -1,4 +1,5 @@
 import { Component, computed, input, output, signal } from '@angular/core';
+import { createGuid } from '../../../utils/guid';
 import { MatIcon } from '@angular/material/icon';
 import { CarConfiguration } from '../../../../models/car-configuration';
 import { AlarmDefinition } from '../../../../models/alarm-definition';
@@ -65,7 +66,7 @@ export class AlarmList {
 
     const normalized: AlarmDefinition = {
       ...draft,
-      id: draft.id || this.createGuid(),
+      id: draft.id || createGuid(),
       name: draft.name.trim(),
     };
 
@@ -108,7 +109,7 @@ export class AlarmList {
 
   private createEmptyStatement(): StatementDefinition {
     return {
-      id: this.createGuid(),
+      id: createGuid(),
       activateComparisons: [[]],
       deactivateComparisons: null,
     };
@@ -122,15 +123,4 @@ export class AlarmList {
     return JSON.parse(JSON.stringify(alarm)) as AlarmDefinition;
   }
 
-  private createGuid(): string {
-    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-      return crypto.randomUUID();
-    }
-
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-      const r = Math.floor(Math.random() * 16);
-      const v = c === 'x' ? r : (r & 0x3) | 0x8;
-      return v.toString(16);
-    });
-  }
 }

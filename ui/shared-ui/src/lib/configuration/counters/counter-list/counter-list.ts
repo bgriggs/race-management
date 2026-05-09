@@ -3,6 +3,7 @@ import { MatIcon } from '@angular/material/icon';
 import { CarConfiguration } from '../../../../models/car-configuration';
 import { CounterDefinition } from '../../../../models/counter-definition';
 import { EditCounter } from '../edit-counter/edit-counter';
+import { createGuid } from '../../../utils/guid';
 
 const EMPTY_GUID = '00000000-0000-0000-0000-000000000000';
 
@@ -78,7 +79,7 @@ export class CounterList {
 
     const normalized = this.normalizeCounter({
       ...draft,
-      id: draft.id || this.createGuid(),
+      id: draft.id || createGuid(),
       name: draft.name.trim(),
     });
 
@@ -114,7 +115,7 @@ export class CounterList {
   private normalizeCounter(counter: CounterDefinition): CounterDefinition {
     return {
       ...counter,
-      id: counter.id || this.createGuid(),
+      id: counter.id || createGuid(),
       outputChId: counter.outputChId || EMPTY_GUID,
       upChId: counter.upChId || EMPTY_GUID,
       downChId: counter.downChId || EMPTY_GUID,
@@ -144,18 +145,6 @@ export class CounterList {
     }
 
     return JSON.parse(JSON.stringify(counter)) as CounterDefinition;
-  }
-
-  private createGuid(): string {
-    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-      return crypto.randomUUID();
-    }
-
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-      const r = Math.floor(Math.random() * 16);
-      const v = c === 'x' ? r : (r & 0x3) | 0x8;
-      return v.toString(16);
-    });
   }
 
 }

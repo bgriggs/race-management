@@ -1,4 +1,5 @@
 import { Component, computed, input, output, signal } from '@angular/core';
+import { createGuid } from '../../../utils/guid';
 import { MatIcon } from '@angular/material/icon';
 import { CarConfiguration } from '../../../../models/car-configuration';
 import { MathDefinition } from '../../../../models/math-definition';
@@ -75,7 +76,7 @@ export class MathList {
 
     const normalized = this.normalizeMath({
       ...draft,
-      id: draft.id || this.createGuid(),
+      id: draft.id || createGuid(),
       name: draft.name.trim(),
     });
 
@@ -108,7 +109,7 @@ export class MathList {
   private normalizeMath(math: MathDefinition): MathDefinition {
     return {
       ...math,
-      id: math.id || this.createGuid(),
+      id: math.id || createGuid(),
       channel1Id: math.channel1Id || EMPTY_GUID,
       channel2Id: math.channel2Id || EMPTY_GUID,
       outputChannelId: math.outputChannelId || EMPTY_GUID,
@@ -137,15 +138,4 @@ export class MathList {
     return JSON.parse(JSON.stringify(math)) as MathDefinition;
   }
 
-  private createGuid(): string {
-    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-      return crypto.randomUUID();
-    }
-
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-      const r = Math.floor(Math.random() * 16);
-      const v = c === 'x' ? r : (r & 0x3) | 0x8;
-      return v.toString(16);
-    });
-  }
 }

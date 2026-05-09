@@ -4,6 +4,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MANAGEMENT_DATA_CLIENT } from '../../../data/management-data-client';
 import { ChannelDefinition } from '../../../../models/channel-definition';
+import { createGuid } from '../../../utils/guid';
 import { EnumDefinition } from '../../../../models/enum-definition';
 
 type ChannelKind = 'reserved' | 'custom';
@@ -209,7 +210,7 @@ export class EditChannel implements OnInit {
     const channel: ChannelDefinition = {
       id: isReserved
         ? selectedReservedChannelId
-        : (existingChannel?.isReserved ? this.createGuid() : existingChannel?.id || this.createGuid()),
+        : (existingChannel?.isReserved ? createGuid() : existingChannel?.id || createGuid()),
       isReserved,
       category: this.form.controls.category.value.trim(),
       name: this.form.controls.name.value.trim(),
@@ -320,18 +321,6 @@ export class EditChannel implements OnInit {
       .finally(() => {
         this.loadingUnitTypes.set(false);
       });
-  }
-
-  private createGuid(): string {
-    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-      return crypto.randomUUID();
-    }
-
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (character) => {
-      const randomNibble = Math.floor(Math.random() * 16);
-      const value = character === 'x' ? randomNibble : (randomNibble & 0x3) | 0x8;
-      return value.toString(16);
-    });
   }
 
 }

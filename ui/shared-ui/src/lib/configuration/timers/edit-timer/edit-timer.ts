@@ -1,4 +1,5 @@
 import { Component, computed, input, model, signal } from '@angular/core';
+import { createGuid } from '../../../utils/guid';
 import { ChannelDefinition } from '../../../../models/channel-definition';
 import { StatementDefinition } from '../../../../models/statement-definition';
 import { TimerDefinition } from '../../../../models/timer-definition';
@@ -97,7 +98,7 @@ export class EditTimer {
   private normalizeStatement(statement: StatementDefinition): StatementDefinition {
     return {
       ...statement,
-      id: statement.id || this.createGuid(),
+      id: statement.id || createGuid(),
       activateComparisons: statement.activateComparisons.length
         ? statement.activateComparisons
         : [[]],
@@ -127,18 +128,6 @@ export class EditTimer {
       activateComparisons: [[]],
       deactivateComparisons: null,
     };
-  }
-
-  private createGuid(): string {
-    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-      return crypto.randomUUID();
-    }
-
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-      const r = Math.floor(Math.random() * 16);
-      const v = c === 'x' ? r : (r & 0x3) | 0x8;
-      return v.toString(16);
-    });
   }
 
 }
