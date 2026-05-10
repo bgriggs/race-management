@@ -1,7 +1,9 @@
 using Channels;
 using Channels.Alarms;
 using Channels.Counters;
+using Channels.Enums;
 using Channels.Logic;
+using Channels.Logging;
 using Channels.Math;
 using Channels.Tables;
 using Channels.Timers;
@@ -35,12 +37,16 @@ public class ModelGenerationSpec : GenerationSpec
         typeof(CounterDefinition),
         typeof(MathDefinition),
         typeof(TableDefinition),
+        typeof(TableMapping),
         typeof(TimerDefinition),
         typeof(ConditionDefinition),
         typeof(StatementDefinition),
         typeof(ComparisonDefinition),
         typeof(CarConfigurationSummary),
-        typeof(AlarmDefinition)
+        typeof(AlarmDefinition),
+        typeof(EnumDefinition),
+        typeof(EnumValueDefinition),
+        typeof(LoggingDefinition)
     ];
 
     private static readonly Type[] EnumTypes =
@@ -49,16 +55,13 @@ public class ModelGenerationSpec : GenerationSpec
         typeof(SimpleOperationType),
         typeof(InterpolationType),
         typeof(LogicType),
+        typeof(LoggingFrequency),
     ];
 
     public override void OnBeforeGeneration(OnBeforeGenerationArgs args)
     {
-        foreach (var type in InterfaceTypes.Where(t => t != typeof(TableDefinition)))
+        foreach (var type in InterfaceTypes)
             AddInterface(type);
-
-        AddInterface(typeof(TableDefinition))
-            .Member(nameof(TableDefinition.Mapping))
-            .Type("[string, string][]");
 
         foreach (var type in EnumTypes)
             AddEnum(type);
@@ -85,10 +88,9 @@ public class ModelGenerationSpec : GenerationSpec
         if (tableDefinitionPath is null || !File.Exists(tableDefinitionPath))
             return;
 
-        var lines = File.ReadAllLines(tableDefinitionPath)
-            .Where(l => !l.Contains("import { ValueTuple } from \"./value-tuple\";"))
-            .ToArray();
-
-        File.WriteAllLines(tableDefinitionPath, lines);
+        var content = File.ReadAllText(tableDefinitionPath);
+        content = content.Replace("export class TableDefinition {", "export interface TableDefinition {");
+        content = System.Text.RegularExpressions.Regex.Replace(content, @" = [^\n;]+;", ";");
+        File.WriteAllText(tableDefinitionPath, content);
     }
 }

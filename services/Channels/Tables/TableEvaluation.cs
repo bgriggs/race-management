@@ -41,11 +41,11 @@ public class TableEvaluation
                     c = StringComparison.OrdinalIgnoreCase;
                 }
 
-                foreach (var m in definition.Mapping)
+                foreach (var m in definition.Mappings)
                 {
-                    if (string.Compare(m.input, inputCh.Value, c) == 0)
+                    if (string.Compare(m.Input, inputCh.Value, c) == 0)
                     {
-                        outputValue.Value = m.output;
+                        outputValue.Value = m.Output;
                         break;
                     }
                 }
@@ -53,11 +53,11 @@ public class TableEvaluation
             // Integers -> string
             else if (inputMap.BaseDecimalPlaces == 0)
             {
-                foreach (var m in definition.Mapping)
+                foreach (var m in definition.Mappings)
                 {
-                    if (int.TryParse(m.input, out int inVal) && inVal == inputCh.GetValueInt())
+                    if (int.TryParse(m.Input, out int inVal) && inVal == inputCh.GetValueInt())
                     {
-                        outputValue.Value = m.output;
+                        outputValue.Value = m.Output;
                         break;
                     }
                 }
@@ -69,13 +69,13 @@ public class TableEvaluation
                 switch (definition.InterpolationType)
                 {
                     case InterpolationType.Linear:
-                        interpolate = Interpolate.Linear(definition.InputPoints, definition.OutputValues);
+                        interpolate = Interpolate.Linear(definition.GetInputPoints(), definition.GetOutputValues());
                         break;
                     case InterpolationType.CubicSpline:
-                        interpolate = Interpolate.CubicSpline(definition.InputPoints, definition.OutputValues);
+                        interpolate = Interpolate.CubicSpline(definition.GetInputPoints(), definition.GetOutputValues());
                         break;
                     case InterpolationType.Polynomial:
-                        interpolate = Interpolate.Polynomial(definition.InputPoints, definition.OutputValues);
+                        interpolate = Interpolate.Polynomial(definition.GetInputPoints(), definition.GetOutputValues());
                         break;
                 }
 

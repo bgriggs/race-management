@@ -10,27 +10,23 @@ public class TableDefinition
     public Guid OutputChannel { get; set; }
     public InterpolationType InterpolationType { get; set; }
 
-    public List<(string input, string output)> Mapping { get; } = [];
+    public List<TableMapping> Mappings { get; set; } = [];
 
 
     private IEnumerable<double>? inputPoints = null;
     private IEnumerable<double>? outputValues = null;
 
-    public IEnumerable<double> InputPoints
+    public IEnumerable<double> GetInputPoints()
     {
-        get
-        {
-            inputPoints ??= [.. Mapping.Select(m => double.Parse(m.input))];
-            return inputPoints;
-        }
+        inputPoints ??= [.. Mappings.Select(m => double.Parse(m.Input))];
+        return inputPoints;
     }
 
-    public IEnumerable<double> OutputValues
+    public IEnumerable<double> GetOutputValues()
     {
-        get
-        {
-            outputValues ??= [.. Mapping.Select(m => double.Parse(m.output))];
-            return outputValues;
-        }
+        outputValues ??= [.. Mappings.Select(m => double.Parse(m.Output))];
+        return outputValues;
     }
 }
+
+public record TableMapping(string Input, string Output);

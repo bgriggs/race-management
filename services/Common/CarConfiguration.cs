@@ -71,7 +71,7 @@ public class CarConfiguration
     public List<AlarmDefinition> AlarmDefinitions { get; set; } = [];
     public List<CounterDefinition> CounterDefinitions { get; set; } = [];
     public List<MathDefinition> MathDefinitions { get; set; } = [];
-    public List<TableDefinition> TableMappings { get; set; } = [];
+    public List<TableDefinition> TableDefinitions { get; set; } = [];
     public List<TimerDefinition> TimerDefinitions { get; set; } = [];
     public List<ConditionDefinition> UserConditions { get; set; } = [];
     public List<LoggingDefinition> LoggingDefinitions { get; set; } = [];

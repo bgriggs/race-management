@@ -56,9 +56,9 @@ public class TableEvaluationTests
         channelDefRepo.Set(StringDef(Ch2));
 
         var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2, IgnoreCase = false };
-        mapping.Mapping.Add(("park", "P"));
-        mapping.Mapping.Add(("reverse", "R"));
-        mapping.Mapping.Add(("neutral", "N"));
+        mapping.Mappings.Add(new TableMapping("park", "P"));
+        mapping.Mappings.Add(new TableMapping("reverse", "R"));
+        mapping.Mappings.Add(new TableMapping("neutral", "N"));
         tableRepo.Add(mapping);
 
         await CreateEvaluation().EvaluateAsync();
@@ -74,7 +74,7 @@ public class TableEvaluationTests
         channelDefRepo.Set(StringDef(Ch2));
 
         var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2, IgnoreCase = false };
-        mapping.Mapping.Add(("park", "P"));
+        mapping.Mappings.Add(new TableMapping("park", "P"));
         tableRepo.Add(mapping);
 
         await CreateEvaluation().EvaluateAsync();
@@ -90,7 +90,7 @@ public class TableEvaluationTests
         channelDefRepo.Set(StringDef(Ch2));
 
         var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2, IgnoreCase = true };
-        mapping.Mapping.Add(("park", "P"));
+        mapping.Mappings.Add(new TableMapping("park", "P"));
         tableRepo.Add(mapping);
 
         await CreateEvaluation().EvaluateAsync();
@@ -106,7 +106,7 @@ public class TableEvaluationTests
         channelDefRepo.Set(StringDef(Ch2));
 
         var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2, IgnoreCase = true };
-        mapping.Mapping.Add(("PARK", "P"));
+        mapping.Mappings.Add(new TableMapping("PARK", "P"));
         tableRepo.Add(mapping);
 
         await CreateEvaluation().EvaluateAsync();
@@ -136,8 +136,8 @@ public class TableEvaluationTests
         channelDefRepo.Set(StringDef(Ch2));
 
         var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2, IgnoreCase = true };
-        mapping.Mapping.Add(("park", "FIRST"));
-        mapping.Mapping.Add(("park", "SECOND"));
+        mapping.Mappings.Add(new TableMapping("park", "FIRST"));
+        mapping.Mappings.Add(new TableMapping("park", "SECOND"));
         tableRepo.Add(mapping);
 
         await CreateEvaluation().EvaluateAsync();
@@ -153,10 +153,10 @@ public class TableEvaluationTests
         channelDefRepo.Set(StringDef(Ch2));
 
         var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2 };
-        mapping.Mapping.Add(("park", "P"));
-        mapping.Mapping.Add(("reverse", "R"));
-        mapping.Mapping.Add(("neutral", "N"));
-        mapping.Mapping.Add(("drive", "D"));
+        mapping.Mappings.Add(new TableMapping("park", "P"));
+        mapping.Mappings.Add(new TableMapping("reverse", "R"));
+        mapping.Mappings.Add(new TableMapping("neutral", "N"));
+        mapping.Mappings.Add(new TableMapping("drive", "D"));
         tableRepo.Add(mapping);
 
         await CreateEvaluation().EvaluateAsync();
@@ -176,9 +176,9 @@ public class TableEvaluationTests
         channelDefRepo.Set(StringDef(Ch2));
 
         var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2 };
-        mapping.Mapping.Add(("1", "one"));
-        mapping.Mapping.Add(("2", "two"));
-        mapping.Mapping.Add(("3", "three"));
+        mapping.Mappings.Add(new TableMapping("1", "one"));
+        mapping.Mappings.Add(new TableMapping("2", "two"));
+        mapping.Mappings.Add(new TableMapping("3", "three"));
         tableRepo.Add(mapping);
 
         await CreateEvaluation().EvaluateAsync();
@@ -194,8 +194,8 @@ public class TableEvaluationTests
         channelDefRepo.Set(StringDef(Ch2));
 
         var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2 };
-        mapping.Mapping.Add(("1", "one"));
-        mapping.Mapping.Add(("2", "two"));
+        mapping.Mappings.Add(new TableMapping("1", "one"));
+        mapping.Mappings.Add(new TableMapping("2", "two"));
         tableRepo.Add(mapping);
 
         await CreateEvaluation().EvaluateAsync();
@@ -211,8 +211,8 @@ public class TableEvaluationTests
         channelDefRepo.Set(StringDef(Ch2));
 
         var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2 };
-        mapping.Mapping.Add(("1", "FIRST"));
-        mapping.Mapping.Add(("1", "SECOND"));
+        mapping.Mappings.Add(new TableMapping("1", "FIRST"));
+        mapping.Mappings.Add(new TableMapping("1", "SECOND"));
         tableRepo.Add(mapping);
 
         await CreateEvaluation().EvaluateAsync();
@@ -228,7 +228,7 @@ public class TableEvaluationTests
         channelDefRepo.Set(StringDef(Ch2));
 
         var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2 };
-        mapping.Mapping.Add(("-1", "minus one"));
+        mapping.Mappings.Add(new TableMapping("-1", "minus one"));
         tableRepo.Add(mapping);
 
         await CreateEvaluation().EvaluateAsync();
@@ -248,8 +248,8 @@ public class TableEvaluationTests
         channelDefRepo.Set(DoubleDef(Ch2));
 
         var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2, InterpolationType = InterpolationType.Linear };
-        mapping.Mapping.Add(("0", "0"));
-        mapping.Mapping.Add(("10", "200"));
+        mapping.Mappings.Add(new TableMapping("0", "0"));
+        mapping.Mappings.Add(new TableMapping("10", "200"));
         tableRepo.Add(mapping);
 
         await CreateEvaluation().EvaluateAsync();
@@ -265,8 +265,8 @@ public class TableEvaluationTests
         channelDefRepo.Set(DoubleDef(Ch2));
 
         var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2, InterpolationType = InterpolationType.Linear };
-        mapping.Mapping.Add(("0", "0"));
-        mapping.Mapping.Add(("10", "200"));
+        mapping.Mappings.Add(new TableMapping("0", "0"));
+        mapping.Mappings.Add(new TableMapping("10", "200"));
         tableRepo.Add(mapping);
 
         await CreateEvaluation().EvaluateAsync();
@@ -282,8 +282,8 @@ public class TableEvaluationTests
         channelDefRepo.Set(DoubleDef(Ch2));
 
         var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2, InterpolationType = InterpolationType.Linear };
-        mapping.Mapping.Add(("0", "0"));
-        mapping.Mapping.Add(("10", "200"));
+        mapping.Mappings.Add(new TableMapping("0", "0"));
+        mapping.Mappings.Add(new TableMapping("10", "200"));
         tableRepo.Add(mapping);
 
         await CreateEvaluation().EvaluateAsync();
@@ -299,8 +299,8 @@ public class TableEvaluationTests
         channelDefRepo.Set(DoubleDef(Ch2));
 
         var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2, InterpolationType = InterpolationType.Linear };
-        mapping.Mapping.Add(("0", "0"));
-        mapping.Mapping.Add(("8", "80"));
+        mapping.Mappings.Add(new TableMapping("0", "0"));
+        mapping.Mappings.Add(new TableMapping("8", "80"));
         tableRepo.Add(mapping);
 
         await CreateEvaluation().EvaluateAsync();
@@ -320,9 +320,9 @@ public class TableEvaluationTests
         channelDefRepo.Set(DoubleDef(Ch2));
 
         var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2, InterpolationType = InterpolationType.CubicSpline };
-        mapping.Mapping.Add(("0", "0"));
-        mapping.Mapping.Add(("5", "50"));
-        mapping.Mapping.Add(("10", "100"));
+        mapping.Mappings.Add(new TableMapping("0", "0"));
+        mapping.Mappings.Add(new TableMapping("5", "50"));
+        mapping.Mappings.Add(new TableMapping("10", "100"));
         tableRepo.Add(mapping);
 
         await CreateEvaluation().EvaluateAsync();
@@ -338,9 +338,9 @@ public class TableEvaluationTests
         channelDefRepo.Set(DoubleDef(Ch2));
 
         var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2, InterpolationType = InterpolationType.CubicSpline };
-        mapping.Mapping.Add(("0", "0"));
-        mapping.Mapping.Add(("5", "50"));
-        mapping.Mapping.Add(("10", "100"));
+        mapping.Mappings.Add(new TableMapping("0", "0"));
+        mapping.Mappings.Add(new TableMapping("5", "50"));
+        mapping.Mappings.Add(new TableMapping("10", "100"));
         tableRepo.Add(mapping);
 
         await CreateEvaluation().EvaluateAsync();
@@ -360,9 +360,9 @@ public class TableEvaluationTests
         channelDefRepo.Set(DoubleDef(Ch2));
 
         var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2, InterpolationType = InterpolationType.Polynomial };
-        mapping.Mapping.Add(("0", "0"));
-        mapping.Mapping.Add(("5", "50"));
-        mapping.Mapping.Add(("10", "100"));
+        mapping.Mappings.Add(new TableMapping("0", "0"));
+        mapping.Mappings.Add(new TableMapping("5", "50"));
+        mapping.Mappings.Add(new TableMapping("10", "100"));
         tableRepo.Add(mapping);
 
         await CreateEvaluation().EvaluateAsync();
@@ -378,9 +378,9 @@ public class TableEvaluationTests
         channelDefRepo.Set(DoubleDef(Ch2));
 
         var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2, InterpolationType = InterpolationType.Polynomial };
-        mapping.Mapping.Add(("0", "0"));
-        mapping.Mapping.Add(("5", "50"));
-        mapping.Mapping.Add(("10", "100"));
+        mapping.Mappings.Add(new TableMapping("0", "0"));
+        mapping.Mappings.Add(new TableMapping("5", "50"));
+        mapping.Mappings.Add(new TableMapping("10", "100"));
         tableRepo.Add(mapping);
 
         await CreateEvaluation().EvaluateAsync();
@@ -400,8 +400,8 @@ public class TableEvaluationTests
         channelDefRepo.Set(DoubleDef(Ch2, decimalPlaces: 2));
 
         var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2, InterpolationType = InterpolationType.Linear };
-        mapping.Mapping.Add(("0", "0"));
-        mapping.Mapping.Add(("10", "200"));
+        mapping.Mappings.Add(new TableMapping("0", "0"));
+        mapping.Mappings.Add(new TableMapping("10", "200"));
         tableRepo.Add(mapping);
 
         await CreateEvaluation().EvaluateAsync();
@@ -419,8 +419,8 @@ public class TableEvaluationTests
         channelDefRepo.Set(DoubleDef(Ch2, decimalPlaces: 0));
 
         var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2, InterpolationType = InterpolationType.Linear };
-        mapping.Mapping.Add(("0", "0"));
-        mapping.Mapping.Add(("10", "200"));
+        mapping.Mappings.Add(new TableMapping("0", "0"));
+        mapping.Mappings.Add(new TableMapping("10", "200"));
         tableRepo.Add(mapping);
 
         await CreateEvaluation().EvaluateAsync();
@@ -443,12 +443,12 @@ public class TableEvaluationTests
         channelDefRepo.Set(StringDef(Ch4));
 
         var m1 = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2 };
-        m1.Mapping.Add(("park", "P"));
+        m1.Mappings.Add(new TableMapping("park", "P"));
         tableRepo.Add(m1);
 
         var m2 = new TableDefinition { InputChannel = Ch3, OutputChannel = Ch4 };
-        m2.Mapping.Add(("1", "one"));
-        m2.Mapping.Add(("2", "two"));
+        m2.Mappings.Add(new TableMapping("1", "one"));
+        m2.Mappings.Add(new TableMapping("2", "two"));
         tableRepo.Add(m2);
 
         await CreateEvaluation().EvaluateAsync();
@@ -468,13 +468,13 @@ public class TableEvaluationTests
         channelDefRepo.Set(DoubleDef(Ch4));
 
         var m1 = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2 };
-        m1.Mapping.Add(("park", "P"));
-        m1.Mapping.Add(("reverse", "R"));
+        m1.Mappings.Add(new TableMapping("park", "P"));
+        m1.Mappings.Add(new TableMapping("reverse", "R"));
         tableRepo.Add(m1);
 
         var m2 = new TableDefinition { InputChannel = Ch3, OutputChannel = Ch4, InterpolationType = InterpolationType.Linear };
-        m2.Mapping.Add(("0", "0"));
-        m2.Mapping.Add(("10", "100"));
+        m2.Mappings.Add(new TableMapping("0", "0"));
+        m2.Mappings.Add(new TableMapping("10", "100"));
         tableRepo.Add(m2);
 
         await CreateEvaluation().EvaluateAsync();

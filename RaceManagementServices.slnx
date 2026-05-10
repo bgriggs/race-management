@@ -1,5 +1,10 @@
 <Solution>
-  <Folder Name="/car/" />
+  <Folder Name="/car/">
+    <Project Path="services/car/CarUpdateAgent.Tests/CarUpdateAgent.Tests.csproj" Id="a460c418-4f76-4362-be9a-cd79c2f72197" />
+    <Project Path="services/car/CarUpdateAgent/CarUpdateAgent.csproj" Id="edb258e9-075f-40e7-b00c-cab95d7c40a6" />
+    <Project Path="services/car/Racecar.Tests/Racecar.Tests.csproj" Id="7a02da53-12c0-4820-ad46-e10d1625f172" />
+    <Project Path="services/car/Racecar/Racecar.csproj" Id="31a63780-7243-4c01-b532-38d86e2b75d7" />
+  </Folder>
   <Folder Name="/cloud/" />
   <Folder Name="/onprem/">
     <Project Path="services/RaceManagementService/RaceManagementService.csproj" />
