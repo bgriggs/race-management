@@ -1,7 +1,10 @@
 using Common;
 using NLog;
+using NLog.Targets;
 using NLog.Web;
 using Racecar.CanBus;
+using Racecar.Logging;
+using Racecar.Services;
 
 namespace Racecar;
 
@@ -9,6 +12,9 @@ public class Program
 {
     public static void Main(string[] args)
     {
+        // Register the custom target type before NLog loads its config from appsettings.
+        Target.Register<LogBroadcastTarget>("LogBroadcast");
+
         var builder = WebApplication.CreateBuilder(args);
 
         // Load car configuration from config.json and watch for changes written by PostConfig.
@@ -24,10 +30,15 @@ public class Program
         builder.Services.AddHealthChecks();
 
         builder.Services.AddSingleton<ICanBusFactory, CanBusFactory>();
+        builder.Services.AddSingleton<LogBroadcaster>();
 
         builder.Services.AddHostedService<TestCanBus>();
 
         var app = builder.Build();
+
+        // Wire the DI-owned broadcaster into the NLog target now that the container is built.
+        if (LogManager.Configuration?.FindTargetByName<LogBroadcastTarget>("broadcast") is { } broadcastTarget)
+            broadcastTarget.Broadcaster = app.Services.GetRequiredService<LogBroadcaster>();
 
         if (app.Environment.IsDevelopment())
         {
