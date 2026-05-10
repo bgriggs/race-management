@@ -5,8 +5,8 @@
 
 import { LoggingFrequency } from "./logging-frequency";
 
-export class LoggingDefinition {
-    id: string = '';
-    channelId: string = '';
-    frequency!: LoggingFrequency;
+export interface LoggingDefinition {
+    id: string;
+    channelId: string;
+    frequency: LoggingFrequency;
 }

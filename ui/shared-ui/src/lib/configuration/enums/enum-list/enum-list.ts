@@ -110,11 +110,11 @@ export class EnumList {
   }
 
   private createEmptyEnum(): EnumDefinition {
-    const def = new EnumDefinition();
-    def.id = '';
-    def.name = '';
-    def.values = [];
-    return def;
+    return {
+      id: '',
+      name: '',
+      values: [],
+    };
   }
 
   private cloneEnum(enumDef: EnumDefinition): EnumDefinition {

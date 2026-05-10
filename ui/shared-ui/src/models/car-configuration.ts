@@ -61,7 +61,7 @@ export interface CarConfiguration {
     alarmDefinitions: AlarmDefinition[];
     counterDefinitions: CounterDefinition[];
     mathDefinitions: MathDefinition[];
-    tableMappings: TableDefinition[];
+    tableDefinitions: TableDefinition[];
     timerDefinitions: TimerDefinition[];
     userConditions: ConditionDefinition[];
     loggingDefinitions: LoggingDefinition[];

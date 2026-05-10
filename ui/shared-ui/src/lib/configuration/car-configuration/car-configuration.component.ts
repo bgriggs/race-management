@@ -16,6 +16,7 @@ import { AlarmList } from '../alarms/alarm-list/alarm-list';
 import { MathList } from '../math/math-list/math-list';
 import { EnumList } from '../enums/enum-list/enum-list';
 import { LogList } from '../logging/log-list/log-list';
+import { TableList } from '../tables/table-list/table-list';
 import { MatIcon } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import {
@@ -52,6 +53,7 @@ import { CanBusInterfaceConfig } from '../../../models/can-bus-interface-config'
     MathList,
     EnumList,
     LogList,
+    TableList,
     MatIcon
   ],
   templateUrl: './car-configuration.component.html',
@@ -528,6 +530,18 @@ export class CarConfigurationComponent implements OnInit {
     });
   }
 
+  onTableDefinitionsChange(tableDefinitions: CarConfiguration['tableDefinitions']): void {
+    const current = this.activeConfiguration();
+    if (!current) {
+      return;
+    }
+
+    this.activeConfiguration.set({
+      ...current,
+      tableDefinitions
+    });
+  }
+
   private buildTreeNodes(): NavigationTreeNode[] {
     return [
       { id: 'general-settings', label: 'General Settings' },
@@ -677,7 +691,7 @@ export class CarConfigurationComponent implements OnInit {
       alarmDefinitions: [],
       counterDefinitions: [],
       mathDefinitions: [],
-      tableMappings: [],
+      tableDefinitions: [],
       timerDefinitions: [],
       userConditions: [],
       loggingDefinitions: [],

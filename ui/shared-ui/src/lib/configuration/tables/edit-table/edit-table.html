@@ -1,0 +1,108 @@
+<section class="table-editor">
+	<section class="editor-section">
+		<label for="table-name">Name</label>
+		<input
+			id="table-name"
+			type="text"
+			maxlength="50"
+			[attr.aria-invalid]="isNameDirty() && !isNameValid()"
+			[value]="table().name"
+			(input)="onNameChanged($any($event.target).value)"
+		/>
+		@if (isNameDirty() && !isNameValid()) {
+			<p class="validation-message">Name is required and must be 50 characters or fewer.</p>
+		}
+	</section>
+
+	<section class="editor-section">
+		<label for="table-interpolation">Interpolation Type</label>
+		<select
+			id="table-interpolation"
+			[value]="table().interpolationType"
+			(change)="onInterpolationTypeChanged($any($event.target).value)"
+		>
+			@for (type of interpolationTypes; track type.value) {
+				<option [value]="type.value">{{ type.label }}</option>
+			}
+		</select>
+	</section>
+
+	<section class="editor-section">
+		<label>Input Channel</label>
+		<lib-channel-selector
+			[channels]="channels()"
+			[channelId]="table().inputChannel || null"
+			(channelIdChange)="onInputChannelChanged($event)"
+		/>
+	</section>
+
+	<section class="editor-section">
+		<section class="table-actions">
+			<button type="button" class="secondary" (click)="addRow()">Add Row</button>
+		</section>
+
+		<div class="list-table-wrap">
+			<table class="list-table">
+				<colgroup>
+					<col class="col-value" />
+					<col class="col-value" />
+					<col />
+				</colgroup>
+				<thead>
+					<tr>
+						<th scope="col">Channel Value</th>
+						<th scope="col">Output Value</th>
+						<th scope="col" class="row-action-column"></th>
+					</tr>
+				</thead>
+				<tbody>
+					@for (row of table().mappings; track $index) {
+						<tr>
+							<td>
+								<input
+									type="number"
+									aria-label="Channel value"
+									inputmode="decimal"
+									[value]="row.input"
+									(input)="onInputPointChanged($index, $any($event.target).value)"
+								/>
+							</td>
+							<td>
+								<input
+									type="number"
+									aria-label="Output value"
+									inputmode="decimal"
+									[value]="row.output"
+									(input)="onOutputValueChanged($index, $any($event.target).value)"
+								/>
+							</td>
+							<td class="row-action-cell">
+								<button
+									type="button"
+									class="row-action-button delete"
+									(click)="removeRow($index)"
+									aria-label="Delete row"
+								>
+									<mat-icon aria-hidden="true">delete</mat-icon>
+								</button>
+							</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		</div>
+
+		@if (rowCount() === 0) {
+			<p class="list-empty">No data points added yet.</p>
+		}
+	</section>
+
+	<section class="editor-section">
+		<label>Output Channel</label>
+		<lib-channel-selector
+			[channels]="channels()"
+			[channelId]="table().outputChannel || null"
+			(channelIdChange)="onOutputChannelChanged($event)"
+		/>
+	</section>
+</section>

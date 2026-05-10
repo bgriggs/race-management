@@ -4,6 +4,7 @@
  */
 
 import { InterpolationType } from "./interpolation-type";
+import { TableMapping } from "./table-mapping";
 
 export interface TableDefinition {
     id: string;
@@ -13,7 +14,5 @@ export interface TableDefinition {
     inputChannel: string;
     outputChannel: string;
     interpolationType: InterpolationType;
-    mapping: [string, string][];
-    inputPoints: number[];
-    outputValues: number[];
+    mappings: TableMapping[];
 }

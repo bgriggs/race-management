@@ -1,0 +1,67 @@
+<section class="list-actions">
+	<button type="button" class="primary" (click)="startAdd()">Add Table</button>
+</section>
+
+@if (!hasTables()) {
+	<p class="list-empty">There are no tables configured.</p>
+} @else {
+	<div class="list-table-wrap">
+		<table class="list-table">
+			<thead>
+				<tr>
+					<th scope="col" class="number-column">#</th>
+					<th scope="col">Name</th>
+					<th scope="col">Input Channel</th>
+					<th scope="col">Output Channel</th>
+					<th scope="col">Entries</th>
+					<th scope="col" class="row-action-column"></th>
+					<th scope="col" class="row-action-column"></th>
+				</tr>
+			</thead>
+			<tbody>
+				@for (table of tables(); track table.id || $index) {
+					<tr>
+						<td>{{ $index + 1 }}</td>
+						<td>{{ table.name || '(Unnamed table)' }}</td>
+						<td>{{ getChannelName(table.inputChannel) }}</td>
+						<td>{{ getChannelName(table.outputChannel) }}</td>
+						<td>{{ getEntryCount(table) }}</td>
+						<td class="row-action-cell">
+							<button type="button" class="row-action-button" (click)="startEdit(table.id)" aria-label="Edit table">
+								<mat-icon aria-hidden="true">edit</mat-icon>
+							</button>
+						</td>
+						<td class="row-action-cell">
+							<button
+								type="button"
+								class="row-action-button delete"
+								(click)="deleteTable(table.id)"
+								aria-label="Delete table"
+							>
+								<mat-icon aria-hidden="true">delete</mat-icon>
+							</button>
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+}
+
+@if (isEditing()) {
+	<div class="editor-backdrop" (click)="stopEdit()"></div>
+	<div class="editor-popup">
+		@if (draftTable(); as currentDraft) {
+			<lib-edit-table
+				[channels]="channels()"
+				[table]="currentDraft"
+				(tableChange)="onDraftTableChanged($event)"
+			/>
+		}
+
+		<section class="editor-actions">
+			<button type="button" class="secondary" (click)="stopEdit()">Cancel</button>
+			<button type="button" class="primary" (click)="saveDraft()" [disabled]="!isDraftNameValid()">OK</button>
+		</section>
+	</div>
+}

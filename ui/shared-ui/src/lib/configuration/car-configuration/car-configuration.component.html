@@ -195,6 +195,13 @@
           />
         }
 
+        @if (selectedNodeId() === 'tables') {
+          <lib-table-list
+            [configuration]="activeConfiguration()"
+            (tableDefinitionsChange)="onTableDefinitionsChange($event)"
+          />
+        }
+
         @if (selectedNodeId() === 'enumerations') {
           <lib-enum-list
             [configuration]="activeConfiguration()"

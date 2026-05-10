@@ -13,13 +13,18 @@ import { ChannelDefinition } from "./channel-definition";
 import { CounterDefinition } from "./counter-definition";
 import { MathDefinition } from "./math-definition";
 import { TableDefinition } from "./table-definition";
+import { TableMapping } from "./table-mapping";
 import { TimerDefinition } from "./timer-definition";
 import { ConditionDefinition } from "./condition-definition";
 import { StatementDefinition } from "./statement-definition";
 import { ComparisonDefinition } from "./comparison-definition";
 import { CarConfigurationSummary } from "./car-configuration-summary";
 import { AlarmDefinition } from "./alarm-definition";
+import { EnumDefinition } from "./enum-definition";
+import { EnumValueDefinition } from "./enum-value-definition";
+import { LoggingDefinition } from "./logging-definition";
 import { InterpolationType } from "./interpolation-type";
+import { LoggingFrequency } from "./logging-frequency";
 import { LogicType } from "./logic-type";
 import { MathType } from "./math-type";
 import { SimpleOperationType } from "./simple-operation-type";
@@ -49,11 +54,11 @@ export function carConfigurationFromMessagePack(obj: Record<string, unknown>): C
         alarmDefinitions: (obj["AlarmDefinitions"] as unknown[]).map(v => alarmDefinitionFromMessagePack(v as Record<string, unknown>)),
         counterDefinitions: (obj["CounterDefinitions"] as unknown[]).map(v => counterDefinitionFromMessagePack(v as Record<string, unknown>)),
         mathDefinitions: (obj["MathDefinitions"] as unknown[]).map(v => mathDefinitionFromMessagePack(v as Record<string, unknown>)),
-        tableMappings: (obj["TableMappings"] as unknown[]).map(v => tableDefinitionFromMessagePack(v as Record<string, unknown>)),
+        tableDefinitions: (obj["TableDefinitions"] as unknown[]).map(v => tableDefinitionFromMessagePack(v as Record<string, unknown>)),
         timerDefinitions: (obj["TimerDefinitions"] as unknown[]).map(v => timerDefinitionFromMessagePack(v as Record<string, unknown>)),
         userConditions: (obj["UserConditions"] as unknown[]).map(v => conditionDefinitionFromMessagePack(v as Record<string, unknown>)),
-        loggingDefinitions: (obj["LoggingDefinitions"] as unknown[]).map(v => v as LoggingDefinition),
-        enumDefinitions: (obj["EnumDefinitions"] as unknown[]).map(v => v as EnumDefinition),
+        loggingDefinitions: (obj["LoggingDefinitions"] as unknown[]).map(v => loggingDefinitionFromMessagePack(v as Record<string, unknown>)),
+        enumDefinitions: (obj["EnumDefinitions"] as unknown[]).map(v => enumDefinitionFromMessagePack(v as Record<string, unknown>)),
     };
 }
 
@@ -190,14 +195,23 @@ export function tableDefinitionFromMessagePack(obj: Record<string, unknown>): Ta
         inputChannel: obj["InputChannel"] as string,
         outputChannel: obj["OutputChannel"] as string,
         interpolationType: obj["InterpolationType"] as InterpolationType,
-        mapping: (obj["Mapping"] as unknown[]).map(v => v as [string, string]),
-        inputPoints: (obj["InputPoints"] as unknown[]).map(v => v as number),
-        outputValues: (obj["OutputValues"] as unknown[]).map(v => v as number),
+        mappings: (obj["Mappings"] as unknown[]).map(v => tableMappingFromMessagePack(v as Record<string, unknown>)),
     };
 }
 
 export function decodeTableDefinitionMessagePack(bytes: Uint8Array): TableDefinition {
     return tableDefinitionFromMessagePack(decode(bytes) as Record<string, unknown>);
+}
+
+export function tableMappingFromMessagePack(obj: Record<string, unknown>): TableMapping {
+    return {
+        input: obj["Input"] as string,
+        output: obj["Output"] as string,
+    };
+}
+
+export function decodeTableMappingMessagePack(bytes: Uint8Array): TableMapping {
+    return tableMappingFromMessagePack(decode(bytes) as Record<string, unknown>);
 }
 
 export function timerDefinitionFromMessagePack(obj: Record<string, unknown>): TimerDefinition {
@@ -292,5 +306,40 @@ export function alarmDefinitionFromMessagePack(obj: Record<string, unknown>): Al
 
 export function decodeAlarmDefinitionMessagePack(bytes: Uint8Array): AlarmDefinition {
     return alarmDefinitionFromMessagePack(decode(bytes) as Record<string, unknown>);
+}
+
+export function enumDefinitionFromMessagePack(obj: Record<string, unknown>): EnumDefinition {
+    return {
+        id: obj["Id"] as string,
+        name: obj["Name"] as string,
+        values: (obj["Values"] as unknown[]).map(v => enumValueDefinitionFromMessagePack(v as Record<string, unknown>)),
+    };
+}
+
+export function decodeEnumDefinitionMessagePack(bytes: Uint8Array): EnumDefinition {
+    return enumDefinitionFromMessagePack(decode(bytes) as Record<string, unknown>);
+}
+
+export function enumValueDefinitionFromMessagePack(obj: Record<string, unknown>): EnumValueDefinition {
+    return {
+        source: obj["Source"] as string,
+        value: obj["Value"] as number,
+    };
+}
+
+export function decodeEnumValueDefinitionMessagePack(bytes: Uint8Array): EnumValueDefinition {
+    return enumValueDefinitionFromMessagePack(decode(bytes) as Record<string, unknown>);
+}
+
+export function loggingDefinitionFromMessagePack(obj: Record<string, unknown>): LoggingDefinition {
+    return {
+        id: obj["Id"] as string,
+        channelId: obj["ChannelId"] as string,
+        frequency: obj["Frequency"] as LoggingFrequency,
+    };
+}
+
+export function decodeLoggingDefinitionMessagePack(bytes: Uint8Array): LoggingDefinition {
+    return loggingDefinitionFromMessagePack(decode(bytes) as Record<string, unknown>);
 }
 

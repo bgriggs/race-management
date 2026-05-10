@@ -71,11 +71,11 @@ export class EditEnum {
   }
 
   private createEmptyEnum(): EnumDefinition {
-    const enumDefinition = new EnumDefinition();
-    enumDefinition.id = '';
-    enumDefinition.name = '';
-    enumDefinition.values = [];
-    return enumDefinition;
+    return {
+      id: '',
+      name: '',
+      values: [],
+    };
   }
 
 }
