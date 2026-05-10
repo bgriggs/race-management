@@ -6,11 +6,15 @@ public interface ICanBus
 
     bool IsSilentOnCanBus { get; set; }
 
+    long MessagesRx { get; }
+
+    long MessagesTx { get; }
+
     event Action<CanMessage> Received;
 
-    Task<int> OpenAsync(int speed);
+    Task<int> OpenAsync(string interfaceName, int speed);
 
-    Task SendAsync(CanMessage message);
+    void Send(CanMessage message);
 
     Task<int> CloseAsync();
 }

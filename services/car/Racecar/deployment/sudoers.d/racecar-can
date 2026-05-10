@@ -1,0 +1,10 @@
+# Allows the Racecar service user to bring the CAN interface up and down
+# without a password. Replace 'pi' with the actual user the service runs as.
+#
+# Deploy with:
+#   sudo cp racecar-can /etc/sudoers.d/racecar-can
+#   sudo chmod 440 /etc/sudoers.d/racecar-can
+#   sudo visudo -c   # validate syntax before relying on it
+
+bgriggs ALL=(ALL) NOPASSWD: /sbin/ip link set * up type can bitrate *
+bgriggs ALL=(ALL) NOPASSWD: /sbin/ip link set * down

@@ -47,36 +47,36 @@ public class ShellCommand : IDisposable
     }
 
     /// <summary>
-    /// Run command and don't wait on the process.
+    /// Run command, wait for it to complete, and return its exit code.
     /// </summary>
-    /// <param name="cmd"></param>
-    /// <param name="args"></param>
-    public async Task RunInstAsync(string cmd, string args = "")
+    public async Task<int> RunInstAsync(string cmd, string args = "")
     {
-        var process = new Process
+        var proc = new Process
         {
             StartInfo = new ProcessStartInfo
             {
                 FileName = cmd,
                 Arguments = args,
                 RedirectStandardOutput = true,
+                RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true,
             }
         };
-        //Logger.Trace(process.StartInfo.FileName + " " + process.StartInfo.Arguments);
-        await Task.Run(() =>
-        {
-            try
-            {
-                process.Start();
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Error sending CAN message");
-            }
-        });
-        //await new Task(() => { process.Start(); });
+
+        Logger.LogInformation("{Cmd} {Args}", cmd, args);
+
+        proc.Start();
+        string stdout = await proc.StandardOutput.ReadToEndAsync();
+        string stderr = await proc.StandardError.ReadToEndAsync();
+        await proc.WaitForExitAsync();
+
+        if (!string.IsNullOrWhiteSpace(stdout))
+            Logger.LogDebug("stdout: {Output}", stdout.Trim());
+        if (!string.IsNullOrWhiteSpace(stderr))
+            Logger.LogWarning("stderr: {Error}", stderr.Trim());
+
+        return proc.ExitCode;
     }
 
     public void Dispose()
