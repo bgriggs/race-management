@@ -18,7 +18,6 @@
 	<Target Name="GenerateTypeScriptModels" AfterTargets="Build">
 		<Exec Command="dotnet tool restore" WorkingDirectory="$(MSBuildProjectDirectory)\..\.." />
 		<Exec Command="dotnet tool run dotnet-typegen generate" WorkingDirectory="$(MSBuildProjectDirectory)" />
-		<Exec Command="pwsh -NoProfile -Command &quot;$p = '$(MSBuildProjectDirectory)\..\..\ui\shared-ui\src\models'; Remove-Item -LiteralPath (Join-Path $p 'value-tuple.ts'), (Join-Path $p 'i-value-tuple-internal.ts'), (Join-Path $p 'i-tuple.ts'), (Join-Path $p 'i-structural-equatable.ts'), (Join-Path $p 'i-structural-comparable.ts') -ErrorAction SilentlyContinue; $table = Join-Path $p 'table-definition.ts'; if (Test-Path $table) { (Get-Content $table) | Where-Object { $_ -ne 'import { ValueTuple } from &quot;./value-tuple&quot;;' } | Set-Content $table }&quot;" />
 	</Target>
 
 </Project>
