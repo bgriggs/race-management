@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using NLog;
 using NLog.Web;
 using RaceManagementService.Data;
+using RaceManagementService.Discovery;
 using RaceManagementService.Routing;
 
 namespace RaceManagementService;
@@ -43,6 +44,9 @@ public class Program
 
             builder.Services.AddDbContext<RaceManagementDbContext>(options =>
                 options.UseSqlite(builder.Configuration.GetConnectionString("RaceManagement")));
+
+            builder.Services.AddSingleton<RacecarRegistry>();
+            builder.Services.AddHostedService<RacecarDiscoveryService>();
 
             var app = builder.Build();
 

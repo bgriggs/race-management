@@ -9,6 +9,7 @@ import { ManagementDataClient } from '../../../../shared-ui/src/lib/data/managem
 import { CarConfiguration } from '../../../../shared-ui/src/models/car-configuration';
 import { CarConfigurationSummary } from '../../../../shared-ui/src/models/car-configuration-summary';
 import { ChannelDefinition } from '../../../../shared-ui/src/models/channel-definition';
+import { DiscoveredRacecar } from '../../../../shared-ui/src/models/discovered-racecar';
 
 @Injectable()
 export class LocalManagementDataClient implements ManagementDataClient {
@@ -17,6 +18,31 @@ export class LocalManagementDataClient implements ManagementDataClient {
     @Inject(MANAGEMENT_DATA_CLIENT_SETTINGS)
     private readonly settings: ManagementDataClientSettings
   ) {}
+
+  async listDiscoveredRacecarsAsync(): Promise<DiscoveredRacecar[]> {
+    return await firstValueFrom(
+      this.httpClient.get<DiscoveredRacecar[]>(this.buildUrl('v1.0/discovery/list-racecars'))
+    );
+  }
+
+  async getActiveRacecarAsync(): Promise<DiscoveredRacecar | null> {
+    const response = await firstValueFrom(
+      this.httpClient.get<DiscoveredRacecar>(this.buildUrl('v1.0/discovery/get-active-racecar'), {
+        observe: 'response'
+      })
+    );
+    return response.status === 204 ? null : response.body;
+  }
+
+  async selectRacecarAsync(name: string): Promise<DiscoveredRacecar> {
+    return await firstValueFrom(
+      this.httpClient.post<DiscoveredRacecar>(
+        this.buildUrl('v1.0/discovery/select-racecar'),
+        null,
+        { params: new HttpParams().set('name', name) }
+      )
+    );
+  }
 
   async loadCarConfigurationSummariesAsync(): Promise<CarConfigurationSummary[]> {
     return await firstValueFrom(
@@ -80,7 +106,11 @@ export class LocalManagementDataClient implements ManagementDataClient {
   }
 
   private buildActionUrl(action: string): string {
+    return this.buildUrl(`v1.0/data/${action}`);
+  }
+
+  private buildUrl(path: string): string {
     const trimmedBaseUrl = this.settings.baseServerUrl.replace(/\/$/, '');
-      return `${trimmedBaseUrl}/v1.0/data/${action}`;
+    return `${trimmedBaseUrl}/${path}`;
   }
 }

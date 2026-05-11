@@ -2,8 +2,12 @@ import { InjectionToken } from '@angular/core';
 import { CarConfiguration } from '../../models/car-configuration';
 import { CarConfigurationSummary } from '../../models/car-configuration-summary';
 import { ChannelDefinition } from '../../models/channel-definition';
+import { DiscoveredRacecar } from '../../models/discovered-racecar';
 
 export interface ManagementDataClient {
+  listDiscoveredRacecarsAsync(): Promise<DiscoveredRacecar[]>;
+  getActiveRacecarAsync(): Promise<DiscoveredRacecar | null>;
+  selectRacecarAsync(name: string): Promise<DiscoveredRacecar>;
   loadCarConfigurationSummariesAsync(): Promise<CarConfigurationSummary[]>;
   loadReservedChannelDefinitionsAsync(): Promise<ChannelDefinition[]>;
   loadAvailableUnitTypesAsync(dataType?: string): Promise<string[]>;

@@ -32,6 +32,7 @@ public class Program
 
         builder.Services.AddSingleton<ICanBusFactory, CanBusFactory>();
         builder.Services.AddSingleton<LogBroadcaster>();
+        builder.Services.AddHostedService<AvahiDiscoveryService>();
 
         // Pipeline infrastructure.
         builder.Services.AddSingleton(TimeProvider.System);
