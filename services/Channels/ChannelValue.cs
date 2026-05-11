@@ -7,12 +7,18 @@ public class ChannelValue
 {
     /// <summary>
     /// Compact session index negotiated at connection time for high-frequency streaming.
-    /// Populated by the transport layer from a <see cref="ChannelSessionMap"/> before transmission.
     /// This index will correspond to the Car's configuration Channel list index for the channel value being used.
     /// </summary>
     public ushort SessionIndex { get; set; }
 
     public string Value { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Wall-clock UTC timestamp this value was produced. Set by the transmit
+    /// boundary in the Racecar pipeline; remains <see cref="DateTime.MinValue"/>
+    /// for values constructed elsewhere unless explicitly populated.
+    /// </summary>
+    public DateTime Timestamp { get; set; }
 
     public int GetValueInt()
     {

@@ -1,0 +1,107 @@
+using Channels;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Time.Testing;
+using Racecar.Pipeline;
+using Racecar.Pipeline.Consumers;
+
+namespace Racecar.Tests.Pipeline;
+
+[TestClass]
+public sealed class SignalRTransmitConsumerTests
+{
+    private sealed class FakeTarget : ISignalRTarget
+    {
+        public string Name => "fake";
+        public bool IsConnected { get; set; } = true;
+        public List<List<ChannelValue>> Deltas { get; } = new();
+        public List<List<ChannelValue>> Fulls { get; } = new();
+        public event Action? Reconnected;
+        public Task SendDeltaAsync(IReadOnlyList<ChannelValue> values, CancellationToken ct)
+        {
+            Deltas.Add(values.ToList());
+            return Task.CompletedTask;
+        }
+        public Task SendFullAsync(IReadOnlyList<ChannelValue> values, CancellationToken ct)
+        {
+            Fulls.Add(values.ToList());
+            return Task.CompletedTask;
+        }
+        public void RaiseReconnected() => Reconnected?.Invoke();
+    }
+
+    private static ActiveConfiguration BuildConfig(int channelId)
+    {
+        return ActiveConfiguration.Empty with
+        {
+            Channels = new Dictionary<int, ChannelDefinition>
+            {
+                [channelId] = new ChannelDefinition { BaseDecimalPlaces = 1 },
+            },
+        };
+    }
+
+    [TestMethod]
+    public async Task Delta_loop_sends_changes_at_100ms_cadence_when_connected()
+    {
+        var time = new FakeTimeProvider(new DateTimeOffset(2026, 5, 10, 0, 0, 0, TimeSpan.Zero));
+        var target = new FakeTarget();
+        var config = BuildConfig(1);
+
+        var consumer = new SignalRTransmitConsumer(target, () => config, time, NullLogger.Instance);
+        consumer.Start();
+        await Task.Delay(50); // let both loops register their initial Task.Delay timers
+
+        await consumer.HandleAsync(new[] { new InternalChannelValue(1, 5.0, 0, time.GetUtcNow().UtcDateTime) }, default);
+
+        time.Advance(TimeSpan.FromMilliseconds(100));
+        await Task.Delay(200); // let the loop body run
+
+        Assert.IsTrue(target.Deltas.Count >= 1, "Delta should have been sent.");
+        Assert.AreEqual(1, target.Deltas[0].Count);
+        Assert.AreEqual("5.0", target.Deltas[0][0].Value);
+
+        await consumer.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task Full_loop_sends_snapshot_at_2_5s_cadence()
+    {
+        var time = new FakeTimeProvider(new DateTimeOffset(2026, 5, 10, 0, 0, 0, TimeSpan.Zero));
+        var target = new FakeTarget();
+        var config = BuildConfig(1);
+
+        var consumer = new SignalRTransmitConsumer(target, () => config, time, NullLogger.Instance);
+        consumer.Start();
+        await Task.Delay(50);
+        await consumer.HandleAsync(new[] { new InternalChannelValue(1, 7.0, 0, time.GetUtcNow().UtcDateTime) }, default);
+
+        time.Advance(TimeSpan.FromMilliseconds(2500));
+        await Task.Delay(200);
+
+        Assert.IsTrue(target.Fulls.Count >= 1, "Full should have been sent.");
+        Assert.AreEqual(1, target.Fulls[0].Count);
+
+        await consumer.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task While_disconnected_no_send_occurs()
+    {
+        var time = new FakeTimeProvider(new DateTimeOffset(2026, 5, 10, 0, 0, 0, TimeSpan.Zero));
+        var target = new FakeTarget { IsConnected = false };
+        var config = BuildConfig(1);
+
+        var consumer = new SignalRTransmitConsumer(target, () => config, time, NullLogger.Instance);
+        consumer.Start();
+        await Task.Delay(50);
+        await consumer.HandleAsync(new[] { new InternalChannelValue(1, 1.0, 0, default) }, default);
+
+        time.Advance(TimeSpan.FromSeconds(3));
+        await Task.Delay(200);
+
+        Assert.AreEqual(0, target.Deltas.Count);
+        Assert.AreEqual(0, target.Fulls.Count);
+
+        await consumer.DisposeAsync();
+    }
+}

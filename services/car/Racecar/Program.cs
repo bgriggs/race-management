@@ -1,9 +1,10 @@
 using Common;
+using Microsoft.Extensions.Options;
 using NLog;
-using NLog.Targets;
 using NLog.Web;
 using Racecar.CanBus;
 using Racecar.Logging;
+using Racecar.Pipeline;
 using Racecar.Services;
 
 namespace Racecar;
@@ -13,7 +14,7 @@ public class Program
     public static void Main(string[] args)
     {
         // Register the custom target type before NLog loads its config from appsettings.
-        Target.Register<LogBroadcastTarget>("LogBroadcast");
+        LogManager.Setup().SetupExtensions(e => e.RegisterTarget<LogBroadcastTarget>("LogBroadcast"));
 
         var builder = WebApplication.CreateBuilder(args);
 
@@ -32,7 +33,15 @@ public class Program
         builder.Services.AddSingleton<ICanBusFactory, CanBusFactory>();
         builder.Services.AddSingleton<LogBroadcaster>();
 
-        builder.Services.AddHostedService<TestCanBus>();
+        // Pipeline infrastructure.
+        builder.Services.AddSingleton(TimeProvider.System);
+        builder.Services.AddSingleton<ChannelStatusState>();
+        builder.Services.AddSingleton<ActiveConfigurationFactory>();
+        builder.Services.AddSingleton<RacecarPipelineHost>();
+        builder.Services.AddHostedService(sp => sp.GetRequiredService<RacecarPipelineHost>());
+
+        // Pipeline startup: build initial ActiveConfiguration and attach CAN buses.
+        builder.Services.AddHostedService<PipelineStartupService>();
 
         var app = builder.Build();
 
@@ -54,43 +63,99 @@ public class Program
     }
 }
 
-public class TestCanBus : BackgroundService
+/// <summary>
+/// Builds the initial <see cref="ActiveConfiguration"/> from the loaded
+/// <see cref="CarConfiguration"/> and attaches each enabled CAN bus to the
+/// pipeline. Also wires up configuration-change notifications so the pipeline
+/// reloads atomically when <c>config.json</c> is updated on disk.
+/// </summary>
+internal sealed class PipelineStartupService : IHostedService
 {
-    private readonly ICanBusFactory canBusFactory;
+    private readonly IOptionsMonitor<CarConfiguration> _carConfig;
+    private readonly RacecarPipelineHost _pipeline;
+    private readonly ActiveConfigurationFactory _factory;
+    private readonly ICanBusFactory _busFactory;
+    private readonly ILogger<PipelineStartupService> _logger;
+    private IDisposable? _changeListener;
 
-    public TestCanBus(ICanBusFactory canBusFactory)
+    public PipelineStartupService(
+        IOptionsMonitor<CarConfiguration> carConfig,
+        RacecarPipelineHost pipeline,
+        ActiveConfigurationFactory factory,
+        ICanBusFactory busFactory,
+        ILogger<PipelineStartupService> logger)
     {
-        this.canBusFactory = canBusFactory;
+        _carConfig = carConfig;
+        _pipeline = pipeline;
+        _factory = factory;
+        _busFactory = busFactory;
+        _logger = logger;
     }
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    public Task StartAsync(CancellationToken cancellationToken)
     {
-        var canBus = canBusFactory.CreateCanBus();
-        var result = await canBus.OpenAsync("can0", 1000000);
-        if (result != 0)
-        {
-            Console.WriteLine($"Failed to open CAN bus, error code: {result}");
-            return;
-        }
+        ApplyConfiguration(_carConfig.CurrentValue);
+        AttachBuses(_carConfig.CurrentValue);
 
-        canBus.Received += message =>
+        _changeListener = _carConfig.OnChange(cfg =>
         {
-            Console.WriteLine($"Received CAN message: ID=0x{message.CanId:X}, Data={BitConverter.ToString(message.Data, 0, message.DataLength)}, Timestamp={message.Timestamp}");
-        };
-        while (!stoppingToken.IsCancellationRequested)
-        {
-            var message = new CanMessage
+            try
             {
-                CanId = 0x123,
-                IdLength = IdLength._11bit,
-                Data = [0xDE, 0xAD, 0xBE, 0xEF],
-                DataLength = 4,
-                Timestamp = DateTime.UtcNow
-            };
-            canBus.Send(message);
-            await Task.Delay(1000, stoppingToken);
+                var next = _factory.Build(cfg);
+                _pipeline.ReloadConfiguration(next);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to reload pipeline configuration.");
+            }
+        });
+
+        return Task.CompletedTask;
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken)
+    {
+        _changeListener?.Dispose();
+        return Task.CompletedTask;
+    }
+
+    private void ApplyConfiguration(CarConfiguration cfg)
+    {
+        try
+        {
+            var active = _factory.Build(cfg);
+            _pipeline.ReloadConfiguration(active);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to build initial pipeline configuration.");
         }
     }
 
-
+    private void AttachBuses(CarConfiguration cfg)
+    {
+        for (var i = 0; i < cfg.CanConfig.Interfaces.Count; i++)
+        {
+            if (i >= cfg.CanConfig.CanBusEnabled.Count || !cfg.CanConfig.CanBusEnabled[i]) continue;
+            var iface = cfg.CanConfig.Interfaces[i];
+            try
+            {
+                var bus = _busFactory.CreateCanBus();
+                var openResult = bus.OpenAsync(iface.InterfaceName, iface.BitRate).GetAwaiter().GetResult();
+                if (openResult != 0)
+                {
+                    _logger.LogWarning(
+                        "CAN bus {Interface} failed to open (code {Code}); skipping.", iface.InterfaceName, openResult);
+                    continue;
+                }
+                bus.IsSilentOnCanBus = iface.SilentOnCanBus;
+                _pipeline.AttachBus(i, bus);
+                _logger.LogInformation("CAN bus {Interface} attached (bus index {Index}).", iface.InterfaceName, i);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to open CAN bus {Interface}.", iface.InterfaceName);
+            }
+        }
+    }
 }
