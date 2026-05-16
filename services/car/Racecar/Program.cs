@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using NLog;
 using NLog.Web;
 using Racecar.CanBus;
+using Racecar.Clients;
 using Racecar.Logging;
 using Racecar.Pipeline;
 using Racecar.Services;
@@ -44,6 +45,9 @@ public class Program
 
         // Pipeline startup: build initial ActiveConfiguration and attach CAN buses.
         builder.Services.AddHostedService<PipelineStartupService>();
+
+        builder.Services.AddSingleton<CloudClient>();
+        builder.Services.AddHostedService(sp => sp.GetRequiredService<CloudClient>());
 
         var app = builder.Build();
 

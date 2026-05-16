@@ -12,17 +12,8 @@ namespace Racecar.Pipeline;
 /// Converts a <see cref="CarConfiguration"/> into an <see cref="ActiveConfiguration"/>
 /// ready for use by the pipeline.
 /// </summary>
-public sealed class ActiveConfigurationFactory
+public sealed class ActiveConfigurationFactory(TimeProvider time, ILogger<ActiveConfigurationFactory> logger)
 {
-    private readonly TimeProvider _time;
-    private readonly ILogger<ActiveConfigurationFactory> _logger;
-
-    public ActiveConfigurationFactory(TimeProvider time, ILogger<ActiveConfigurationFactory> logger)
-    {
-        _time = time;
-        _logger = logger;
-    }
-
     public ActiveConfiguration Build(CarConfiguration carConfig)
     {
         // 1. Assign compact int channel IDs (session indices) in definition list order.
@@ -96,7 +87,7 @@ public sealed class ActiveConfigurationFactory
             var def = carConfig.ChannelDefinitions[i];
             var converter = ChannelUnitConverter.Build(def, out var warning);
             if (warning is not null)
-                _logger.LogWarning(warning);
+                logger.LogWarning(warning);
             unitConverters[i] = converter;
         }
 
@@ -108,7 +99,7 @@ public sealed class ActiveConfigurationFactory
             carConfig.TimerDefinitions,
             carConfig.CounterDefinitions,
             carConfig.UserConditions,
-            _time);
+            time);
 
         return new ActiveConfiguration
         {
