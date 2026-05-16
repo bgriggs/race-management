@@ -1,11 +1,20 @@
 ﻿using BigMission.Shared.SignalR;
+using Channels;
 using Common;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Options;
 
 namespace Racecar.Clients;
 
-public class CloudClient : HubClientBase
+public interface ICloudClient
+{
+    /// <summary>Raised when the hub connection state changes.</summary>
+    event Action<HubConnectionState>? ConnectionStatusChanged;
+
+    Task SendChannelValuesAsync(ChannelValue[] channelValues);
+}
+
+public class CloudClient : HubClientBase, ICloudClient
 {
     private readonly ILogger logger;
     private HubConnection? hub;
@@ -18,7 +27,7 @@ public class CloudClient : HubClientBase
     private readonly IDisposable? configChangeListener;
 
 
-    public CloudClient(ILoggerFactory loggerFactory, IConfiguration configuration, IOptionsMonitor<CarConfiguration> carConfig) 
+    public CloudClient(ILoggerFactory loggerFactory, IConfiguration configuration, IOptionsMonitor<CarConfiguration> carConfig)
         : base(loggerFactory, configuration)
     {
         logger = loggerFactory.CreateLogger(GetType().Name);
@@ -47,7 +56,11 @@ public class CloudClient : HubClientBase
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            FireStatusUpdate(hub);
+            var h = hub;
+            if (h != null)
+            {
+                FireStatusUpdate(h);
+            }
             await CheckConnectionHealthAsync();
             await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
         }
@@ -133,4 +146,17 @@ public class CloudClient : HubClientBase
             reconnectSemaphore.Release();
         }
     }
+
+    #region Cloud Calls
+
+    public async Task SendChannelValuesAsync(ChannelValue[] channelValues)
+    {
+        var h = hub;
+        if (h != null)
+        {
+            await h.InvokeAsync("SendChannelValuesAsync", channelValues);
+        }
+    }
+
+    #endregion
 }
