@@ -1,4 +1,5 @@
-﻿using UnitsNet;
+﻿using System.ComponentModel.DataAnnotations;
+using UnitsNet;
 
 namespace Channels;
 
@@ -13,8 +14,14 @@ public class ChannelDefinition
     /// </summary>
     public Guid Id { get; set; }
     public bool IsReserved { get; set; }
+
+    [StringLength(16)]
     public string Category { get; set; } = string.Empty;
+    
+    [StringLength(25)]
     public string Name { get; set; } = string.Empty;
+    
+    [StringLength(6)]
     public string Abbreviation { get; set; } = string.Empty;
 
     /// <summary>
@@ -37,6 +44,8 @@ public class ChannelDefinition
     public double LowRange { get; set; }
     public double HighRange { get; set; }
     public double DefaultValue { get; set; }
+
+    [StringLength(16)]
     public string GroupTag { get; set; } = string.Empty;
 
     /// <summary>

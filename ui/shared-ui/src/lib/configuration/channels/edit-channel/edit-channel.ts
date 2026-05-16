@@ -71,11 +71,11 @@ export class EditChannel implements OnInit {
   readonly form = new FormGroup({
     reservedChannelId: new FormControl('', { nonNullable: true }),
     name: new FormControl('', {
-      validators: [Validators.required, Validators.minLength(1), Validators.maxLength(16)],
+      validators: [Validators.required, Validators.minLength(1), Validators.maxLength(25)],
       nonNullable: true
     }),
     abbreviation: new FormControl('', {
-      validators: [Validators.required, Validators.minLength(1), Validators.maxLength(4)],
+      validators: [Validators.required, Validators.minLength(1), Validators.maxLength(6)],
       nonNullable: true
     }),
     dataType: new FormControl<ChannelDataType>('Temperature', { nonNullable: true }),
