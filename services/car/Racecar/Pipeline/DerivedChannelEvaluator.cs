@@ -83,7 +83,16 @@ public sealed class PipelineDerivedChannelEvaluator : IDerivedChannelEvaluator
         _channels = channels;
         _channelRepo = new SyncChannelRepository();
         _defRepo = new ChannelDefinitionMemoryRepository();
-        foreach (var (_, def) in channels) _defRepo.Set(def);
+        foreach (var (id, def) in channels)
+        {
+            _defRepo.Set(def);
+            if (idToGuid.TryGetValue(id, out var guid))
+            {
+                var cv = new ChannelValue { SessionIndex = (ushort)id };
+                cv.SetBaseValue(def.DefaultValue);
+                _channelRepo.Set(guid, cv);
+            }
+        }
 
         var mathRepo = new MathMemoryRepository();
         foreach (var d in mathDefs) mathRepo.Add(d);

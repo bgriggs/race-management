@@ -119,18 +119,26 @@ public sealed class RacecarPipelineHost : BackgroundService
             () => ((IEnumerable<ConsumerHost>)_rawHosts).Concat(_channelHosts),
             _loggerFactory.CreateLogger<Watchdog>());
 
+        var timeoutMonitor = new ChannelTimeoutMonitor(
+            () => _active,
+            _statusState,
+            () => _channelHosts,
+            _time,
+            _loggerFactory.CreateLogger<ChannelTimeoutMonitor>());
+
         var workerTask = worker.RunAsync(stoppingToken);
         var watchdogTask = watchdog.RunAsync(stoppingToken);
+        var timeoutTask = timeoutMonitor.RunAsync(stoppingToken);
         var consumerTasks = _rawHosts.Cast<ConsumerHost>().Concat(_channelHosts)
             .Select(h => h.RunAsync(stoppingToken)).ToList();
 
         try
         {
-            await Task.WhenAny(new[] { workerTask, watchdogTask }.Concat(consumerTasks)).ConfigureAwait(false);
+            await Task.WhenAny(new[] { workerTask, watchdogTask, timeoutTask }.Concat(consumerTasks)).ConfigureAwait(false);
         }
         catch (OperationCanceledException) { }
 
-        await ShutdownAsync(workerTask, watchdogTask, consumerTasks).ConfigureAwait(false);
+        await ShutdownAsync(workerTask, watchdogTask, timeoutTask, consumerTasks).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -164,7 +172,7 @@ public sealed class RacecarPipelineHost : BackgroundService
         });
     }
 
-    private async Task ShutdownAsync(Task worker, Task watchdog, List<Task> consumerTasks)
+    private async Task ShutdownAsync(Task worker, Task watchdog, Task timeoutMonitor, List<Task> consumerTasks)
     {
         _logger.LogInformation("Racecar pipeline shutting down (budget {Budget}).", ShutdownBudget);
         foreach (var reader in _readers) reader.Stop();
@@ -184,5 +192,6 @@ public sealed class RacecarPipelineHost : BackgroundService
         catch { /* swallow */ }
 
         try { await watchdog.WaitAsync(TimeSpan.FromMilliseconds(500)).ConfigureAwait(false); } catch { }
+        try { await timeoutMonitor.WaitAsync(TimeSpan.FromMilliseconds(500)).ConfigureAwait(false); } catch { }
     }
 }
