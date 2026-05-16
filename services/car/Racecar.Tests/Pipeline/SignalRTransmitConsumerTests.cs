@@ -13,17 +13,17 @@ public sealed class SignalRTransmitConsumerTests
     {
         public string Name => "fake";
         public bool IsConnected { get; set; } = true;
-        public List<List<ChannelValue>> Deltas { get; } = new();
-        public List<List<ChannelValue>> Fulls { get; } = new();
+        public List<List<ChannelValue>> Deltas { get; } = [];
+        public List<List<ChannelValue>> Fulls { get; } = [];
         public event Action? Reconnected;
         public Task SendDeltaAsync(IReadOnlyList<ChannelValue> values, CancellationToken ct)
         {
-            Deltas.Add(values.ToList());
+            Deltas.Add([.. values]);
             return Task.CompletedTask;
         }
         public Task SendFullAsync(IReadOnlyList<ChannelValue> values, CancellationToken ct)
         {
-            Fulls.Add(values.ToList());
+            Fulls.Add([.. values]);
             return Task.CompletedTask;
         }
         public void RaiseReconnected() => Reconnected?.Invoke();
@@ -72,14 +72,14 @@ public sealed class SignalRTransmitConsumerTests
 
         var consumer = new SignalRTransmitConsumer(target, () => config, time, NullLogger.Instance);
         consumer.Start();
-        await Task.Delay(50);
+        await Task.Delay(50, TestContext.CancellationToken);
         await consumer.HandleAsync(new[] { new InternalChannelValue(1, 7.0, 0, time.GetUtcNow().UtcDateTime) }, default);
 
         time.Advance(TimeSpan.FromMilliseconds(2500));
-        await Task.Delay(200);
+        await Task.Delay(200, TestContext.CancellationToken);
 
-        Assert.IsTrue(target.Fulls.Count >= 1, "Full should have been sent.");
-        Assert.AreEqual(1, target.Fulls[0].Count);
+        Assert.IsGreaterThanOrEqualTo(1, target.Fulls.Count, "Full should have been sent.");
+        Assert.HasCount(1, target.Fulls[0]);
 
         await consumer.DisposeAsync();
     }
@@ -93,14 +93,14 @@ public sealed class SignalRTransmitConsumerTests
 
         var consumer = new SignalRTransmitConsumer(target, () => config, time, NullLogger.Instance);
         consumer.Start();
-        await Task.Delay(50);
+        await Task.Delay(50, TestContext.CancellationToken);
         await consumer.HandleAsync(new[] { new InternalChannelValue(1, 1.0, 0, default) }, default);
 
         time.Advance(TimeSpan.FromSeconds(3));
-        await Task.Delay(200);
+        await Task.Delay(200, TestContext.CancellationToken);
 
-        Assert.AreEqual(0, target.Deltas.Count);
-        Assert.AreEqual(0, target.Fulls.Count);
+        Assert.IsEmpty(target.Deltas);
+        Assert.IsEmpty(target.Fulls);
 
         await consumer.DisposeAsync();
     }

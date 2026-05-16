@@ -1,6 +1,4 @@
 using System.Threading.Channels;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Common;
 using Racecar.CanBus;
@@ -27,9 +25,9 @@ public sealed class RacecarPipelineHost : BackgroundService
     private readonly ChangeFilter _changeFilter;
     private readonly CanDecoder _decoder;
 
-    private readonly List<CanBusReader> _readers = new();
-    private readonly List<RawConsumerHost> _rawHosts = new();
-    private readonly List<ChannelConsumerHost> _channelHosts = new();
+    private readonly List<CanBusReader> _readers = [];
+    private readonly List<RawConsumerHost> _rawHosts = [];
+    private readonly List<ChannelConsumerHost> _channelHosts = [];
 
     private volatile ActiveConfiguration _active = ActiveConfiguration.Empty;
     private Channel<TimestampedFrame>? _mergedInput;
@@ -61,6 +59,7 @@ public sealed class RacecarPipelineHost : BackgroundService
     /// </summary>
     public void ReloadConfiguration(ActiveConfiguration next)
     {
+        _statusState.Clear(); // Clear all channel state on config change
         var previous = Interlocked.Exchange(ref _active, next);
         MigrateState(previous, next);
         foreach (var host in _channelHosts) host.UpdateSubscriptions(next);

@@ -16,7 +16,7 @@ public sealed class CoalescingMailboxTests
 
         var batch = await mb.DrainAsync(CancellationToken.None);
 
-        Assert.AreEqual(2, batch.Length);
+        Assert.HasCount(2, batch);
         var byId = batch.ToDictionary(v => v.ChannelId);
         Assert.AreEqual(99.0, byId[1].BaseValue);
         Assert.AreEqual(2.0, byId[2].BaseValue);
@@ -29,7 +29,7 @@ public sealed class CoalescingMailboxTests
         mb.Write(new InternalChannelValue(1, 1.0, 0, default));
 
         var first = await mb.DrainAsync(CancellationToken.None);
-        Assert.AreEqual(1, first.Length);
+        Assert.HasCount(1, first);
 
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
         await Assert.ThrowsExactlyAsync<OperationCanceledException>(
@@ -71,7 +71,7 @@ public sealed class BoundedMailboxTests
         Assert.IsTrue(mb.Write(2));
         Assert.IsTrue(mb.Write(3)); // drops oldest (1)
 
-        Assert.IsTrue(mb.Dropped >= 1);
+        Assert.IsGreaterThanOrEqualTo(1, mb.Dropped);
 
         mb.Complete();
         var seen = new List<int>();

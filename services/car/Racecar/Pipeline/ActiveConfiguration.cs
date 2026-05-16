@@ -1,5 +1,4 @@
 using Channels;
-using Common.CanBus;
 
 namespace Racecar.Pipeline;
 
