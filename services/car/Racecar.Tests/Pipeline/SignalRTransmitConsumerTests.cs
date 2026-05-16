@@ -35,7 +35,7 @@ public sealed class SignalRTransmitConsumerTests
         {
             Channels = new Dictionary<int, ChannelDefinition>
             {
-                [channelId] = new ChannelDefinition { BaseDecimalPlaces = 1 },
+                [channelId] = new ChannelDefinition { },
             },
         };
     }
@@ -49,16 +49,16 @@ public sealed class SignalRTransmitConsumerTests
 
         var consumer = new SignalRTransmitConsumer(target, () => config, time, NullLogger.Instance);
         consumer.Start();
-        await Task.Delay(50); // let both loops register their initial Task.Delay timers
+        await Task.Delay(50, TestContext.CancellationToken); // let both loops register their initial Task.Delay timers
 
         await consumer.HandleAsync(new[] { new InternalChannelValue(1, 5.0, 0, time.GetUtcNow().UtcDateTime) }, default);
 
         time.Advance(TimeSpan.FromMilliseconds(100));
-        await Task.Delay(200); // let the loop body run
+        await Task.Delay(200, TestContext.CancellationToken); // let the loop body run
 
-        Assert.IsTrue(target.Deltas.Count >= 1, "Delta should have been sent.");
-        Assert.AreEqual(1, target.Deltas[0].Count);
-        Assert.AreEqual("5.0", target.Deltas[0][0].Value);
+        Assert.IsGreaterThanOrEqualTo(1, target.Deltas.Count, "Delta should have been sent.");
+        Assert.HasCount(1, target.Deltas[0]);
+        Assert.AreEqual("5", target.Deltas[0][0].Value);
 
         await consumer.DisposeAsync();
     }
@@ -104,4 +104,6 @@ public sealed class SignalRTransmitConsumerTests
 
         await consumer.DisposeAsync();
     }
+
+    public TestContext TestContext { get; set; }
 }

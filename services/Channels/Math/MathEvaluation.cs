@@ -82,7 +82,7 @@ public class MathEvaluation
 
             var outputChMap = await channelDefinitionRepository.GetChannelDefinitionAsync(definition.OutputChannelId);
             var outputValue = new ChannelValue();
-            outputValue.SetBaseValue(output, outputChMap);
+            outputValue.SetBaseValue(output);
             await channelRepository.SetChannelValueAsync(definition.OutputChannelId, outputValue);
         }
     }

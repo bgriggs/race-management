@@ -80,7 +80,7 @@ public class TableEvaluation
                 }
 
                 var interpolatedOutput = interpolate?.Interpolate(inputCh.GetValueDouble()) ?? 0.0;
-                outputValue.SetBaseValue(interpolatedOutput, outputMap);
+                outputValue.SetBaseValue(interpolatedOutput);
             }
 
             await channelRepository.SetChannelValueAsync(definition.OutputChannel, outputValue);

@@ -40,11 +40,12 @@ public class MathEvaluationTests
     private void SetupChannel(Guid id, string value, string baseUnit, int decimalPlaces)
     {
         channelRepo.Set(id, value);
-        channelDefRepo.Set(new ChannelDefinition { Id = id, BaseUnitType = baseUnit, BaseDecimalPlaces = decimalPlaces });
+        channelDefRepo.Set(new ChannelDefinition { Id = id, BaseUnitType = baseUnit });
     }
 
     private void SetupOutputChannel(Guid id, int decimalPlaces = 2) =>
-        channelDefRepo.Set(new ChannelDefinition { Id = id, BaseDecimalPlaces = decimalPlaces });
+        channelDefRepo.Set(new ChannelDefinition { Id = id });
+
 
     private double GetOutput(Guid channelId) =>
         double.Parse(channelRepo.Get(channelId).Value);
@@ -323,7 +324,7 @@ public class MathEvaluationTests
     public async Task Output_FormattedWithDefinedDecimalPlaces()
     {
         SetupInputChannel(Ch1, "5");
-        channelDefRepo.Set(new ChannelDefinition { Id = ChOut, BaseDecimalPlaces = 3 });
+        channelDefRepo.Set(new ChannelDefinition { Id = ChOut });
 
         mathRepo.Add(new MathDefinition { Id = MathId(1), Name = "math", Type = MathType.LinearCorrector, Channel1Id = Ch1, OutputChannelId = ChOut, A = 2m, B = 0m });
 
@@ -331,7 +332,6 @@ public class MathEvaluationTests
 
         var raw = channelRepo.Get(ChOut).Value;
         Assert.AreEqual(10.0, double.Parse(raw), 0.0001);
-        Assert.IsTrue(raw.Contains('.') || raw.Contains(','), "Should contain a decimal separator");
     }
 
     // -------------------------------------------------------------------------

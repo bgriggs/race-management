@@ -25,7 +25,6 @@ export interface ChannelDefinition {
      * Gets or sets the base unit type for the channel, such as degrees, feet, etc. When the value is set, this is its units.
      */
     baseUnitType: string;
-    baseDecimalPlaces: number;
     /**
      * Gets or sets the type of unit used when the channel value is accessed such as for displaying values.
      */

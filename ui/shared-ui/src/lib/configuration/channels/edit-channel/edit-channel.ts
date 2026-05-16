@@ -80,7 +80,6 @@ export class EditChannel implements OnInit {
     }),
     dataType: new FormControl<ChannelDataType>('Temperature', { nonNullable: true }),
     baseUnitType: new FormControl('', { nonNullable: true }),
-    baseDecimalPlaces: new FormControl(1, { nonNullable: true }),
     outputUnitType: new FormControl('', { nonNullable: true }),
     outputDecimalPlaces: new FormControl(1, { nonNullable: true }),
     category: new FormControl('', {
@@ -158,7 +157,7 @@ export class EditChannel implements OnInit {
           abbreviation: incomingChannel?.abbreviation ?? '',
           dataType: this.normalizeDataType(incomingChannel?.dataType),
           baseUnitType: incomingChannel?.baseUnitType ?? '',
-          baseDecimalPlaces: incomingChannel?.baseDecimalPlaces ?? 1,
+          // baseDecimalPlaces removed
           outputUnitType: incomingChannel?.outputUnitType ?? '',
           outputDecimalPlaces: incomingChannel?.outputDecimalPlaces ?? 1,
           category: incomingChannel?.category ?? '',
@@ -248,7 +247,7 @@ export class EditChannel implements OnInit {
       abbreviation: this.form.controls.abbreviation.value.trim(),
       dataType,
       baseUnitType: this.form.controls.baseUnitType.value,
-      baseDecimalPlaces: Number(this.form.controls.baseDecimalPlaces.value),
+      // baseDecimalPlaces removed
       outputUnitType: this.form.controls.outputUnitType.value,
       outputDecimalPlaces: Number(this.form.controls.outputDecimalPlaces.value),
       lowRange: Number(this.form.controls.lowRange.value),
@@ -265,7 +264,7 @@ export class EditChannel implements OnInit {
       channel.category = selectedReservedChannel.category;
       channel.dataType = this.normalizeDataType(selectedReservedChannel.dataType);
       channel.baseUnitType = selectedReservedChannel.baseUnitType;
-      channel.baseDecimalPlaces = selectedReservedChannel.baseDecimalPlaces;
+      // channel.baseDecimalPlaces removed
       channel.outputUnitType = selectedReservedChannel.outputUnitType;
       channel.outputDecimalPlaces = selectedReservedChannel.outputDecimalPlaces;
       channel.lowRange = selectedReservedChannel.lowRange;
@@ -287,7 +286,7 @@ export class EditChannel implements OnInit {
 
   copyBaseToOutput(): void {
     this.form.controls.outputUnitType.setValue(this.form.controls.baseUnitType.value);
-    this.form.controls.outputDecimalPlaces.setValue(this.form.controls.baseDecimalPlaces.value);
+    // baseDecimalPlaces removed from copyBaseToOutput
   }
 
   private syncDisabledState(): void {
@@ -332,7 +331,7 @@ export class EditChannel implements OnInit {
       abbreviation: selected.abbreviation,
       dataType: this.normalizeDataType(selected.dataType),
       baseUnitType: selected.baseUnitType,
-      baseDecimalPlaces: selected.baseDecimalPlaces,
+      // baseDecimalPlaces removed
       outputUnitType: selected.outputUnitType,
       outputDecimalPlaces: selected.outputDecimalPlaces,
       category: selected.category,

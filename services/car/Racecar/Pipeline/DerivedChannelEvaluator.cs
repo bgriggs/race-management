@@ -128,7 +128,7 @@ public sealed class PipelineDerivedChannelEvaluator : IDerivedChannelEvaluator
             if (!_idToGuid.TryGetValue(v.ChannelId, out var guid)) continue;
             if (!_channels.TryGetValue(v.ChannelId, out var def)) continue;
             var cv = new ChannelValue { SessionIndex = (ushort)v.ChannelId };
-            cv.SetBaseValue(v.BaseValue, def);
+            cv.SetBaseValue(v.BaseValue);
             _channelRepo.Set(guid, cv);
         }
 

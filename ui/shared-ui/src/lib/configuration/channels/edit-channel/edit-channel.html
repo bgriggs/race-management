@@ -41,13 +41,13 @@
 	<section class="field-grid">
 		<section class="field">
 			<label for="channel-name">Name</label>
-			<input id="channel-name" type="text" formControlName="name" minlength="1" maxlength="16"
+			<input id="channel-name" type="text" formControlName="name" minlength="1" maxlength="25"
 				[readonly]="kind() === 'reserved'" />
 		</section>
 
 		<section class="field">
-			<label for="channel-abbreviation">Abbreviation (4)</label>
-			<input id="channel-abbreviation" type="text" formControlName="abbreviation" minlength="1" maxlength="4"
+			<label for="channel-abbreviation">Abbreviation (6)</label>
+			<input id="channel-abbreviation" type="text" formControlName="abbreviation" minlength="1" maxlength="6"
 				[readonly]="kind() === 'reserved'" />
 		</section>
 
@@ -68,7 +68,7 @@
 	}
 
 	@if (!isUnitless() && !isString()) {
-	<section class="field-grid">
+	<section class="field-grid field-grid--3col">
 		<section class="field">
 			<label for="channel-base-unit-type">Base Unit Type</label>
 			<select id="channel-base-unit-type" formControlName="baseUnitType">
@@ -93,12 +93,6 @@
 				}
 			</select>
 			<p class="field-description">Source units such as what is received from CAN Bus</p>
-		</section>
-
-		<section class="field">
-			<label for="channel-base-decimals">Base Decimal Places</label>
-			<input id="channel-base-decimals" type="number" step="1" formControlName="baseDecimalPlaces"
-				[readonly]="kind() === 'reserved'" />
 		</section>
 
 		<section class="field">

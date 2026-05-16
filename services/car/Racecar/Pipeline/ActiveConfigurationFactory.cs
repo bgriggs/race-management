@@ -76,14 +76,7 @@ public sealed class ActiveConfigurationFactory
         for (var i = 0; i < carConfig.ChannelDefinitions.Count; i++)
         {
             var def = carConfig.ChannelDefinitions[i];
-            if (def.BaseDecimalPlaces == 0)
-            {
-                deadbands[i] = 0d;
-            }
-            else
-            {
-                deadbands[i] = System.Math.Pow(10, -def.OutputDecimalPlaces);
-            }
+            deadbands[i] = 0d;
         }
 
         // 4. Per-channel definition hashes (used for state migration on reload).

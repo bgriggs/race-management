@@ -30,10 +30,9 @@ public class ChannelValue
         return double.TryParse(Value, out var result) ? result : 0;
     }
 
-    public void SetBaseValue(double value, ChannelDefinition definition)
+    public void SetBaseValue(double value)
     {
-        var zeros = GetZeros(definition.BaseDecimalPlaces);
-        Value = value.ToString("0." + zeros);
+        Value = value.ToString();
     }
 
     private static string GetZeros(int count)

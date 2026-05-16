@@ -133,7 +133,6 @@ export function channelDefinitionFromMessagePack(obj: Record<string, unknown>): 
         abbreviation: obj["Abbreviation"] as string,
         dataType: obj["DataType"] as string,
         baseUnitType: obj["BaseUnitType"] as string,
-        baseDecimalPlaces: obj["BaseDecimalPlaces"] as number,
         outputUnitType: obj["OutputUnitType"] as string,
         outputDecimalPlaces: obj["OutputDecimalPlaces"] as number,
         lowRange: obj["LowRange"] as number,

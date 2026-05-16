@@ -36,10 +36,10 @@ public class TableEvaluationTests
     //    new() { Id = id, DataType = "string", IsStringValue = true };
 
     private static ChannelDefinition IntDef(Guid id) =>
-        new() { Id = id, DataType = "int", BaseDecimalPlaces = 0 };
+        new() { Id = id, DataType = "int" };
 
-    private static ChannelDefinition DoubleDef(Guid id, int decimalPlaces = 2) =>
-        new() { Id = id, DataType = "float", BaseDecimalPlaces = decimalPlaces };
+    private static ChannelDefinition DoubleDef(Guid id) =>
+        new() { Id = id, DataType = "float" };
 
     private double GetOutputDouble(Guid channelId) =>
         double.Parse(channelRepo.Get(channelId).Value);
@@ -397,7 +397,7 @@ public class TableEvaluationTests
     {
         channelRepo.Set(Ch1, "5");
         channelDefRepo.Set(DoubleDef(Ch1));
-        channelDefRepo.Set(DoubleDef(Ch2, decimalPlaces: 2));
+        channelDefRepo.Set(DoubleDef(Ch2));
 
         var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2, InterpolationType = InterpolationType.Linear };
         mapping.Mappings.Add(new TableMapping("0", "0"));
@@ -407,8 +407,6 @@ public class TableEvaluationTests
         await CreateEvaluation().EvaluateAsync();
 
         Assert.AreEqual(100.0, GetOutputDouble(Ch2), 0.001);
-        Assert.IsTrue(channelRepo.Get(Ch2).Value.Contains(".") || channelRepo.Get(Ch2).Value.Contains(","),
-            "Output should contain a decimal separator");
     }
 
     [TestMethod]
@@ -416,7 +414,7 @@ public class TableEvaluationTests
     {
         channelRepo.Set(Ch1, "5");
         channelDefRepo.Set(DoubleDef(Ch1));
-        channelDefRepo.Set(DoubleDef(Ch2, decimalPlaces: 0));
+        channelDefRepo.Set(DoubleDef(Ch2));
 
         var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2, InterpolationType = InterpolationType.Linear };
         mapping.Mappings.Add(new TableMapping("0", "0"));

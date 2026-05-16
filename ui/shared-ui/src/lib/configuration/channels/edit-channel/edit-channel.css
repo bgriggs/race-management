@@ -31,6 +31,10 @@
 	gap: 0.8rem;
 }
 
+.field-grid--3col {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .field-grid--4col {
 	grid-template-columns: repeat(4, minmax(0, auto));
 }

@@ -71,7 +71,7 @@ public sealed class SignalRTransmitConsumer : IChannelConsumer, IAsyncDisposable
                     existing = new ChannelValue { SessionIndex = (ushort)v.ChannelId };
                     _full[v.ChannelId] = existing;
                 }
-                existing.SetBaseValue(v.BaseValue, def);
+                existing.SetBaseValue(v.BaseValue);
                 existing.Timestamp = v.WallTime;
                 _ = _changes.Add(v.ChannelId);
             }
