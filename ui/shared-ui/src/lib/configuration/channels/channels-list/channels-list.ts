@@ -1,5 +1,6 @@
 import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
+import { MatTooltip } from '@angular/material/tooltip';
 import { CarConfiguration } from '../../../../models/car-configuration';
 import { ChannelDefinition } from '../../../../models/channel-definition';
 import { EnumDefinition } from '../../../../models/enum-definition';
@@ -9,7 +10,7 @@ import { ChannelUsageService } from '../channel-usage.service';
 @Component({
   selector: 'lib-channels-list',
   standalone: true,
-  imports: [MatIcon, EditChannel],
+  imports: [MatIcon, MatTooltip, EditChannel],
   templateUrl: './channels-list.html',
   styleUrl: './channels-list.css',
 })
@@ -20,6 +21,7 @@ export class ChannelsList {
   readonly channelDefinitionsChange = output<ChannelDefinition[]>();
 
   readonly editingChannelId = signal<string | null>(null);
+  readonly deleteBlockedMessage = signal<string | null>(null);
 
   readonly channels = computed<ChannelDefinition[]>(() => this.configuration()?.channelDefinitions ?? []);
   readonly enumDefinitions = computed<EnumDefinition[]>(() => this.configuration()?.enumDefinitions ?? []);
@@ -33,6 +35,19 @@ export class ChannelsList {
   );
 
   readonly unusedChannelCount = computed(() => this.channels().length - this.usedChannelCount());
+
+  /** Map of channelId → usage labels for channels assigned to more than one output source. */
+  readonly duplicateUsages = computed<ReadonlyMap<string, string[]>>(() => {
+    const result = new Map<string, string[]>();
+    for (const [id, labels] of this.channelUsageService.channelUsageMap()) {
+      if (labels.length > 1) {
+        result.set(id, labels);
+      }
+    }
+    return result;
+  });
+
+  readonly channelUsageMap = computed(() => this.channelUsageService.channelUsageMap());
 
   readonly editingChannel = computed<ChannelDefinition | null>(() => {
     const editingId = this.editingChannelId();
@@ -58,11 +73,25 @@ export class ChannelsList {
   }
 
   deleteChannel(channelId: string): void {
+    const locations = this.channelUsageMap().get(channelId);
+    if (locations?.length) {
+      const channel = this.channels().find(ch => ch.id === channelId);
+      const name = channel?.name ?? 'This channel';
+      this.deleteBlockedMessage.set(
+        `"${name}" is still assigned as an output in the following locations. Unassign it before deleting:\n${locations.map(l => `\u2022 ${l}`).join('\n')}`
+      );
+      return;
+    }
+
     this.channelDefinitionsChange.emit(this.channels().filter((channel) => channel.id !== channelId));
 
     if (this.editingChannelId() === channelId) {
       this.stopEdit();
     }
+  }
+
+  dismissDeleteError(): void {
+    this.deleteBlockedMessage.set(null);
   }
 
   saveChannel(channel: ChannelDefinition): void {

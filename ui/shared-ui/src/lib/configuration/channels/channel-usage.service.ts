@@ -14,46 +14,79 @@ const EMPTY_GUID = '00000000-0000-0000-0000-000000000000';
 @Injectable({ providedIn: 'root' })
 export class ChannelUsageService {
   private readonly _usedChannelIds = signal<string[]>([]);
+  private readonly _channelUsageMap = signal<ReadonlyMap<string, string[]>>(new Map());
 
   /** Channel IDs that are assigned as outputs across the active configuration. Updated via {@link updateFromConfiguration}. */
   readonly usedChannelIds: Signal<string[]> = this._usedChannelIds.asReadonly();
 
   /**
+   * Maps each output-assigned channel ID to the list of configuration locations that write to it.
+   * Updated via {@link updateFromConfiguration}.
+   */
+  readonly channelUsageMap: Signal<ReadonlyMap<string, string[]>> = this._channelUsageMap.asReadonly();
+
+  /**
    * Recomputes the set of output-assigned channel IDs from the full configuration and
-   * updates the {@link usedChannelIds} signal. Call this whenever the active configuration
-   * is loaded or changes.
+   * updates the {@link usedChannelIds} and {@link channelUsageMap} signals. Call this
+   * whenever the active configuration is loaded or changes.
    */
   updateFromConfiguration(config: CarConfiguration | null): void {
     if (!config) {
       this._usedChannelIds.set([]);
+      this._channelUsageMap.set(new Map());
       return;
     }
 
-    const ids = new Set<string>();
+    const usageMap = new Map<string, string[]>();
 
-    for (const id of this.getUsedChannelIdsFromCanInterfaces(config.canConfig?.interfaces ?? [])) {
-      ids.add(id);
-    }
-    for (const id of this.getUsedChannelIdsFromUserConditions(config.userConditions)) {
-      ids.add(id);
-    }
-    for (const id of this.getUsedChannelIdsFromMathDefinitions(config.mathDefinitions)) {
-      ids.add(id);
-    }
-    for (const id of this.getUsedChannelIdsFromCounterDefinitions(config.counterDefinitions)) {
-      ids.add(id);
-    }
-    for (const id of this.getUsedChannelIdsFromTimerDefinitions(config.timerDefinitions)) {
-      ids.add(id);
-    }
-    for (const id of this.getUsedChannelIdsFromTableDefinitions(config.tableDefinitions)) {
-      ids.add(id);
-    }
-    for (const id of this.getUsedChannelIdsFromAlarmDefinitions(config.alarmDefinitions)) {
-      ids.add(id);
+    const addUsage = (channelId: string, label: string) => {
+      if (!channelId || channelId === EMPTY_GUID) return;
+      const existing = usageMap.get(channelId);
+      if (existing) {
+        existing.push(label);
+      } else {
+        usageMap.set(channelId, [label]);
+      }
+    };
+
+    for (const iface of config.canConfig?.interfaces ?? []) {
+      for (const msg of iface.messages) {
+        if (!msg.isReceive) continue;
+        const label = `CAN ${iface.interfaceName} - 0x${msg.canId.toString(16).toUpperCase()}`;
+        for (const assignment of msg.channelAssignments) {
+          addUsage(assignment.id, label);
+        }
+      }
     }
 
-    this._usedChannelIds.set([...ids]);
+    for (const def of config.userConditions ?? []) {
+      addUsage(def.outputChannelId, `Condition: ${def.name}`);
+    }
+
+    for (const def of config.mathDefinitions ?? []) {
+      addUsage(def.outputChannelId, `Math: ${def.name}`);
+    }
+
+    for (const def of config.counterDefinitions ?? []) {
+      addUsage(def.outputChId, `Counter: ${def.name}`);
+    }
+
+    for (const def of config.timerDefinitions ?? []) {
+      addUsage(def.outputChId, `Timer: ${def.name}`);
+    }
+
+    for (const def of config.tableDefinitions ?? []) {
+      addUsage(def.outputChannel, `Table: ${def.name}`);
+    }
+
+    for (const def of config.alarmDefinitions ?? []) {
+      if (def.alarmStatusChannelId) {
+        addUsage(def.alarmStatusChannelId, `Alarm: ${def.name}`);
+      }
+    }
+
+    this._usedChannelIds.set([...usageMap.keys()]);
+    this._channelUsageMap.set(usageMap);
   }
 
   getUsedChannelIdsFromCanConfig(

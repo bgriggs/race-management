@@ -1,3 +1,53 @@
+.channels-dialog-backdrop {
+	position: fixed;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.35);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 1100;
+	padding: 1rem;
+}
+
+.channels-dialog {
+	background: #ffffff;
+	border-radius: 10px;
+	border: 1px solid #d9dfd8;
+	max-width: 460px;
+	width: 100%;
+	padding: 1rem;
+}
+
+.channels-dialog h2 {
+	margin: 0;
+	font-size: 1.15rem;
+	color: #2f3d2c;
+}
+
+.channels-dialog-text {
+	margin: 0.65rem 0 0;
+	color: #7b1f1f;
+	white-space: pre-line;
+	line-height: 1.6;
+	font-size: 0.9rem;
+}
+
+.channels-dialog-close {
+	display: block;
+	margin-top: 1rem;
+	border: 1px solid #7d8e7b;
+	background: #ffffff;
+	color: #2f3d2c;
+	border-radius: 8px;
+	padding: 0.35rem 0.75rem;
+	font-size: 0.9rem;
+	cursor: pointer;
+}
+
+.channels-dialog-close:hover {
+	background: #f4f8f2;
+}
+
 .channels-empty {
 	margin: 1rem 0;
 	color: #555;
@@ -71,12 +121,32 @@
 	font-weight: 600;
 }
 
-.checkmark-column {
-	width: 4rem;
-}
-
 .checkmark-cell {
 	text-align: center;
+}
+
+.used-cell {
+	vertical-align: middle;
+}
+
+.used-cell-content {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+}
+
+.used-locations {
+	font-size: 0.85rem;
+	color: #465643;
+}
+
+.duplicate-warning-icon {
+	font-size: 1.1rem;
+	width: 1.1rem;
+	height: 1.1rem;
+	color: #b45309;
+	cursor: default;
+	vertical-align: middle;
 }
 
 .row-action-column {

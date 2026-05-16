@@ -314,6 +314,50 @@ h1 {
   background: #f4f8f2;
 }
 
+.duplicate-dialog {
+  max-width: 560px;
+}
+
+.duplicate-dialog-intro {
+  margin: 0.65rem 0 0.9rem;
+  color: #465643;
+}
+
+.duplicate-channel-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.duplicate-channel-item {
+  border: 1px solid #f5d7d7;
+  border-radius: 6px;
+  background: #fffafa;
+  padding: 0.5rem 0.75rem;
+}
+
+.duplicate-channel-name {
+  font-weight: 600;
+  color: #7b1f1f;
+  display: block;
+  margin-bottom: 0.3rem;
+}
+
+.duplicate-location-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: #554040;
+  font-size: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
 @media (max-width: 900px) {
   .header-actions {
     flex-direction: column;

@@ -2,3 +2,7 @@
 
 @import "@angular/material/prebuilt-themes/indigo-pink.css";
 @import "tailwindcss";
+
+.multiline-tooltip {
+  white-space: pre-line;
+}

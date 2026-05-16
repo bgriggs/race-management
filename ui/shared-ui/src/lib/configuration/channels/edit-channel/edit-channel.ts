@@ -19,11 +19,11 @@ type ChannelDataType =
   | 'Speed'
   | 'Pressure'
   | 'Force'
-  | 'Voltage'
+  | 'ElectricPotential'
   | 'Mass'
   | 'Ratio'
-  | 'Current'
-  | 'Resistance';
+  | 'ElectricCurrent'
+  | 'ElectricResistance';
 
 @Component({
   selector: 'lib-edit-channel',
@@ -61,11 +61,11 @@ export class EditChannel implements OnInit {
     'Speed',
     'Pressure',
     'Force',
-    'Voltage',
+    'ElectricPotential',
     'Mass',
     'Ratio',
-    'Current',
-    'Resistance'
+    'ElectricCurrent',
+    'ElectricResistance'
   ];
 
   readonly form = new FormGroup({
@@ -97,6 +97,38 @@ export class EditChannel implements OnInit {
     defaultValue: new FormControl(0, { nonNullable: true }),
     timeoutMs: new FormControl(0, { nonNullable: true })
   });
+
+  private readonly preferredUnitTypesByDataType: Partial<Record<ChannelDataType, string[]>> = {
+    Temperature:  ['DegreeFahrenheit', 'DegreeCelsius', 'Kelvin'],
+    Length:       ['Meter', 'Kilometer', 'Foot', 'Inch', 'Mile'],
+    Volume:       ['UsGallon','Liter', 'Milliliter', 'CubicMeter'],
+    VolumeFlow:   ['LiterPerMinute', 'UsGallonPerMinute', 'LiterPerSecond', 'MilliliterPerMinute', 'CubicMeterPerSecond'],
+    Duration:     ['Second', 'Minute', 'Hour', 'Millisecond'],
+    Speed:        ['MilePerHour', 'KilometerPerHour', 'MeterPerSecond', 'FootPerSecond'],
+    Pressure:     ['PoundForcePerSquareInch', 'Bar', 'Kilopascal', 'Megapascal', 'Pascal'],
+    Force:        ['PoundForce', 'Newton', 'KilogramForce'],
+    ElectricPotential: ['Volt', 'Millivolt', 'Microvolt'],
+    Mass:         ['Pound','Kilogram', 'Gram', 'Ounce'],
+    Ratio:        ['Percent', 'DecimalFraction', 'PartsPerMillion', 'PartsPerBillion', 'PartsPerThousand'],
+    ElectricCurrent:    ['Ampere', 'Milliampere'],
+    ElectricResistance: ['Ohm'],
+  };
+
+  readonly commonUnitTypes = computed(() => {
+    const preferred = this.preferredUnitTypesByDataType[this.dataTypeValue()] ?? [];
+    const available = new Set(this.availableUnitTypes());
+    return preferred.filter(u => available.has(u));
+  });
+
+  readonly otherUnitTypes = computed(() => {
+    const common = new Set(this.commonUnitTypes());
+    return this.availableUnitTypes().filter(u => !common.has(u));
+  });
+
+  readonly toDisplayName = (name: string): string =>
+    name
+      .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+      .replace(/([a-z])([A-Z])/g, '$1 $2');
 
   private readonly dataTypeValue = toSignal(this.form.controls.dataType.valueChanges, { initialValue: this.form.controls.dataType.value });
   readonly isUnitless = computed(() => this.dataTypeValue() === 'Unitless');

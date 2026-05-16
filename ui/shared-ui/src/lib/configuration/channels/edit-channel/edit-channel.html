@@ -55,7 +55,7 @@
 			<label for="channel-data-type">Data Type</label>
 			<select id="channel-data-type" formControlName="dataType">
 				@for (option of dataTypeOptions; track option) {
-				<option [value]="option">{{ option }}</option>
+				<option [value]="option">{{ toDisplayName(option) }}</option>
 				}
 			</select>
 		</section>
@@ -73,8 +73,23 @@
 			<label for="channel-base-unit-type">Base Unit Type</label>
 			<select id="channel-base-unit-type" formControlName="baseUnitType">
 				<option value="">Select base unit type</option>
-				@for (unitType of availableUnitTypes(); track unitType) {
-				<option [value]="unitType">{{ unitType }}</option>
+				@if (commonUnitTypes().length > 0) {
+					<optgroup label="Common">
+						@for (unitType of commonUnitTypes(); track unitType) {
+							<option [value]="unitType">{{ toDisplayName(unitType) }}</option>
+						}
+					</optgroup>
+					@if (otherUnitTypes().length > 0) {
+						<optgroup label="Other">
+							@for (unitType of otherUnitTypes(); track unitType) {
+								<option [value]="unitType">{{ toDisplayName(unitType) }}</option>
+							}
+						</optgroup>
+					}
+				} @else {
+					@for (unitType of availableUnitTypes(); track unitType) {
+						<option [value]="unitType">{{ toDisplayName(unitType) }}</option>
+					}
 				}
 			</select>
 			<p class="field-description">Source units such as what is received from CAN Bus</p>
@@ -90,8 +105,23 @@
 			<label for="channel-output-unit-type">Output Unit Type</label>
 			<select id="channel-output-unit-type" formControlName="outputUnitType">
 				<option value="">Select output unit type</option>
-				@for (unitType of availableUnitTypes(); track unitType) {
-				<option [value]="unitType">{{ unitType }}</option>
+				@if (commonUnitTypes().length > 0) {
+					<optgroup label="Common">
+						@for (unitType of commonUnitTypes(); track unitType) {
+							<option [value]="unitType">{{ toDisplayName(unitType) }}</option>
+						}
+					</optgroup>
+					@if (otherUnitTypes().length > 0) {
+						<optgroup label="Other">
+							@for (unitType of otherUnitTypes(); track unitType) {
+								<option [value]="unitType">{{ toDisplayName(unitType) }}</option>
+							}
+						</optgroup>
+					}
+				} @else {
+					@for (unitType of availableUnitTypes(); track unitType) {
+						<option [value]="unitType">{{ toDisplayName(unitType) }}</option>
+					}
 				}
 			</select>
 			<p class="field-description">Convert value to these units</p>

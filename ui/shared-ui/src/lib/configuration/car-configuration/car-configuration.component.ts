@@ -77,6 +77,7 @@ export class CarConfigurationComponent implements OnInit {
   readonly summaryLoadError = signal<string | null>(null);
   readonly snackbarMessage = signal<string | null>(null);
   readonly errorDialogMessage = signal<string | null>(null);
+  readonly duplicateAssignmentError = signal<Array<{ channelName: string; locations: string[] }> | null>(null);
   readonly activeConfiguration = signal<CarConfiguration | null>(null);
   readonly configurationSummaries = signal<CarConfigurationSummary[]>([]);
 
@@ -310,6 +311,12 @@ export class CarConfigurationComponent implements OnInit {
       return;
     }
 
+    const duplicates = this.buildDuplicateAssignmentErrors();
+    if (duplicates) {
+      this.duplicateAssignmentError.set(duplicates);
+      return;
+    }
+
     try {
       const saved = await this.managementDataClient.saveCarConfigurationAsync(current);
       this.activeConfiguration.set(this.normalizeConfiguration(saved));
@@ -330,6 +337,12 @@ export class CarConfigurationComponent implements OnInit {
       return;
     }
 
+    const duplicates = this.buildDuplicateAssignmentErrors();
+    if (duplicates) {
+      this.duplicateAssignmentError.set(duplicates);
+      return;
+    }
+
     try {
       const updated = await this.managementDataClient.transmitToCarAsync(current);
       this.activeConfiguration.set(this.normalizeConfiguration(updated));
@@ -343,6 +356,10 @@ export class CarConfigurationComponent implements OnInit {
 
   closeErrorDialog(): void {
     this.errorDialogMessage.set(null);
+  }
+
+  closeDuplicateAssignmentError(): void {
+    this.duplicateAssignmentError.set(null);
   }
 
   backToConfigurationPicker(): void {
@@ -598,6 +615,25 @@ export class CarConfigurationComponent implements OnInit {
 
   private openErrorDialog(message: string): void {
     this.errorDialogMessage.set(message);
+  }
+
+  private buildDuplicateAssignmentErrors(): Array<{ channelName: string; locations: string[] }> | null {
+    const config = this.activeConfiguration();
+    if (!config) return null;
+
+    const channelNameById = new Map(config.channelDefinitions.map(ch => [ch.id, ch.name]));
+    const duplicates: Array<{ channelName: string; locations: string[] }> = [];
+
+    for (const [channelId, locations] of this.channelUsageService.channelUsageMap()) {
+      if (locations.length > 1) {
+        duplicates.push({
+          channelName: channelNameById.get(channelId) ?? channelId,
+          locations
+        });
+      }
+    }
+
+    return duplicates.length > 0 ? duplicates : null;
   }
 
   private getErrorMessage(error: unknown, fallbackMessage: string): string {

@@ -230,3 +230,25 @@
     </section>
   </section>
 }
+
+@if (duplicateAssignmentError()) {
+  <section class="dialog-backdrop" role="presentation" (click)="closeDuplicateAssignmentError()">
+    <section class="dialog duplicate-dialog" role="alertdialog" aria-modal="true" aria-label="Duplicate channel assignments" (click)="$event.stopPropagation()">
+      <h2>Duplicate Channel Assignments</h2>
+      <p class="duplicate-dialog-intro">The following channels are assigned as outputs in more than one place. Each channel must have only one output source before saving or transmitting.</p>
+      <div class="duplicate-channel-list">
+        @for (item of duplicateAssignmentError()!; track item.channelName) {
+          <div class="duplicate-channel-item">
+            <span class="duplicate-channel-name">{{ item.channelName }}</span>
+            <div class="duplicate-location-list">
+              @for (loc of item.locations; track loc) {
+                <div>{{ loc }}</div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+      <button type="button" class="dialog-close" (click)="closeDuplicateAssignmentError()">Close</button>
+    </section>
+  </section>
+}
