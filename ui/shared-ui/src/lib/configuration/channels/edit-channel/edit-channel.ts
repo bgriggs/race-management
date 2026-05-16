@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, effect, inject, input, output, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { MANAGEMENT_DATA_CLIENT } from '../../../data/management-data-client';
 import { ChannelDefinition } from '../../../../models/channel-definition';
 import { createGuid } from '../../../utils/guid';
@@ -95,7 +95,15 @@ export class EditChannel implements OnInit {
     highRange: new FormControl(100, { nonNullable: true }),
     defaultValue: new FormControl(0, { nonNullable: true }),
     timeoutMs: new FormControl(0, { nonNullable: true })
-  });
+  }, { validators: EditChannel.defaultValueInRangeValidator });
+
+  static defaultValueInRangeValidator(group: AbstractControl): ValidationErrors | null {
+    const low = Number((group as FormGroup).controls['lowRange'].value);
+    const high = Number((group as FormGroup).controls['highRange'].value);
+    const def = Number((group as FormGroup).controls['defaultValue'].value);
+    if (isNaN(low) || isNaN(high) || isNaN(def)) return null;
+    return def >= low && def <= high ? null : { defaultValueOutOfRange: true };
+  }
 
   private readonly preferredUnitTypesByDataType: Partial<Record<ChannelDataType, string[]>> = {
     Temperature:  ['DegreeFahrenheit', 'DegreeCelsius', 'Kelvin'],

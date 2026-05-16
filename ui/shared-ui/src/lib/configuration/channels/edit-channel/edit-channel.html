@@ -149,6 +149,9 @@
 			<label for="channel-default-value">Default Value</label>
 			<input id="channel-default-value" type="number" formControlName="defaultValue"
 				[readonly]="kind() === 'reserved'" />
+			@if (form.hasError('defaultValueOutOfRange') && form.controls.defaultValue.dirty) {
+			<p class="field-error">Must be between Low and High range.</p>
+			}
 		</section>
 		}
 
