@@ -5,96 +5,76 @@
 
 	<section class="channel-kind">
 		<label>
-			<input
-				type="radio"
-				name="channel-kind"
-				value="reserved"
-				[checked]="kind() === 'reserved'"
-				(change)="onKindChange($event)"
-			/>
+			<input type="radio" name="channel-kind" value="reserved" [checked]="kind() === 'reserved'"
+				(change)="onKindChange($event)" />
 			Reserved Channel
 		</label>
 
 		<label>
-			<input
-				type="radio"
-				name="channel-kind"
-				value="custom"
-				[checked]="kind() === 'custom'"
-				(change)="onKindChange($event)"
-			/>
+			<input type="radio" name="channel-kind" value="custom" [checked]="kind() === 'custom'"
+				(change)="onKindChange($event)" />
 			Custom Channel
 		</label>
 	</section>
 
 	@if (kind() === 'reserved') {
-		<section class="field">
-			<label for="reserved-channel-id">Reserved Channel</label>
-			@if (loadingReserved()) {
-				<p class="field-note">Loading reserved channels...</p>
-			} @else if (reservedLoadError()) {
-				<p class="field-error">{{ reservedLoadError() }}</p>
-			} @else if (availableReservedChannels().length === 0) {
-				<p class="field-note">All reserved channels are already configured.</p>
-			} @else {
-				<select
-					id="reserved-channel-id"
-					formControlName="reservedChannelId"
-					(change)="onReservedChannelChange($any($event.target).value)"
-				>
-					<option value="">Select a reserved channel</option>
-					@for (reservedChannel of availableReservedChannels(); track reservedChannel.id) {
-						<option [value]="reservedChannel.id">{{ reservedChannel.name }}</option>
-					}
-				</select>
+	<section class="field">
+		<label for="reserved-channel-id">Reserved Channel</label>
+		@if (loadingReserved()) {
+		<p class="field-note">Loading reserved channels...</p>
+		} @else if (reservedLoadError()) {
+		<p class="field-error">{{ reservedLoadError() }}</p>
+		} @else if (availableReservedChannels().length === 0) {
+		<p class="field-note">All reserved channels are already configured.</p>
+		} @else {
+		<select id="reserved-channel-id" formControlName="reservedChannelId"
+			(change)="onReservedChannelChange($any($event.target).value)">
+			<option value="">Select a reserved channel</option>
+			@for (reservedChannel of availableReservedChannels(); track reservedChannel.id) {
+			<option [value]="reservedChannel.id">{{ reservedChannel.name }}</option>
 			}
-		</section>
+		</select>
+		}
+	</section>
 	}
 
 	<section class="field-grid">
 		<section class="field">
 			<label for="channel-name">Name</label>
-			<input id="channel-name" type="text" formControlName="name" minlength="1" maxlength="16" [readonly]="kind() === 'reserved'" />
+			<input id="channel-name" type="text" formControlName="name" minlength="1" maxlength="16"
+				[readonly]="kind() === 'reserved'" />
 		</section>
 
 		<section class="field">
-			<label for="channel-abbreviation">Abbreviation</label>
-			<input id="channel-abbreviation" type="text" formControlName="abbreviation" minlength="1" maxlength="4" [readonly]="kind() === 'reserved'" />
+			<label for="channel-abbreviation">Abbreviation (4)</label>
+			<input id="channel-abbreviation" type="text" formControlName="abbreviation" minlength="1" maxlength="4"
+				[readonly]="kind() === 'reserved'" />
 		</section>
 
 		<section class="field">
 			<label for="channel-data-type">Data Type</label>
-			<select id="channel-data-type" formControlName="dataType" [disabled]="kind() === 'reserved'">
+			<select id="channel-data-type" formControlName="dataType">
 				@for (option of dataTypeOptions; track option) {
-					<option [value]="option">{{ option }}</option>
+				<option [value]="option">{{ option }}</option>
 				}
 			</select>
-		</section>
-
-		<section class="field">
-			<label for="channel-category">Category</label>
-			<input id="channel-category" type="text" formControlName="category" maxlength="16" [readonly]="kind() === 'reserved'" />
-		</section>
-
-		<section class="field">
-			<label for="channel-group-tag">Group Tag</label>
-			<input id="channel-group-tag" type="text" formControlName="groupTag" maxlength="16" [readonly]="kind() === 'reserved'" />
 		</section>
 	</section>
 
 	@if (loadingUnitTypes()) {
-		<p class="field-note">Loading available unit types...</p>
+	<p class="field-note">Loading available unit types...</p>
 	} @else if (unitTypesLoadError()) {
-		<p class="field-error">{{ unitTypesLoadError() }}</p>
+	<p class="field-error">{{ unitTypesLoadError() }}</p>
 	}
 
+	@if (!isUnitless() && !isString()) {
 	<section class="field-grid">
 		<section class="field">
 			<label for="channel-base-unit-type">Base Unit Type</label>
-			<select id="channel-base-unit-type" formControlName="baseUnitType" [disabled]="kind() === 'reserved'">
+			<select id="channel-base-unit-type" formControlName="baseUnitType">
 				<option value="">Select base unit type</option>
 				@for (unitType of availableUnitTypes(); track unitType) {
-					<option [value]="unitType">{{ unitType }}</option>
+				<option [value]="unitType">{{ unitType }}</option>
 				}
 			</select>
 			<p class="field-description">Source units such as what is received from CAN Bus</p>
@@ -102,21 +82,16 @@
 
 		<section class="field">
 			<label for="channel-base-decimals">Base Decimal Places</label>
-			<input
-				id="channel-base-decimals"
-				type="number"
-				step="1"
-				formControlName="baseDecimalPlaces"
-				[readonly]="kind() === 'reserved'"
-			/>
+			<input id="channel-base-decimals" type="number" step="1" formControlName="baseDecimalPlaces"
+				[readonly]="kind() === 'reserved'" />
 		</section>
 
 		<section class="field">
 			<label for="channel-output-unit-type">Output Unit Type</label>
-			<select id="channel-output-unit-type" formControlName="outputUnitType" [disabled]="kind() === 'reserved'">
+			<select id="channel-output-unit-type" formControlName="outputUnitType">
 				<option value="">Select output unit type</option>
 				@for (unitType of availableUnitTypes(); track unitType) {
-					<option [value]="unitType">{{ unitType }}</option>
+				<option [value]="unitType">{{ unitType }}</option>
 				}
 			</select>
 			<p class="field-description">Convert value to these units</p>
@@ -124,15 +99,17 @@
 
 		<section class="field">
 			<label for="channel-output-decimals">Output Decimal Places</label>
-			<input
-				id="channel-output-decimals"
-				type="number"
-				step="1"
-				formControlName="outputDecimalPlaces"
-				[readonly]="kind() === 'reserved'"
-			/>
+			<div class="field-row">
+				<input id="channel-output-decimals" type="number" step="1" formControlName="outputDecimalPlaces"
+					[readonly]="kind() === 'reserved'" />
+				<button type="button" class="icon-btn" title="Copy unit type and decimal places from Base" (click)="copyBaseToOutput()">&#x2193;</button>
+			</div>
 		</section>
+	</section>
+	}
 
+	<section class="field-grid field-grid--4col">
+		@if (!isString()) {
 		<section class="field">
 			<label for="channel-low-range">Low Range</label>
 			<input id="channel-low-range" type="number" formControlName="lowRange" [readonly]="kind() === 'reserved'" />
@@ -140,18 +117,48 @@
 
 		<section class="field">
 			<label for="channel-high-range">High Range</label>
-			<input id="channel-high-range" type="number" formControlName="highRange" [readonly]="kind() === 'reserved'" />
+			<input id="channel-high-range" type="number" formControlName="highRange"
+				[readonly]="kind() === 'reserved'" />
+		</section>
+
+		<section class="field">
+			<label for="channel-default-value">Default Value</label>
+			<input id="channel-default-value" type="number" formControlName="defaultValue"
+				[readonly]="kind() === 'reserved'" />
+		</section>
+		}
+
+		<section class="field">
+			<label for="channel-timeout-ms">Timeout (ms)</label>
+			<input id="channel-timeout-ms" type="number" step="1" formControlName="timeoutMs"
+				[readonly]="kind() === 'reserved'" />
 		</section>
 	</section>
 
+	@if (!isString()) {
 	<section class="field">
 		<label for="channel-enum-conversion">Enumeration</label>
 		<select id="channel-enum-conversion" formControlName="enumConversion">
 			<option value="">None</option>
 			@for (enumDefinition of enumDefinitions(); track enumDefinition.id) {
-				<option [value]="enumDefinition.id">{{ enumDefinition.name }}</option>
+			<option [value]="enumDefinition.id">{{ enumDefinition.name }}</option>
 			}
 		</select>
+	</section>
+	}
+
+	<section class="field-grid">
+		<section class="field">
+			<label for="channel-category">Category</label>
+			<input id="channel-category" type="text" formControlName="category" maxlength="16"
+				[readonly]="kind() === 'reserved'" />
+		</section>
+
+		<section class="field">
+			<label for="channel-group-tag">Group Tag</label>
+			<input id="channel-group-tag" type="text" formControlName="groupTag" maxlength="16"
+				[readonly]="kind() === 'reserved'" />
+		</section>
 	</section>
 
 	<section class="channel-form-actions">

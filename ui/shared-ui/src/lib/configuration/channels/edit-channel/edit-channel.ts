@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, effect, inject, input, output, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MANAGEMENT_DATA_CLIENT } from '../../../data/management-data-client';
 import { ChannelDefinition } from '../../../../models/channel-definition';
@@ -92,8 +93,14 @@ export class EditChannel implements OnInit {
     }),
     enumConversion: new FormControl('', { nonNullable: true }),
     lowRange: new FormControl(0, { nonNullable: true }),
-    highRange: new FormControl(100, { nonNullable: true })
+    highRange: new FormControl(100, { nonNullable: true }),
+    defaultValue: new FormControl(0, { nonNullable: true }),
+    timeoutMs: new FormControl(0, { nonNullable: true })
   });
+
+  private readonly dataTypeValue = toSignal(this.form.controls.dataType.valueChanges, { initialValue: this.form.controls.dataType.value });
+  readonly isUnitless = computed(() => this.dataTypeValue() === 'Unitless');
+  readonly isString = computed(() => this.dataTypeValue() === 'String');
 
   readonly availableReservedChannels = computed(() => {
     const currentChannelId = this.channel()?.id ?? null;
@@ -126,7 +133,9 @@ export class EditChannel implements OnInit {
           groupTag: incomingChannel?.groupTag ?? '',
           enumConversion: incomingChannel?.enumConversion ?? '',
           lowRange: incomingChannel?.lowRange ?? 0,
-          highRange: incomingChannel?.highRange ?? 100
+          highRange: incomingChannel?.highRange ?? 100,
+          defaultValue: incomingChannel?.defaultValue ?? 0,
+          timeoutMs: incomingChannel?.timeoutMs ?? 0
         },
         { emitEvent: false }
       );
@@ -135,6 +144,7 @@ export class EditChannel implements OnInit {
         this.ensureReservedChannelsLoaded();
       }
 
+      this.syncDisabledState();
       this.loadAvailableUnitTypes();
     });
 
@@ -154,6 +164,8 @@ export class EditChannel implements OnInit {
     const target = event.target as HTMLInputElement;
     const nextKind: ChannelKind = target.value === 'reserved' ? 'reserved' : 'custom';
     this.kind.set(nextKind);
+
+    this.syncDisabledState();
 
     if (nextKind === 'reserved') {
       await this.ensureReservedChannelsLoaded();
@@ -209,9 +221,10 @@ export class EditChannel implements OnInit {
       outputDecimalPlaces: Number(this.form.controls.outputDecimalPlaces.value),
       lowRange: Number(this.form.controls.lowRange.value),
       highRange: Number(this.form.controls.highRange.value),
-      defaultValue: existingChannel?.defaultValue ?? 0,
+      defaultValue: Number(this.form.controls.defaultValue.value),
       groupTag: this.form.controls.groupTag.value.trim(),
-      enumConversion: this.form.controls.enumConversion.value || null
+      enumConversion: this.form.controls.enumConversion.value || null,
+      timeoutMs: Number(this.form.controls.timeoutMs.value)
     };
 
     if (isReserved && selectedReservedChannel) {
@@ -226,8 +239,11 @@ export class EditChannel implements OnInit {
       channel.lowRange = selectedReservedChannel.lowRange;
       channel.highRange = selectedReservedChannel.highRange;
       channel.defaultValue = selectedReservedChannel.defaultValue;
+      channel.timeoutMs = selectedReservedChannel.timeoutMs;
+
       channel.groupTag = selectedReservedChannel.groupTag;
       channel.enumConversion = selectedReservedChannel.enumConversion;
+      channel.timeoutMs = selectedReservedChannel.timeoutMs;
     }
 
     this.save.emit(channel);
@@ -235,6 +251,24 @@ export class EditChannel implements OnInit {
 
   dismiss(): void {
     this.cancel.emit();
+  }
+
+  copyBaseToOutput(): void {
+    this.form.controls.outputUnitType.setValue(this.form.controls.baseUnitType.value);
+    this.form.controls.outputDecimalPlaces.setValue(this.form.controls.baseDecimalPlaces.value);
+  }
+
+  private syncDisabledState(): void {
+    const opts = { emitEvent: false };
+    if (this.kind() === 'reserved') {
+      this.form.controls.dataType.disable(opts);
+      this.form.controls.baseUnitType.disable(opts);
+      this.form.controls.outputUnitType.disable(opts);
+    } else {
+      this.form.controls.dataType.enable(opts);
+      this.form.controls.baseUnitType.enable(opts);
+      this.form.controls.outputUnitType.enable(opts);
+    }
   }
 
   private async ensureReservedChannelsLoaded(): Promise<void> {
@@ -272,7 +306,9 @@ export class EditChannel implements OnInit {
       category: selected.category,
       groupTag: selected.groupTag,
       lowRange: selected.lowRange,
-      highRange: selected.highRange
+      highRange: selected.highRange,
+      defaultValue: selected.defaultValue,
+      timeoutMs: selected.timeoutMs
     });
 
     this.loadAvailableUnitTypes();
@@ -285,6 +321,13 @@ export class EditChannel implements OnInit {
 
   private loadAvailableUnitTypes(): void {
     const selectedDataType = this.form.controls.dataType.value;
+
+    if (selectedDataType === 'Unitless' || selectedDataType === 'String') {
+      this.availableUnitTypes.set([]);
+      this.unitTypesLoadError.set(null);
+      return;
+    }
+
     this.loadingUnitTypes.set(true);
     this.unitTypesLoadError.set(null);
 

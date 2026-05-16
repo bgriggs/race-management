@@ -31,6 +31,10 @@
 	gap: 0.8rem;
 }
 
+.field-grid--4col {
+	grid-template-columns: repeat(4, minmax(0, auto));
+}
+
 .field {
 	display: flex;
 	flex-direction: column;
@@ -45,13 +49,54 @@
 
 
 
+#channel-abbreviation {
+	width: 65px;
+}
+
+#channel-base-decimals,
+#channel-output-decimals,
+#channel-low-range,
+#channel-high-range,
+#channel-default-value,
+#channel-timeout-ms {
+	width: 85px;
+}
+
 .field > input,
-.field > select {
+.field > select,
+.field-row > input {
 	border: 1px solid #c4cec2;
 	border-radius: 6px;
 	padding: 0.4rem 0.5rem;
 	font-size: 0.95rem;
 	background: #ffffff;
+}
+
+.field-row {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+}
+
+.icon-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 26px;
+	height: 26px;
+	padding: 0;
+	border: 1px solid #c4cec2;
+	border-radius: 4px;
+	background: #eef3ed;
+	cursor: pointer;
+	font-size: 0.9rem;
+	color: #2f3d2c;
+	flex-shrink: 0;
+}
+
+.icon-btn:hover {
+	background: #dce8da;
+	border-color: #9ab096;
 }
 
 .field-note {

@@ -45,4 +45,9 @@ public class ChannelDefinition
     /// represents a mode setting. The enum conversion definition would define the mapping of numeric values to string values for the channel.
     /// </summary>
     public Guid? EnumConversion { get; set; }
+
+    /// <summary>
+    /// Amount of time in milliseconds between updates from the channel source before considering the value timed out and set to default.
+    /// </summary>
+    public int TimeoutMs { get; set; } = 3000;
 }

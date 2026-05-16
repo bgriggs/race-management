@@ -141,6 +141,7 @@ export function channelDefinitionFromMessagePack(obj: Record<string, unknown>): 
         defaultValue: obj["DefaultValue"] as number,
         groupTag: obj["GroupTag"] as string,
         enumConversion: obj["EnumConversion"] != null ? obj["EnumConversion"] as string : null,
+        timeoutMs: obj["TimeoutMs"] as number,
     };
 }
 

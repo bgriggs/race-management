@@ -41,4 +41,8 @@ export interface ChannelDefinition {
      * represents a mode setting. The enum conversion definition would define the mapping of numeric values to string values for the channel.
      */
     enumConversion: string | null;
+    /**
+     * Amount of time in milliseconds between updates from the channel source before considering the value timed out and set to default.
+     */
+    timeoutMs: number;
 }
