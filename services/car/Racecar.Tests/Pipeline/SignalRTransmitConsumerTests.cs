@@ -41,7 +41,7 @@ public sealed class SignalRTransmitConsumerTests
         var client = new FakeCloudClient();
         var config = BuildConfig(1);
 
-        var consumer = new SignalRTransmitConsumer(client, () => config, time, NullLogger.Instance);
+        var consumer = new CloudTransmitConsumer(client, () => config, time, NullLogger.Instance);
         consumer.Start();
         await Task.Delay(50, TestContext.CancellationToken); // let both loops register their initial Task.Delay timers
 
@@ -64,7 +64,7 @@ public sealed class SignalRTransmitConsumerTests
         var client = new FakeCloudClient();
         var config = BuildConfig(1);
 
-        var consumer = new SignalRTransmitConsumer(client, () => config, time, NullLogger.Instance);
+        var consumer = new CloudTransmitConsumer(client, () => config, time, NullLogger.Instance);
         consumer.Start();
         await Task.Delay(50, TestContext.CancellationToken);
         await consumer.HandleAsync(new[] { new InternalChannelValue(1, 7.0, 0, time.GetUtcNow().UtcDateTime) }, default);

@@ -9,7 +9,7 @@ namespace Racecar.Pipeline.Consumers;
 /// Channel consumer that ships values to the cloud via <see cref="ICloudClient"/> on a
 /// 100 ms delta cadence and a 2.5 s full-state cadence.
 /// </summary>
-public sealed class SignalRTransmitConsumer : IChannelConsumer, IAsyncDisposable
+public sealed class CloudTransmitConsumer : IChannelConsumer, IAsyncDisposable
 {
     private static readonly TimeSpan DeltaInterval = TimeSpan.FromMilliseconds(100);
     private static readonly TimeSpan FullInterval = TimeSpan.FromMilliseconds(2500);
@@ -31,7 +31,7 @@ public sealed class SignalRTransmitConsumer : IChannelConsumer, IAsyncDisposable
     private int _consecutiveSendFailures;
     private long _sendTimeouts;
 
-    public SignalRTransmitConsumer(
+    public CloudTransmitConsumer(
         ICloudClient cloudClient,
         Func<ActiveConfiguration> configAccessor,
         TimeProvider time,
