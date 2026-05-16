@@ -4,6 +4,7 @@ using System.Text.Json;
 using Channels;
 using Common;
 using Common.CanBus;
+using Microsoft.Extensions.Logging;
 
 namespace Racecar.Pipeline;
 
@@ -14,10 +15,12 @@ namespace Racecar.Pipeline;
 public sealed class ActiveConfigurationFactory
 {
     private readonly TimeProvider _time;
+    private readonly ILogger<ActiveConfigurationFactory> _logger;
 
-    public ActiveConfigurationFactory(TimeProvider time)
+    public ActiveConfigurationFactory(TimeProvider time, ILogger<ActiveConfigurationFactory> logger)
     {
         _time = time;
+        _logger = logger;
     }
 
     public ActiveConfiguration Build(CarConfiguration carConfig)
@@ -86,7 +89,18 @@ public sealed class ActiveConfigurationFactory
             definitionHashes[i] = ComputeHash(carConfig.ChannelDefinitions[i]);
         }
 
-        // 5. Build derived evaluator.
+        // 5. Build per-channel unit converters (parse DataType/BaseUnitType/OutputUnitType once).
+        var unitConverters = new Dictionary<int, ChannelUnitConverter>();
+        for (var i = 0; i < carConfig.ChannelDefinitions.Count; i++)
+        {
+            var def = carConfig.ChannelDefinitions[i];
+            var converter = ChannelUnitConverter.Build(def, out var warning);
+            if (warning is not null)
+                _logger.LogWarning(warning);
+            unitConverters[i] = converter;
+        }
+
+        // 6. Build derived evaluator.
         var evaluator = new PipelineDerivedChannelEvaluator(
             idToGuid, guidToId, channels,
             carConfig.MathDefinitions,
@@ -105,6 +119,7 @@ public sealed class ActiveConfigurationFactory
             Deadbands = deadbands,
             DefinitionHashes = definitionHashes,
             DerivedEvaluator = evaluator,
+            UnitConverters = unitConverters,
         };
     }
 

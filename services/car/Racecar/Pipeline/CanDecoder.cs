@@ -37,8 +37,11 @@ public sealed class CanDecoder
             }
 
             var baseValue = ApplyFormula(raw, ch);
+            var outputValue = config.UnitConverters.TryGetValue(ch.ChannelId, out var converter)
+                ? converter.Convert(baseValue)
+                : baseValue;
             output[written++] = new InternalChannelValue(
-                ch.ChannelId, baseValue, frame.MonotonicTicks, frame.WallTime);
+                ch.ChannelId, outputValue, frame.MonotonicTicks, frame.WallTime);
 
             if (written >= output.Length) break;
         }

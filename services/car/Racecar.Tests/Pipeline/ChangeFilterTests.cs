@@ -27,7 +27,7 @@ public sealed class ChangeFilterTests
 
         Assert.AreEqual(1, kept);
         Assert.IsTrue(status.TryGet(1, out var v));
-        Assert.AreEqual(5.0, v.BaseValue);
+        Assert.AreEqual(5.0, v.Value);
     }
 
     [TestMethod]
@@ -37,8 +37,8 @@ public sealed class ChangeFilterTests
         var filter = new ChangeFilter(status);
         var config = ConfigWithDeadbands((1, 0));
 
-        _ = filter.Filter(config, new[] { new InternalChannelValue(1, 5.0, 100, DateTime.UnixEpoch) });
-        var kept = filter.Filter(config, new[] { new InternalChannelValue(1, 5.0, 200, DateTime.UnixEpoch) });
+        _ = filter.Filter(config, [new InternalChannelValue(1, 5.0, 100, DateTime.UnixEpoch)]);
+        var kept = filter.Filter(config, [new InternalChannelValue(1, 5.0, 200, DateTime.UnixEpoch)]);
 
         Assert.AreEqual(0, kept);
     }
@@ -50,8 +50,8 @@ public sealed class ChangeFilterTests
         var filter = new ChangeFilter(status);
         var config = ConfigWithDeadbands((1, 0.5));
 
-        _ = filter.Filter(config, new[] { new InternalChannelValue(1, 10.0, 0, default) });
-        var kept = filter.Filter(config, new[] { new InternalChannelValue(1, 10.4, 0, default) });
+        _ = filter.Filter(config, [new InternalChannelValue(1, 10.0, 0, default)]);
+        var kept = filter.Filter(config, [new InternalChannelValue(1, 10.4, 0, default)]);
 
         Assert.AreEqual(0, kept);
     }
@@ -63,8 +63,8 @@ public sealed class ChangeFilterTests
         var filter = new ChangeFilter(status);
         var config = ConfigWithDeadbands((1, 0.5));
 
-        _ = filter.Filter(config, new[] { new InternalChannelValue(1, 10.0, 0, default) });
-        var kept = filter.Filter(config, new[] { new InternalChannelValue(1, 10.6, 0, default) });
+        _ = filter.Filter(config, [new InternalChannelValue(1, 10.0, 0, default)]);
+        var kept = filter.Filter(config, [new InternalChannelValue(1, 10.6, 0, default)]);
 
         Assert.AreEqual(1, kept);
     }
@@ -77,12 +77,12 @@ public sealed class ChangeFilterTests
         var config = ConfigWithDeadbands((1, 0), (2, 0), (3, 0));
 
         // seed
-        _ = filter.Filter(config, new[]
-        {
+        _ = filter.Filter(config,
+        [
             new InternalChannelValue(1, 1.0, 0, default),
             new InternalChannelValue(2, 2.0, 0, default),
             new InternalChannelValue(3, 3.0, 0, default),
-        });
+        ]);
 
         var buf = new[]
         {
@@ -95,6 +95,6 @@ public sealed class ChangeFilterTests
 
         Assert.AreEqual(1, kept);
         Assert.AreEqual(2, buf[0].ChannelId);
-        Assert.AreEqual(9.0, buf[0].BaseValue);
+        Assert.AreEqual(9.0, buf[0].Value);
     }
 }

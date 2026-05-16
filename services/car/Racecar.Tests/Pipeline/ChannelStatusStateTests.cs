@@ -28,6 +28,6 @@ public sealed class ChannelStatusStateTests
         s.Set(new InternalChannelValue(10, 42.0, 1, new DateTime(2026, 1, 1)));
         var snap = s.Snapshot();
         Assert.HasCount(1, snap);
-        Assert.AreEqual(42.0, snap[10].BaseValue);
+        Assert.AreEqual(42.0, snap[10].Value);
     }
 }

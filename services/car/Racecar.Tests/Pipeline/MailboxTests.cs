@@ -18,8 +18,8 @@ public sealed class CoalescingMailboxTests
 
         Assert.HasCount(2, batch);
         var byId = batch.ToDictionary(v => v.ChannelId);
-        Assert.AreEqual(99.0, byId[1].BaseValue);
-        Assert.AreEqual(2.0, byId[2].BaseValue);
+        Assert.AreEqual(99.0, byId[1].Value);
+        Assert.AreEqual(2.0, byId[2].Value);
     }
 
     [TestMethod]

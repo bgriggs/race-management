@@ -11,15 +11,8 @@ namespace Racecar.Pipeline;
 /// Single-threaded: only the pipeline worker calls <see cref="Filter"/>.
 /// Reads of <see cref="ChannelStatusState"/> are safe from any thread.
 /// </remarks>
-public sealed class ChangeFilter
+public sealed class ChangeFilter(ChannelStatusState state)
 {
-    private readonly ChannelStatusState _state;
-
-    public ChangeFilter(ChannelStatusState state)
-    {
-        _state = state;
-    }
-
     /// <summary>
     /// In-place filter: returns the count of values that passed the filter.
     /// Surviving values are packed at the start of <paramref name="buffer"/>.
@@ -32,7 +25,7 @@ public sealed class ChangeFilter
             var value = buffer[read];
             if (PassesFilter(config, in value))
             {
-                _state.Set(in value);
+                state.Set(in value);
                 buffer[write++] = value;
             }
         }
@@ -46,13 +39,13 @@ public sealed class ChangeFilter
         {
             return false;
         }
-        _state.Set(in value);
+        state.Set(in value);
         return true;
     }
 
     private bool PassesFilter(ActiveConfiguration config, in InternalChannelValue value)
     {
-        if (!_state.TryGet(value.ChannelId, out var previous))
+        if (!state.TryGet(value.ChannelId, out var previous))
         {
             return true;
         }
@@ -60,8 +53,8 @@ public sealed class ChangeFilter
         var deadband = config.GetDeadband(value.ChannelId);
         if (deadband <= 0d)
         {
-            return previous.BaseValue != value.BaseValue;
+            return previous.Value != value.Value;
         }
-        return Math.Abs(value.BaseValue - previous.BaseValue) > deadband;
+        return Math.Abs(value.Value - previous.Value) > deadband;
     }
 }

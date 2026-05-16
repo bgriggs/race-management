@@ -35,11 +35,6 @@ public class ChannelValue
         return double.TryParse(Value, out var result) ? result : 0;
     }
 
-    public void SetBaseValue(double value)
-    {
-        Value = value.ToString();
-    }
-
     private static string GetZeros(int count)
     {
         var sb = new StringBuilder();
