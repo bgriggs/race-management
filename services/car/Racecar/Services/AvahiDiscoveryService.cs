@@ -68,6 +68,11 @@ public sealed class AvahiDiscoveryService : BackgroundService
                 process.Start();
                 _logger.LogInformation("avahi-publish started (PID {Pid}).", process.Id);
             }
+            catch (System.ComponentModel.Win32Exception ex) when (ex.NativeErrorCode == 2) // ENOENT
+            {
+                _logger.LogInformation("DNS-SD advertisement skipped: avahi-publish not installed.");
+                return;
+            }
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Could not start avahi-publish. DNS-SD advertisement unavailable.");

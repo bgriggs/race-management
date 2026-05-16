@@ -1,5 +1,4 @@
 using System.Threading.Channels;
-using Microsoft.Extensions.Logging;
 using Racecar.CanBus;
 
 namespace Racecar.Pipeline;

@@ -40,6 +40,7 @@ public class Program
         builder.Services.AddSingleton<ActiveConfigurationFactory>();
         builder.Services.AddSingleton<RacecarPipelineHost>();
         builder.Services.AddHostedService(sp => sp.GetRequiredService<RacecarPipelineHost>());
+        builder.Services.AddHostedService<TestChannelValues>();
 
         // Pipeline startup: build initial ActiveConfiguration and attach CAN buses.
         builder.Services.AddHostedService<PipelineStartupService>();
@@ -63,6 +64,30 @@ public class Program
         app.Run();
     }
 }
+
+class TestChannelValues : BackgroundService
+{
+    private readonly ChannelStatusState channelStatus;
+    private readonly ILogger<TestChannelValues> logger;
+
+    public TestChannelValues(ChannelStatusState channelStatus, ILogger<TestChannelValues> logger)
+    {
+        this.channelStatus = channelStatus;
+        this.logger = logger;
+    }
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            foreach(var ch in channelStatus.Snapshot())
+            {
+                logger.LogInformation("Channel {ChannelId} value: {Value}", ch.Key, ch.Value.BaseValue);
+            }
+            await Task.Delay(1000, stoppingToken);
+        }
+    }
+}
+
 
 /// <summary>
 /// Builds the initial <see cref="ActiveConfiguration"/> from the loaded
