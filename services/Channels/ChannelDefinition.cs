@@ -41,6 +41,8 @@ public class ChannelDefinition
 
     public double LowRange { get; set; }
     public double HighRange { get; set; }
+
+    [DefaultValueInRange]
     public double DefaultValue { get; set; }
 
     [StringLength(16)]
@@ -57,4 +59,22 @@ public class ChannelDefinition
     /// Amount of time in milliseconds between updates from the channel source before considering the value timed out and set to default.
     /// </summary>
     public int TimeoutMs { get; set; } = 3000;
+}
+
+[AttributeUsage(AttributeTargets.Property)]
+file sealed class DefaultValueInRangeAttribute : ValidationAttribute
+{
+    protected override ValidationResult? IsValid(object? value, ValidationContext context)
+    {
+        if (value is not double defaultValue) return ValidationResult.Success;
+
+        var instance = context.ObjectInstance;
+        var type = instance.GetType();
+        var low = (double)(type.GetProperty(nameof(ChannelDefinition.LowRange))?.GetValue(instance) ?? double.MinValue);
+        var high = (double)(type.GetProperty(nameof(ChannelDefinition.HighRange))?.GetValue(instance) ?? double.MaxValue);
+
+        return defaultValue >= low && defaultValue <= high
+            ? ValidationResult.Success
+            : new ValidationResult($"DefaultValue must be between LowRange ({low}) and HighRange ({high}) inclusive.", [context.MemberName!]);
+    }
 }
