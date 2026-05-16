@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using UnitsNet;
 
 namespace Channels;
 
@@ -34,7 +33,6 @@ public class ChannelDefinition
     /// Gets or sets the base unit type for the channel, such as degrees, feet, etc. When the value is set, this is its units.
     /// </summary>
     public string BaseUnitType { get; set; } = string.Empty;
-    public int BaseDecimalPlaces { get; set; }
     /// <summary>
     /// Gets or sets the type of unit used when the channel value is accessed such as for displaying values.
     /// </summary>
