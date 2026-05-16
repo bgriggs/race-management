@@ -32,8 +32,8 @@ public class TableEvaluationTests
         new(tableRepo, channelRepo, channelDefRepo);
 
     // Channel definition factory helpers.
-    private static ChannelDefinition StringDef(Guid id) =>
-        new() { Id = id, DataType = "string", IsStringValue = true };
+    //private static ChannelDefinition StringDef(Guid id) =>
+    //    new() { Id = id, DataType = "string", IsStringValue = true };
 
     private static ChannelDefinition IntDef(Guid id) =>
         new() { Id = id, DataType = "int", BaseDecimalPlaces = 0 };
@@ -48,193 +48,193 @@ public class TableEvaluationTests
     // String → String mapping
     // -------------------------------------------------------------------------
 
-    [TestMethod]
-    public async Task StringMapping_CaseSensitive_ExactMatch_SetsOutput()
-    {
-        channelRepo.Set(Ch1, "park");
-        channelDefRepo.Set(StringDef(Ch1));
-        channelDefRepo.Set(StringDef(Ch2));
+    //[TestMethod]
+    //public async Task StringMapping_CaseSensitive_ExactMatch_SetsOutput()
+    //{
+    //    channelRepo.Set(Ch1, "park");
+    //    channelDefRepo.Set(StringDef(Ch1));
+    //    channelDefRepo.Set(StringDef(Ch2));
 
-        var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2, IgnoreCase = false };
-        mapping.Mappings.Add(new TableMapping("park", "P"));
-        mapping.Mappings.Add(new TableMapping("reverse", "R"));
-        mapping.Mappings.Add(new TableMapping("neutral", "N"));
-        tableRepo.Add(mapping);
+    //    var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2, IgnoreCase = false };
+    //    mapping.Mappings.Add(new TableMapping("park", "P"));
+    //    mapping.Mappings.Add(new TableMapping("reverse", "R"));
+    //    mapping.Mappings.Add(new TableMapping("neutral", "N"));
+    //    tableRepo.Add(mapping);
 
-        await CreateEvaluation().EvaluateAsync();
+    //    await CreateEvaluation().EvaluateAsync();
 
-        Assert.AreEqual("P", channelRepo.Get(Ch2).Value);
-    }
+    //    Assert.AreEqual("P", channelRepo.Get(Ch2).Value);
+    //}
 
-    [TestMethod]
-    public async Task StringMapping_CaseSensitive_WrongCase_NoMatch_OutputEmpty()
-    {
-        channelRepo.Set(Ch1, "PARK");
-        channelDefRepo.Set(StringDef(Ch1));
-        channelDefRepo.Set(StringDef(Ch2));
+    //[TestMethod]
+    //public async Task StringMapping_CaseSensitive_WrongCase_NoMatch_OutputEmpty()
+    //{
+    //    channelRepo.Set(Ch1, "PARK");
+    //    channelDefRepo.Set(StringDef(Ch1));
+    //    channelDefRepo.Set(StringDef(Ch2));
 
-        var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2, IgnoreCase = false };
-        mapping.Mappings.Add(new TableMapping("park", "P"));
-        tableRepo.Add(mapping);
+    //    var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2, IgnoreCase = false };
+    //    mapping.Mappings.Add(new TableMapping("park", "P"));
+    //    tableRepo.Add(mapping);
 
-        await CreateEvaluation().EvaluateAsync();
+    //    await CreateEvaluation().EvaluateAsync();
 
-        Assert.AreEqual(string.Empty, channelRepo.Get(Ch2).Value);
-    }
+    //    Assert.AreEqual(string.Empty, channelRepo.Get(Ch2).Value);
+    //}
 
-    [TestMethod]
-    public async Task StringMapping_CaseInsensitive_DifferentCase_SetsOutput()
-    {
-        channelRepo.Set(Ch1, "PARK");
-        channelDefRepo.Set(StringDef(Ch1));
-        channelDefRepo.Set(StringDef(Ch2));
+    //[TestMethod]
+    //public async Task StringMapping_CaseInsensitive_DifferentCase_SetsOutput()
+    //{
+    //    channelRepo.Set(Ch1, "PARK");
+    //    channelDefRepo.Set(StringDef(Ch1));
+    //    channelDefRepo.Set(StringDef(Ch2));
 
-        var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2, IgnoreCase = true };
-        mapping.Mappings.Add(new TableMapping("park", "P"));
-        tableRepo.Add(mapping);
+    //    var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2, IgnoreCase = true };
+    //    mapping.Mappings.Add(new TableMapping("park", "P"));
+    //    tableRepo.Add(mapping);
 
-        await CreateEvaluation().EvaluateAsync();
+    //    await CreateEvaluation().EvaluateAsync();
 
-        Assert.AreEqual("P", channelRepo.Get(Ch2).Value);
-    }
+    //    Assert.AreEqual("P", channelRepo.Get(Ch2).Value);
+    //}
 
-    [TestMethod]
-    public async Task StringMapping_CaseInsensitive_MixedCase_SetsOutput()
-    {
-        channelRepo.Set(Ch1, "Park");
-        channelDefRepo.Set(StringDef(Ch1));
-        channelDefRepo.Set(StringDef(Ch2));
+    //[TestMethod]
+    //public async Task StringMapping_CaseInsensitive_MixedCase_SetsOutput()
+    //{
+    //    channelRepo.Set(Ch1, "Park");
+    //    channelDefRepo.Set(StringDef(Ch1));
+    //    channelDefRepo.Set(StringDef(Ch2));
 
-        var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2, IgnoreCase = true };
-        mapping.Mappings.Add(new TableMapping("PARK", "P"));
-        tableRepo.Add(mapping);
+    //    var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2, IgnoreCase = true };
+    //    mapping.Mappings.Add(new TableMapping("PARK", "P"));
+    //    tableRepo.Add(mapping);
 
-        await CreateEvaluation().EvaluateAsync();
+    //    await CreateEvaluation().EvaluateAsync();
 
-        Assert.AreEqual("P", channelRepo.Get(Ch2).Value);
-    }
+    //    Assert.AreEqual("P", channelRepo.Get(Ch2).Value);
+    //}
 
-    [TestMethod]
-    public async Task StringMapping_NoMappingEntries_OutputEmpty()
-    {
-        channelRepo.Set(Ch1, "park");
-        channelDefRepo.Set(StringDef(Ch1));
-        channelDefRepo.Set(StringDef(Ch2));
+    //[TestMethod]
+    //public async Task StringMapping_NoMappingEntries_OutputEmpty()
+    //{
+    //    channelRepo.Set(Ch1, "park");
+    //    channelDefRepo.Set(StringDef(Ch1));
+    //    channelDefRepo.Set(StringDef(Ch2));
 
-        tableRepo.Add(new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2 });
+    //    tableRepo.Add(new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2 });
 
-        await CreateEvaluation().EvaluateAsync();
+    //    await CreateEvaluation().EvaluateAsync();
 
-        Assert.AreEqual(string.Empty, channelRepo.Get(Ch2).Value);
-    }
+    //    Assert.AreEqual(string.Empty, channelRepo.Get(Ch2).Value);
+    //}
 
-    [TestMethod]
-    public async Task StringMapping_FirstMatchWins_SecondDuplicateIgnored()
-    {
-        channelRepo.Set(Ch1, "park");
-        channelDefRepo.Set(StringDef(Ch1));
-        channelDefRepo.Set(StringDef(Ch2));
+    //[TestMethod]
+    //public async Task StringMapping_FirstMatchWins_SecondDuplicateIgnored()
+    //{
+    //    channelRepo.Set(Ch1, "park");
+    //    channelDefRepo.Set(StringDef(Ch1));
+    //    channelDefRepo.Set(StringDef(Ch2));
 
-        var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2, IgnoreCase = true };
-        mapping.Mappings.Add(new TableMapping("park", "FIRST"));
-        mapping.Mappings.Add(new TableMapping("park", "SECOND"));
-        tableRepo.Add(mapping);
+    //    var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2, IgnoreCase = true };
+    //    mapping.Mappings.Add(new TableMapping("park", "FIRST"));
+    //    mapping.Mappings.Add(new TableMapping("park", "SECOND"));
+    //    tableRepo.Add(mapping);
 
-        await CreateEvaluation().EvaluateAsync();
+    //    await CreateEvaluation().EvaluateAsync();
 
-        Assert.AreEqual("FIRST", channelRepo.Get(Ch2).Value);
-    }
+    //    Assert.AreEqual("FIRST", channelRepo.Get(Ch2).Value);
+    //}
 
-    [TestMethod]
-    public async Task StringMapping_LastEntryMatches_SetsOutput()
-    {
-        channelRepo.Set(Ch1, "drive");
-        channelDefRepo.Set(StringDef(Ch1));
-        channelDefRepo.Set(StringDef(Ch2));
+    //[TestMethod]
+    //public async Task StringMapping_LastEntryMatches_SetsOutput()
+    //{
+    //    channelRepo.Set(Ch1, "drive");
+    //    channelDefRepo.Set(StringDef(Ch1));
+    //    channelDefRepo.Set(StringDef(Ch2));
 
-        var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2 };
-        mapping.Mappings.Add(new TableMapping("park", "P"));
-        mapping.Mappings.Add(new TableMapping("reverse", "R"));
-        mapping.Mappings.Add(new TableMapping("neutral", "N"));
-        mapping.Mappings.Add(new TableMapping("drive", "D"));
-        tableRepo.Add(mapping);
+    //    var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2 };
+    //    mapping.Mappings.Add(new TableMapping("park", "P"));
+    //    mapping.Mappings.Add(new TableMapping("reverse", "R"));
+    //    mapping.Mappings.Add(new TableMapping("neutral", "N"));
+    //    mapping.Mappings.Add(new TableMapping("drive", "D"));
+    //    tableRepo.Add(mapping);
 
-        await CreateEvaluation().EvaluateAsync();
+    //    await CreateEvaluation().EvaluateAsync();
 
-        Assert.AreEqual("D", channelRepo.Get(Ch2).Value);
-    }
+    //    Assert.AreEqual("D", channelRepo.Get(Ch2).Value);
+    //}
 
-    // -------------------------------------------------------------------------
-    // Integer → String mapping
-    // -------------------------------------------------------------------------
+    //// -------------------------------------------------------------------------
+    //// Integer → String mapping
+    //// -------------------------------------------------------------------------
 
-    [TestMethod]
-    public async Task IntegerMapping_ExactMatch_SetsOutput()
-    {
-        channelRepo.Set(Ch1, "3");
-        channelDefRepo.Set(IntDef(Ch1));
-        channelDefRepo.Set(StringDef(Ch2));
+    //[TestMethod]
+    //public async Task IntegerMapping_ExactMatch_SetsOutput()
+    //{
+    //    channelRepo.Set(Ch1, "3");
+    //    channelDefRepo.Set(IntDef(Ch1));
+    //    channelDefRepo.Set(StringDef(Ch2));
 
-        var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2 };
-        mapping.Mappings.Add(new TableMapping("1", "one"));
-        mapping.Mappings.Add(new TableMapping("2", "two"));
-        mapping.Mappings.Add(new TableMapping("3", "three"));
-        tableRepo.Add(mapping);
+    //    var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2 };
+    //    mapping.Mappings.Add(new TableMapping("1", "one"));
+    //    mapping.Mappings.Add(new TableMapping("2", "two"));
+    //    mapping.Mappings.Add(new TableMapping("3", "three"));
+    //    tableRepo.Add(mapping);
 
-        await CreateEvaluation().EvaluateAsync();
+    //    await CreateEvaluation().EvaluateAsync();
 
-        Assert.AreEqual("three", channelRepo.Get(Ch2).Value);
-    }
+    //    Assert.AreEqual("three", channelRepo.Get(Ch2).Value);
+    //}
 
-    [TestMethod]
-    public async Task IntegerMapping_NoMatch_OutputEmpty()
-    {
-        channelRepo.Set(Ch1, "9");
-        channelDefRepo.Set(IntDef(Ch1));
-        channelDefRepo.Set(StringDef(Ch2));
+    //[TestMethod]
+    //public async Task IntegerMapping_NoMatch_OutputEmpty()
+    //{
+    //    channelRepo.Set(Ch1, "9");
+    //    channelDefRepo.Set(IntDef(Ch1));
+    //    channelDefRepo.Set(StringDef(Ch2));
 
-        var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2 };
-        mapping.Mappings.Add(new TableMapping("1", "one"));
-        mapping.Mappings.Add(new TableMapping("2", "two"));
-        tableRepo.Add(mapping);
+    //    var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2 };
+    //    mapping.Mappings.Add(new TableMapping("1", "one"));
+    //    mapping.Mappings.Add(new TableMapping("2", "two"));
+    //    tableRepo.Add(mapping);
 
-        await CreateEvaluation().EvaluateAsync();
+    //    await CreateEvaluation().EvaluateAsync();
 
-        Assert.AreEqual(string.Empty, channelRepo.Get(Ch2).Value);
-    }
+    //    Assert.AreEqual(string.Empty, channelRepo.Get(Ch2).Value);
+    //}
 
-    [TestMethod]
-    public async Task IntegerMapping_FirstMatchWins_SecondDuplicateIgnored()
-    {
-        channelRepo.Set(Ch1, "1");
-        channelDefRepo.Set(IntDef(Ch1));
-        channelDefRepo.Set(StringDef(Ch2));
+    //[TestMethod]
+    //public async Task IntegerMapping_FirstMatchWins_SecondDuplicateIgnored()
+    //{
+    //    channelRepo.Set(Ch1, "1");
+    //    channelDefRepo.Set(IntDef(Ch1));
+    //    channelDefRepo.Set(StringDef(Ch2));
 
-        var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2 };
-        mapping.Mappings.Add(new TableMapping("1", "FIRST"));
-        mapping.Mappings.Add(new TableMapping("1", "SECOND"));
-        tableRepo.Add(mapping);
+    //    var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2 };
+    //    mapping.Mappings.Add(new TableMapping("1", "FIRST"));
+    //    mapping.Mappings.Add(new TableMapping("1", "SECOND"));
+    //    tableRepo.Add(mapping);
 
-        await CreateEvaluation().EvaluateAsync();
+    //    await CreateEvaluation().EvaluateAsync();
 
-        Assert.AreEqual("FIRST", channelRepo.Get(Ch2).Value);
-    }
+    //    Assert.AreEqual("FIRST", channelRepo.Get(Ch2).Value);
+    //}
 
-    [TestMethod]
-    public async Task IntegerMapping_NegativeValue_Matches()
-    {
-        channelRepo.Set(Ch1, "-1");
-        channelDefRepo.Set(IntDef(Ch1));
-        channelDefRepo.Set(StringDef(Ch2));
+    //[TestMethod]
+    //public async Task IntegerMapping_NegativeValue_Matches()
+    //{
+    //    channelRepo.Set(Ch1, "-1");
+    //    channelDefRepo.Set(IntDef(Ch1));
+    //    channelDefRepo.Set(StringDef(Ch2));
 
-        var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2 };
-        mapping.Mappings.Add(new TableMapping("-1", "minus one"));
-        tableRepo.Add(mapping);
+    //    var mapping = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2 };
+    //    mapping.Mappings.Add(new TableMapping("-1", "minus one"));
+    //    tableRepo.Add(mapping);
 
-        await CreateEvaluation().EvaluateAsync();
+    //    await CreateEvaluation().EvaluateAsync();
 
-        Assert.AreEqual("minus one", channelRepo.Get(Ch2).Value);
-    }
+    //    Assert.AreEqual("minus one", channelRepo.Get(Ch2).Value);
+    //}
 
     // -------------------------------------------------------------------------
     // Double → Double interpolation: Linear
@@ -432,56 +432,56 @@ public class TableEvaluationTests
     // Multiple mappings
     // -------------------------------------------------------------------------
 
-    [TestMethod]
-    public async Task MultipleMappings_AllProcessedIndependently()
-    {
-        channelRepo.Set(Ch1, "park");
-        channelRepo.Set(Ch3, "2");
-        channelDefRepo.Set(StringDef(Ch1));
-        channelDefRepo.Set(StringDef(Ch2));
-        channelDefRepo.Set(IntDef(Ch3));
-        channelDefRepo.Set(StringDef(Ch4));
+    //[TestMethod]
+    //public async Task MultipleMappings_AllProcessedIndependently()
+    //{
+    //    channelRepo.Set(Ch1, "park");
+    //    channelRepo.Set(Ch3, "2");
+    //    channelDefRepo.Set(StringDef(Ch1));
+    //    channelDefRepo.Set(StringDef(Ch2));
+    //    channelDefRepo.Set(IntDef(Ch3));
+    //    channelDefRepo.Set(StringDef(Ch4));
 
-        var m1 = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2 };
-        m1.Mappings.Add(new TableMapping("park", "P"));
-        tableRepo.Add(m1);
+    //    var m1 = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2 };
+    //    m1.Mappings.Add(new TableMapping("park", "P"));
+    //    tableRepo.Add(m1);
 
-        var m2 = new TableDefinition { InputChannel = Ch3, OutputChannel = Ch4 };
-        m2.Mappings.Add(new TableMapping("1", "one"));
-        m2.Mappings.Add(new TableMapping("2", "two"));
-        tableRepo.Add(m2);
+    //    var m2 = new TableDefinition { InputChannel = Ch3, OutputChannel = Ch4 };
+    //    m2.Mappings.Add(new TableMapping("1", "one"));
+    //    m2.Mappings.Add(new TableMapping("2", "two"));
+    //    tableRepo.Add(m2);
 
-        await CreateEvaluation().EvaluateAsync();
+    //    await CreateEvaluation().EvaluateAsync();
 
-        Assert.AreEqual("P", channelRepo.Get(Ch2).Value);
-        Assert.AreEqual("two", channelRepo.Get(Ch4).Value);
-    }
+    //    Assert.AreEqual("P", channelRepo.Get(Ch2).Value);
+    //    Assert.AreEqual("two", channelRepo.Get(Ch4).Value);
+    //}
 
-    [TestMethod]
-    public async Task MultipleMappings_OneStringOneInterpolation_BothProduceCorrectOutputs()
-    {
-        channelRepo.Set(Ch1, "reverse");
-        channelRepo.Set(Ch3, "5");
-        channelDefRepo.Set(StringDef(Ch1));
-        channelDefRepo.Set(StringDef(Ch2));
-        channelDefRepo.Set(DoubleDef(Ch3));
-        channelDefRepo.Set(DoubleDef(Ch4));
+    //[TestMethod]
+    //public async Task MultipleMappings_OneStringOneInterpolation_BothProduceCorrectOutputs()
+    //{
+    //    channelRepo.Set(Ch1, "reverse");
+    //    channelRepo.Set(Ch3, "5");
+    //    channelDefRepo.Set(StringDef(Ch1));
+    //    channelDefRepo.Set(StringDef(Ch2));
+    //    channelDefRepo.Set(DoubleDef(Ch3));
+    //    channelDefRepo.Set(DoubleDef(Ch4));
 
-        var m1 = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2 };
-        m1.Mappings.Add(new TableMapping("park", "P"));
-        m1.Mappings.Add(new TableMapping("reverse", "R"));
-        tableRepo.Add(m1);
+    //    var m1 = new TableDefinition { InputChannel = Ch1, OutputChannel = Ch2 };
+    //    m1.Mappings.Add(new TableMapping("park", "P"));
+    //    m1.Mappings.Add(new TableMapping("reverse", "R"));
+    //    tableRepo.Add(m1);
 
-        var m2 = new TableDefinition { InputChannel = Ch3, OutputChannel = Ch4, InterpolationType = InterpolationType.Linear };
-        m2.Mappings.Add(new TableMapping("0", "0"));
-        m2.Mappings.Add(new TableMapping("10", "100"));
-        tableRepo.Add(m2);
+    //    var m2 = new TableDefinition { InputChannel = Ch3, OutputChannel = Ch4, InterpolationType = InterpolationType.Linear };
+    //    m2.Mappings.Add(new TableMapping("0", "0"));
+    //    m2.Mappings.Add(new TableMapping("10", "100"));
+    //    tableRepo.Add(m2);
 
-        await CreateEvaluation().EvaluateAsync();
+    //    await CreateEvaluation().EvaluateAsync();
 
-        Assert.AreEqual("R", channelRepo.Get(Ch2).Value);
-        Assert.AreEqual(50.0, GetOutputDouble(Ch4), 0.001);
-    }
+    //    Assert.AreEqual("R", channelRepo.Get(Ch2).Value);
+    //    Assert.AreEqual(50.0, GetOutputDouble(Ch4), 0.001);
+    //}
 
     [TestMethod]
     public async Task NoMappings_NothingProcessed_OutputChannelUnchanged()

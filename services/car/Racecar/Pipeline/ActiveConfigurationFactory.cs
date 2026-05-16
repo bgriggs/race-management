@@ -76,7 +76,7 @@ public sealed class ActiveConfigurationFactory
         for (var i = 0; i < carConfig.ChannelDefinitions.Count; i++)
         {
             var def = carConfig.ChannelDefinitions[i];
-            if (def.IsStringValue || def.BaseDecimalPlaces == 0)
+            if (def.BaseDecimalPlaces == 0)
             {
                 deadbands[i] = 0d;
             }

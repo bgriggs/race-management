@@ -44,6 +44,7 @@ public class Program
 
             builder.Services.AddDbContext<RaceManagementDbContext>(options =>
                 options.UseSqlite(builder.Configuration.GetConnectionString("RaceManagement")));
+            builder.Services.AddHttpClient();
 
             builder.Services.AddSingleton<RacecarRegistry>();
             builder.Services.AddHostedService<RacecarDiscoveryService>();

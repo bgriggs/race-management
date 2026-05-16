@@ -31,39 +31,39 @@ public class TableEvaluation
             var outputMap = await channelDefinitionRepository.GetChannelDefinitionAsync(definition.OutputChannel);
             var outputValue = new ChannelValue();
 
-            // String, straight mapping, e.g. enum
-            // String -> string
-            if (inputMap.IsStringValue)
-            {
-                var c = StringComparison.Ordinal;
-                if (definition.IgnoreCase)
-                {
-                    c = StringComparison.OrdinalIgnoreCase;
-                }
+            //// String, straight mapping, e.g. enum
+            //// String -> string
+            //if (inputMap.IsStringValue)
+            //{
+            //    var c = StringComparison.Ordinal;
+            //    if (definition.IgnoreCase)
+            //    {
+            //        c = StringComparison.OrdinalIgnoreCase;
+            //    }
 
-                foreach (var m in definition.Mappings)
-                {
-                    if (string.Compare(m.Input, inputCh.Value, c) == 0)
-                    {
-                        outputValue.Value = m.Output;
-                        break;
-                    }
-                }
-            }
-            // Integers -> string
-            else if (inputMap.BaseDecimalPlaces == 0)
-            {
-                foreach (var m in definition.Mappings)
-                {
-                    if (int.TryParse(m.Input, out int inVal) && inVal == inputCh.GetValueInt())
-                    {
-                        outputValue.Value = m.Output;
-                        break;
-                    }
-                }
-            }
+            //    foreach (var m in definition.Mappings)    
+            //    {
+            //        if (string.Compare(m.Input, inputCh.Value, c) == 0)
+            //        {
+            //            outputValue.Value = m.Output;
+            //            break;
+            //        }
+            //    }
+            //}
+            //// Integers -> string
+            //if (inputMap.BaseDecimalPlaces == 0)
+            //{
+            //    foreach (var m in definition.Mappings)
+            //    {
+            //        if (int.TryParse(m.Input, out int inVal) && inVal == inputCh.GetValueInt())
+            //        {
+            //            outputValue.Value = m.Output;
+            //            break;
+            //        }
+            //    }
+            //}
             // Double -> double: interpolate with the table
-            else
+            //else
             {
                 IInterpolation? interpolate = null;
                 switch (definition.InterpolationType)

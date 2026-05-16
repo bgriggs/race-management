@@ -16,14 +16,10 @@ public class ChannelDefinition
     public string Category { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string Abbreviation { get; set; } = string.Empty;
-    
-    /// <summary>
-    /// Non-numeric types such as enums and table strings.
-    /// </summary>
-    public bool IsStringValue { get; set; }
 
     /// <summary>
     /// Gets or sets the data type such as: Temperature, Length, Volume, VolumeFlow, Duration, Speed, Pressure, Force, Voltage, Mass, Ratio, Current, Resistance.
+    /// Special types: Unitless, String
     /// </summary>
     public string DataType { get; set; } = string.Empty;
 
@@ -40,6 +36,7 @@ public class ChannelDefinition
 
     public double LowRange { get; set; }
     public double HighRange { get; set; }
+    public double DefaultValue { get; set; }
     public string GroupTag { get; set; } = string.Empty;
 
     /// <summary>

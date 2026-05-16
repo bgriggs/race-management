@@ -1,9 +1,11 @@
 using System.Text.Json;
+using System.Net.Http.Json;
 using Channels;
 using Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RaceManagementService.Data;
+using RaceManagementService.Discovery;
 using UnitsNet;
 
 namespace RaceManagementService.Controllers.V1;
@@ -11,7 +13,11 @@ namespace RaceManagementService.Controllers.V1;
 [ApiController]
 [Route("v{version:apiVersion}/[controller]/[action]")]
 [ApiVersion("1.0")]
-public class DataController(RaceManagementDbContext db, ILogger<DataController> logger) : ControllerBase
+public class DataController(
+    RaceManagementDbContext db,
+    ILogger<DataController> logger,
+    RacecarRegistry racecarRegistry,
+    IHttpClientFactory httpClientFactory) : ControllerBase
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -78,33 +84,7 @@ public class DataController(RaceManagementDbContext db, ILogger<DataController> 
 
         carConfiguration.LastUpdated = DateTime.UtcNow;
 
-        var existing = await db.CarConfigurations.FindAsync(carConfiguration.ConfigurationId);
-        if (existing is null)
-        {
-            logger.LogInformation("Saving new car configuration...");
-            db.CarConfigurations.Add(new CarConfigurationEntity
-            {
-                Id = carConfiguration.ConfigurationId,
-                Name = carConfiguration.Name,
-                Car = carConfiguration.Car,
-                Notes = carConfiguration.Notes,
-                LastUpdated = carConfiguration.LastUpdated,
-                LastUpdatedOnCarTimestamp = carConfiguration.LastUpdatedOnCarTimestamp,
-                ConfigurationSchemaVersion = carConfiguration.ConfigurationSchemaVersion,
-                Data = JsonSerializer.Serialize(carConfiguration, JsonOptions),
-            });
-        }
-        else
-        {
-            logger.LogInformation("Updating existing car configuration...");
-            existing.Name = carConfiguration.Name;
-            existing.Car = carConfiguration.Car;
-            existing.Notes = carConfiguration.Notes;
-            existing.LastUpdated = carConfiguration.LastUpdated;
-            existing.LastUpdatedOnCarTimestamp = carConfiguration.LastUpdatedOnCarTimestamp;
-            existing.ConfigurationSchemaVersion = carConfiguration.ConfigurationSchemaVersion;
-            existing.Data = JsonSerializer.Serialize(carConfiguration, JsonOptions);
-        }
+        UpsertCarConfigurationEntity(carConfiguration, await db.CarConfigurations.FindAsync(carConfiguration.ConfigurationId));
 
         await db.SaveChangesAsync();
         return Ok(carConfiguration);
@@ -132,17 +112,89 @@ public class DataController(RaceManagementDbContext db, ILogger<DataController> 
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status502BadGateway)]
     [ProducesResponseType<CarConfiguration>(StatusCodes.Status200OK)]
     public async Task<ActionResult<CarConfiguration>> TransmitToCarAsync([FromBody] CarConfiguration carConfiguration)
     {
         logger.LogInformation("{MethodName} called", nameof(TransmitToCarAsync));
 
-        // Save the configuration
-        // Send to car
-        // Update the last updated on car timestamp
+        var activeRacecar = racecarRegistry.ActiveRacecar;
+        if (activeRacecar is null)
+        {
+            logger.LogWarning("Cannot transmit configuration because there is no active racecar.");
+            return NotFound("There is no active car.");
+        }
+
+        if (carConfiguration.ConfigurationId == Guid.Empty)
+            carConfiguration.ConfigurationId = Guid.NewGuid();
+
+        carConfiguration.LastUpdated = DateTime.UtcNow;
+
+        // Save locally first.
+        var existing = await db.CarConfigurations.FindAsync(carConfiguration.ConfigurationId);
+        UpsertCarConfigurationEntity(carConfiguration, existing);
+        await db.SaveChangesAsync();
+
+        var client = httpClientFactory.CreateClient();
+        var targetUrl = $"{activeRacecar.BaseUrl}/config";
+
+        HttpResponseMessage response;
+        try
+        {
+            response = await client.PostAsJsonAsync(targetUrl, carConfiguration, JsonOptions);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to reach active racecar '{RacecarName}' at {TargetUrl}", activeRacecar.Name, targetUrl);
+            return StatusCode(StatusCodes.Status502BadGateway, "Failed to send configuration to the active car.");
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            logger.LogWarning(
+                "Active racecar '{RacecarName}' rejected configuration with status code {StatusCode}.",
+                activeRacecar.Name,
+                (int)response.StatusCode);
+            return StatusCode(StatusCodes.Status502BadGateway, "Active car did not accept configuration.");
+        }
+
+        // Mark the successful car transmit timestamp.
+        carConfiguration.LastUpdatedOnCarTimestamp = DateTime.UtcNow;
+        UpsertCarConfigurationEntity(carConfiguration, existing ?? await db.CarConfigurations.FindAsync(carConfiguration.ConfigurationId));
+        await db.SaveChangesAsync();
 
         // Return the fully update configuration with the new timestamps
         return Ok(carConfiguration);
+    }
+
+    private void UpsertCarConfigurationEntity(CarConfiguration carConfiguration, CarConfigurationEntity? existing)
+    {
+        if (existing is null)
+        {
+            logger.LogInformation("Saving new car configuration...");
+            db.CarConfigurations.Add(new CarConfigurationEntity
+            {
+                Id = carConfiguration.ConfigurationId,
+                Name = carConfiguration.Name,
+                Car = carConfiguration.Car,
+                Notes = carConfiguration.Notes,
+                LastUpdated = carConfiguration.LastUpdated,
+                LastUpdatedOnCarTimestamp = carConfiguration.LastUpdatedOnCarTimestamp,
+                ConfigurationSchemaVersion = carConfiguration.ConfigurationSchemaVersion,
+                Data = JsonSerializer.Serialize(carConfiguration, JsonOptions),
+            });
+
+            return;
+        }
+
+        logger.LogInformation("Updating existing car configuration...");
+        existing.Name = carConfiguration.Name;
+        existing.Car = carConfiguration.Car;
+        existing.Notes = carConfiguration.Notes;
+        existing.LastUpdated = carConfiguration.LastUpdated;
+        existing.LastUpdatedOnCarTimestamp = carConfiguration.LastUpdatedOnCarTimestamp;
+        existing.ConfigurationSchemaVersion = carConfiguration.ConfigurationSchemaVersion;
+        existing.Data = JsonSerializer.Serialize(carConfiguration, JsonOptions);
     }
 
     [HttpGet]

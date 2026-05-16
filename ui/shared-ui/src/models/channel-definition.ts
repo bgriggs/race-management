@@ -17,11 +17,8 @@ export interface ChannelDefinition {
     name: string;
     abbreviation: string;
     /**
-     * Non-numeric types such as enums and table strings.
-     */
-    isStringValue: boolean;
-    /**
      * Gets or sets the data type such as: Temperature, Length, Volume, VolumeFlow, Duration, Speed, Pressure, Force, Voltage, Mass, Ratio, Current, Resistance.
+     * Special types: Unitless, String
      */
     dataType: string;
     /**
@@ -36,6 +33,7 @@ export interface ChannelDefinition {
     outputDecimalPlaces: number;
     lowRange: number;
     highRange: number;
+    defaultValue: number;
     groupTag: string;
     /**
      * Optional conversion from the value to specified string enum values, stored as a reference to a separate enum conversion definition. 

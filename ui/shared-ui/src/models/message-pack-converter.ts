@@ -131,7 +131,6 @@ export function channelDefinitionFromMessagePack(obj: Record<string, unknown>): 
         category: obj["Category"] as string,
         name: obj["Name"] as string,
         abbreviation: obj["Abbreviation"] as string,
-        isStringValue: obj["IsStringValue"] as boolean,
         dataType: obj["DataType"] as string,
         baseUnitType: obj["BaseUnitType"] as string,
         baseDecimalPlaces: obj["BaseDecimalPlaces"] as number,
@@ -139,6 +138,7 @@ export function channelDefinitionFromMessagePack(obj: Record<string, unknown>): 
         outputDecimalPlaces: obj["OutputDecimalPlaces"] as number,
         lowRange: obj["LowRange"] as number,
         highRange: obj["HighRange"] as number,
+        defaultValue: obj["DefaultValue"] as number,
         groupTag: obj["GroupTag"] as string,
         enumConversion: obj["EnumConversion"] != null ? obj["EnumConversion"] as string : null,
     };

@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MANAGEMENT_DATA_CLIENT } from '../../../data/management-data-client';
 import { ChannelDefinition } from '../../../../models/channel-definition';
 import { createGuid } from '../../../utils/guid';
@@ -9,6 +8,8 @@ import { EnumDefinition } from '../../../../models/enum-definition';
 
 type ChannelKind = 'reserved' | 'custom';
 type ChannelDataType =
+  'Unitless'
+  | 'String'
   | 'Temperature'
   | 'Length'
   | 'Volume'
@@ -26,7 +27,7 @@ type ChannelDataType =
 @Component({
   selector: 'lib-edit-channel',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatSlideToggleModule],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './edit-channel.html',
   styleUrl: './edit-channel.css',
 })
@@ -49,6 +50,8 @@ export class EditChannel implements OnInit {
   readonly unitTypesLoadError = signal<string | null>(null);
 
   readonly dataTypeOptions: ChannelDataType[] = [
+    'Unitless',
+    'String',
     'Temperature',
     'Length',
     'Volume',
@@ -74,7 +77,6 @@ export class EditChannel implements OnInit {
       validators: [Validators.required, Validators.minLength(1), Validators.maxLength(4)],
       nonNullable: true
     }),
-    isStringValue: new FormControl(false, { nonNullable: true }),
     dataType: new FormControl<ChannelDataType>('Temperature', { nonNullable: true }),
     baseUnitType: new FormControl('', { nonNullable: true }),
     baseDecimalPlaces: new FormControl(1, { nonNullable: true }),
@@ -92,10 +94,6 @@ export class EditChannel implements OnInit {
     lowRange: new FormControl(0, { nonNullable: true }),
     highRange: new FormControl(100, { nonNullable: true })
   });
-
-  isStringDataType(): boolean {
-    return this.form.controls.isStringValue.value;
-  }
 
   readonly availableReservedChannels = computed(() => {
     const currentChannelId = this.channel()?.id ?? null;
@@ -119,7 +117,6 @@ export class EditChannel implements OnInit {
           reservedChannelId: incomingChannel?.isReserved ? incomingChannel.id : '',
           name: incomingChannel?.name ?? '',
           abbreviation: incomingChannel?.abbreviation ?? '',
-          isStringValue: incomingChannel?.isStringValue ?? false,
           dataType: this.normalizeDataType(incomingChannel?.dataType),
           baseUnitType: incomingChannel?.baseUnitType ?? '',
           baseDecimalPlaces: incomingChannel?.baseDecimalPlaces ?? 1,
@@ -145,15 +142,6 @@ export class EditChannel implements OnInit {
       this.loadAvailableUnitTypes();
     });
 
-    this.form.controls.isStringValue.valueChanges.subscribe((isStringValue) => {
-      if (isStringValue) {
-        this.availableUnitTypes.set([]);
-        this.unitTypesLoadError.set(null);
-        return;
-      }
-
-      this.loadAvailableUnitTypes();
-    });
   }
 
   async ngOnInit(): Promise<void> {
@@ -204,7 +192,6 @@ export class EditChannel implements OnInit {
     }
 
     const dataType = this.form.controls.dataType.value;
-    const isStringValue = this.form.controls.isStringValue.value;
     const existingChannel = this.channel();
 
     const channel: ChannelDefinition = {
@@ -216,13 +203,13 @@ export class EditChannel implements OnInit {
       name: this.form.controls.name.value.trim(),
       abbreviation: this.form.controls.abbreviation.value.trim(),
       dataType,
-      isStringValue,
-      baseUnitType: isStringValue ? '' : this.form.controls.baseUnitType.value,
-      baseDecimalPlaces: isStringValue ? 0 : Number(this.form.controls.baseDecimalPlaces.value),
-      outputUnitType: isStringValue ? '' : this.form.controls.outputUnitType.value,
-      outputDecimalPlaces: isStringValue ? 0 : Number(this.form.controls.outputDecimalPlaces.value),
-      lowRange: isStringValue ? 0 : Number(this.form.controls.lowRange.value),
-      highRange: isStringValue ? 0 : Number(this.form.controls.highRange.value),
+      baseUnitType: this.form.controls.baseUnitType.value,
+      baseDecimalPlaces: Number(this.form.controls.baseDecimalPlaces.value),
+      outputUnitType: this.form.controls.outputUnitType.value,
+      outputDecimalPlaces: Number(this.form.controls.outputDecimalPlaces.value),
+      lowRange: Number(this.form.controls.lowRange.value),
+      highRange: Number(this.form.controls.highRange.value),
+      defaultValue: existingChannel?.defaultValue ?? 0,
       groupTag: this.form.controls.groupTag.value.trim(),
       enumConversion: this.form.controls.enumConversion.value || null
     };
@@ -232,13 +219,13 @@ export class EditChannel implements OnInit {
       channel.abbreviation = selectedReservedChannel.abbreviation;
       channel.category = selectedReservedChannel.category;
       channel.dataType = this.normalizeDataType(selectedReservedChannel.dataType);
-      channel.isStringValue = selectedReservedChannel.isStringValue;
-      channel.baseUnitType = channel.isStringValue ? '' : selectedReservedChannel.baseUnitType;
-      channel.baseDecimalPlaces = channel.isStringValue ? 0 : selectedReservedChannel.baseDecimalPlaces;
-      channel.outputUnitType = channel.isStringValue ? '' : selectedReservedChannel.outputUnitType;
-      channel.outputDecimalPlaces = channel.isStringValue ? 0 : selectedReservedChannel.outputDecimalPlaces;
-      channel.lowRange = channel.isStringValue ? 0 : selectedReservedChannel.lowRange;
-      channel.highRange = channel.isStringValue ? 0 : selectedReservedChannel.highRange;
+      channel.baseUnitType = selectedReservedChannel.baseUnitType;
+      channel.baseDecimalPlaces = selectedReservedChannel.baseDecimalPlaces;
+      channel.outputUnitType = selectedReservedChannel.outputUnitType;
+      channel.outputDecimalPlaces = selectedReservedChannel.outputDecimalPlaces;
+      channel.lowRange = selectedReservedChannel.lowRange;
+      channel.highRange = selectedReservedChannel.highRange;
+      channel.defaultValue = selectedReservedChannel.defaultValue;
       channel.groupTag = selectedReservedChannel.groupTag;
       channel.enumConversion = selectedReservedChannel.enumConversion;
     }
@@ -277,7 +264,6 @@ export class EditChannel implements OnInit {
     this.form.patchValue({
       name: selected.name,
       abbreviation: selected.abbreviation,
-      isStringValue: selected.isStringValue,
       dataType: this.normalizeDataType(selected.dataType),
       baseUnitType: selected.baseUnitType,
       baseDecimalPlaces: selected.baseDecimalPlaces,
@@ -298,13 +284,6 @@ export class EditChannel implements OnInit {
   }
 
   private loadAvailableUnitTypes(): void {
-    const isStringValue = this.form.controls.isStringValue.value;
-    if (isStringValue) {
-      this.availableUnitTypes.set([]);
-      this.unitTypesLoadError.set(null);
-      return;
-    }
-
     const selectedDataType = this.form.controls.dataType.value;
     this.loadingUnitTypes.set(true);
     this.unitTypesLoadError.set(null);
