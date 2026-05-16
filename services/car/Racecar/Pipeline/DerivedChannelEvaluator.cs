@@ -88,8 +88,11 @@ public sealed class PipelineDerivedChannelEvaluator : IDerivedChannelEvaluator
             _defRepo.Set(def);
             if (idToGuid.TryGetValue(id, out var guid))
             {
-                var cv = new ChannelValue { SessionIndex = (ushort)id };
-                cv.SetBaseValue(def.DefaultValue);
+                var cv = new ChannelValue
+                {
+                    SessionIndex = (ushort)id,
+                    Value = def.DefaultValue.ToString(),
+                };
                 _channelRepo.Set(guid, cv);
             }
         }
@@ -135,9 +138,12 @@ public sealed class PipelineDerivedChannelEvaluator : IDerivedChannelEvaluator
         {
             ref readonly var v = ref changedInputs[i];
             if (!_idToGuid.TryGetValue(v.ChannelId, out var guid)) continue;
-            if (!_channels.TryGetValue(v.ChannelId, out var def)) continue;
-            var cv = new ChannelValue { SessionIndex = (ushort)v.ChannelId };
-            cv.SetBaseValue(v.BaseValue);
+            if (!_channels.TryGetValue(v.ChannelId, out _)) continue;
+            var cv = new ChannelValue
+            {
+                SessionIndex = (ushort)v.ChannelId,
+                Value = v.Value.ToString()
+            };
             _channelRepo.Set(guid, cv);
         }
 

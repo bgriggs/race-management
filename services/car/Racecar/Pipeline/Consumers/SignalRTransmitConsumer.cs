@@ -21,9 +21,9 @@ public sealed class SignalRTransmitConsumer : IChannelConsumer, IAsyncDisposable
     private readonly TimeProvider _time;
     private readonly ILogger _logger;
 
-    private readonly object _stateLock = new();
-    private readonly Dictionary<int, ChannelValue> _full = new();
-    private readonly HashSet<int> _changes = new();
+    private readonly Lock _stateLock = new();
+    private readonly Dictionary<int, ChannelValue> _full = [];
+    private readonly HashSet<int> _changes = [];
 
     private CancellationTokenSource? _cts;
     private Task? _deltaLoop;
@@ -68,10 +68,13 @@ public sealed class SignalRTransmitConsumer : IChannelConsumer, IAsyncDisposable
                 }
                 if (!_full.TryGetValue(v.ChannelId, out var existing))
                 {
-                    existing = new ChannelValue { SessionIndex = (ushort)v.ChannelId };
+                    existing = new ChannelValue
+                    {
+                        SessionIndex = (ushort)v.ChannelId
+                    };
                     _full[v.ChannelId] = existing;
                 }
-                existing.SetBaseValue(v.BaseValue);
+                existing.Value = v.Value.ToString();
                 existing.Timestamp = v.WallTime;
                 _ = _changes.Add(v.ChannelId);
             }

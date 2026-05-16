@@ -81,7 +81,7 @@ class TestChannelValues : BackgroundService
         {
             foreach(var ch in channelStatus.Snapshot())
             {
-                logger.LogInformation("Channel {ChannelId} value: {Value}", ch.Key, ch.Value.BaseValue);
+                logger.LogInformation("Channel {ChannelId} value: {Value}", ch.Key, ch.Value.Value);
             }
             await Task.Delay(1000, stoppingToken);
         }

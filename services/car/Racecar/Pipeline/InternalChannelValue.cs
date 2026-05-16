@@ -11,6 +11,6 @@ namespace Racecar.Pipeline;
 /// </remarks>
 public readonly record struct InternalChannelValue(
     int ChannelId,
-    double BaseValue,
+    double Value,
     long MonotonicTicks,
     DateTime WallTime);

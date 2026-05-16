@@ -15,7 +15,7 @@ namespace Racecar.Pipeline;
 /// </remarks>
 internal sealed class ChannelTimeoutMonitor
 {
-    private static readonly TimeSpan CheckInterval = TimeSpan.FromMilliseconds(50);
+    private static readonly TimeSpan CheckInterval = TimeSpan.FromMilliseconds(100);
 
     private readonly Func<ActiveConfiguration> _configAccessor;
     private readonly ChannelStatusState _state;
@@ -86,7 +86,7 @@ internal sealed class ChannelTimeoutMonitor
             _state.Set(in reset);
 
             // Only notify consumers when the value actually changes.
-            if (current.BaseValue == def.DefaultValue) continue;
+            if (current.Value == def.DefaultValue) continue;
 
             _logger.LogDebug(
                 "Channel {ChannelId} ({Name}) timed out after {Elapsed:F0} ms; resetting to default {Default}.",

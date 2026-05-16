@@ -55,6 +55,12 @@ public sealed record ActiveConfiguration
 
     public required IDerivedChannelEvaluator DerivedEvaluator { get; init; }
 
+    /// <summary>
+    /// Pre-parsed unit converters keyed by compact channel ID. Built once at
+    /// configuration load time; used by <see cref="CanDecoder"/> on every CAN frame.
+    /// </summary>
+    public required IReadOnlyDictionary<int, ChannelUnitConverter> UnitConverters { get; init; }
+
     /// <summary>Default deadband for an unmapped channel (strict equality).</summary>
     public double GetDeadband(int channelId) =>
         Deadbands.TryGetValue(channelId, out var d) ? d : 0d;
@@ -68,5 +74,6 @@ public sealed record ActiveConfiguration
         Deadbands = new Dictionary<int, double>(),
         DefinitionHashes = new Dictionary<int, ulong>(),
         DerivedEvaluator = NoOpDerivedEvaluator.Instance,
+        UnitConverters = new Dictionary<int, ChannelUnitConverter>(),
     };
 }
