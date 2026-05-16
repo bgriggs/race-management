@@ -1,16 +1,20 @@
-﻿using System.Text;
+﻿using MessagePack;
+using System.Text;
 using UnitsNet;
 
 namespace Channels;
 
+[MessagePackObject]
 public class ChannelValue
 {
     /// <summary>
     /// Compact session index negotiated at connection time for high-frequency streaming.
     /// This index will correspond to the Car's configuration Channel list index for the channel value being used.
     /// </summary>
+    [Key(0)]
     public ushort SessionIndex { get; set; }
 
+    [Key(1)]
     public string Value { get; set; } = string.Empty;
 
     /// <summary>
@@ -18,6 +22,7 @@ public class ChannelValue
     /// boundary in the Racecar pipeline; remains <see cref="DateTime.MinValue"/>
     /// for values constructed elsewhere unless explicitly populated.
     /// </summary>
+    [Key(2)]
     public DateTime Timestamp { get; set; }
 
     public int GetValueInt()
