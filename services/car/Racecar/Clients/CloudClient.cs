@@ -1,6 +1,8 @@
-﻿using BigMission.Shared.SignalR;
+﻿using BigMission.Shared.Auth;
+using BigMission.Shared.SignalR;
 using Channels;
 using Common;
+using Microsoft.AspNetCore.Http.Connections.Client;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Options;
 
@@ -25,7 +27,7 @@ public class CloudClient : HubClientBase, ICloudClient
 
     private CarConfiguration carConfiguration;
     private readonly IDisposable? configChangeListener;
-
+    private readonly IConfiguration configuration;
 
     public CloudClient(ILoggerFactory loggerFactory, IConfiguration configuration, IOptionsMonitor<CarConfiguration> carConfig)
         : base(loggerFactory, configuration)
@@ -45,6 +47,7 @@ public class CloudClient : HubClientBase, ICloudClient
                 logger.LogError(ex, "Failed to reload hub configuration.");
             }
         });
+        this.configuration = configuration;
     }
 
 
@@ -69,6 +72,42 @@ public class CloudClient : HubClientBase, ICloudClient
     protected override string GetClientId() => carConfiguration.ClientId;
     protected override string GetClientSecret() => carConfiguration.ClientSecret;
 
+    protected override HubConnection GetConnection()
+    {
+        var hubUrl = configuration["Server:StatusHub"] ?? throw new InvalidOperationException("Hub URL is not configured.");
+        var authUrl = configuration["Keycloak:AuthServerUrl"] ?? throw new InvalidOperationException("Keycloak URL is not configured.");
+        var realm = configuration["Keycloak:Realm"] ?? throw new InvalidOperationException("Keycloak realm is not configured.");
+
+        var builder = new HubConnectionBuilder().WithUrl(hubUrl, delegate (HttpConnectionOptions options)
+        {
+            // Skip negotiate to connect directly via WebSocket without a connection ID.
+            // This avoids 404 errors in multi-replica deployments where negotiate and
+            // WebSocket upgrade may hit different pods.
+            options.SkipNegotiation = true;
+            options.Transports = Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets;
+            options.AccessTokenProvider = async delegate
+            {
+                try
+                {
+                    var clientId = GetClientId();
+                    var clientSecret = GetClientSecret();
+                    return await KeycloakServiceToken.RequestClientToken(authUrl, realm, clientId, clientSecret);
+                }
+                catch (Exception exception)
+                {
+                    logger.LogError(exception, "Failed to get server hub access token");
+                    return null;
+                }
+            };
+        })
+        .WithAutomaticReconnect(new InfiniteRetryPolicy())
+        .TryAddMessagePack();
+
+        var hubConnection = builder.Build();
+
+        InitializeStateLogging(hubConnection);
+        return hubConnection;
+    }
 
     /// <summary>
     /// Detects when the hub connection is stuck in Connecting or Reconnecting state
