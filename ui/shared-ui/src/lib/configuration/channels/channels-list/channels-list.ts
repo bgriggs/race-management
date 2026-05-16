@@ -1,9 +1,10 @@
-import { Component, computed, input, output, signal } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { CarConfiguration } from '../../../../models/car-configuration';
 import { ChannelDefinition } from '../../../../models/channel-definition';
 import { EnumDefinition } from '../../../../models/enum-definition';
 import { EditChannel } from '../edit-channel/edit-channel';
+import { ChannelUsageService } from '../channel-usage.service';
 
 @Component({
   selector: 'lib-channels-list',
@@ -13,6 +14,8 @@ import { EditChannel } from '../edit-channel/edit-channel';
   styleUrl: './channels-list.css',
 })
 export class ChannelsList {
+  private readonly channelUsageService = inject(ChannelUsageService);
+
   readonly configuration = input<CarConfiguration | null>(null);
   readonly channelDefinitionsChange = output<ChannelDefinition[]>();
 
@@ -22,6 +25,14 @@ export class ChannelsList {
   readonly enumDefinitions = computed<EnumDefinition[]>(() => this.configuration()?.enumDefinitions ?? []);
 
   readonly hasChannels = computed(() => this.channels().length > 0);
+
+  readonly usedChannelIdSet = computed(() => new Set(this.channelUsageService.usedChannelIds()));
+
+  readonly usedChannelCount = computed(() =>
+    this.channels().filter(ch => this.usedChannelIdSet().has(ch.id)).length
+  );
+
+  readonly unusedChannelCount = computed(() => this.channels().length - this.usedChannelCount());
 
   readonly editingChannel = computed<ChannelDefinition | null>(() => {
     const editingId = this.editingChannelId();

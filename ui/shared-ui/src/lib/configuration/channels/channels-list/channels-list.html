@@ -1,5 +1,19 @@
 <section class="channels-actions">
 	<button type="button" class="add-channel-button" (click)="startAdd()">Add Channel</button>
+	<div class="channel-stats">
+		<span class="channel-stat">
+			<span class="channel-stat-label">Total</span>
+			<span class="channel-stat-value">{{ channels().length }}</span>
+		</span>
+		<span class="channel-stat">
+			<span class="channel-stat-label">Used</span>
+			<span class="channel-stat-value">{{ usedChannelCount() }}</span>
+		</span>
+		<span class="channel-stat">
+			<span class="channel-stat-label">Unused</span>
+			<span class="channel-stat-value">{{ unusedChannelCount() }}</span>
+		</span>
+	</div>
 </section>
 
 @if (!hasChannels()) {
@@ -10,8 +24,7 @@
 			<thead>
 				<tr>
 					<th scope="col" class="row-action-column"></th>
-					<th scope="col">Name</th>
-					<th scope="col">Reserved</th>
+					<th scope="col">Name</th>				<th scope="col" class="checkmark-column">Used</th>					<th scope="col">Reserved</th>
 					<th scope="col">Data Type</th>
 					<th scope="col">Base Units</th>
 					<th scope="col">Output Units</th>
@@ -29,6 +42,11 @@
 							</button>
 						</td>
 						<td>{{ channel.name }}</td>
+						<td class="checkmark-cell" [attr.aria-label]="usedChannelIdSet().has(channel.id) ? 'Used channel' : 'Unused channel'">
+							@if (usedChannelIdSet().has(channel.id)) {
+								<span class="checkmark" aria-hidden="true">✓</span>
+							}
+						</td>
 						<td class="checkmark-cell" [attr.aria-label]="channel.isReserved ? 'Reserved channel' : 'Not reserved'">
 							@if (channel.isReserved) {
 								<span class="checkmark" aria-hidden="true">✓</span>

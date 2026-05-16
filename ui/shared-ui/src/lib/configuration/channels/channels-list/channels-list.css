@@ -5,8 +5,34 @@
 
 .channels-actions {
 	display: flex;
-	justify-content: flex-end;
+	align-items: center;
+	gap: 1rem;
 	margin-bottom: 0.75rem;
+}
+
+.channel-stats {
+	display: flex;
+	gap: 1rem;
+}
+
+.channel-stat {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	line-height: 1.2;
+}
+
+.channel-stat-label {
+	font-size: 0.7rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: #666;
+}
+
+.channel-stat-value {
+	font-size: 1rem;
+	font-weight: 600;
+	color: #2f3d2c;
 }
 
 .add-channel-button {
@@ -43,6 +69,10 @@
 
 .channels-table th {
 	font-weight: 600;
+}
+
+.checkmark-column {
+	width: 4rem;
 }
 
 .checkmark-cell {

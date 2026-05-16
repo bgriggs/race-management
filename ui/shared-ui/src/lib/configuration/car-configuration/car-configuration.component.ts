@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, effect } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { ErrorListComponent, ErrorListItem } from '../error-list/error-list.component';
 import { NavigationTreeComponent, NavigationTreeNode } from '../navigation-tree/navigation-tree.component';
@@ -32,6 +32,7 @@ import { CarConfiguration } from '../../../models/car-configuration';
 import { ChannelDefinition } from '../../../models/channel-definition';
 import { CanBusConfig as CanBusConfigModel } from '../../../models/can-bus-config';
 import { CanBusInterfaceConfig } from '../../../models/can-bus-interface-config';
+import { ChannelUsageService } from '../channels/channel-usage.service';
 
 @Component({
   selector: 'rm-car-configuration',
@@ -62,8 +63,13 @@ import { CanBusInterfaceConfig } from '../../../models/can-bus-interface-config'
 export class CarConfigurationComponent implements OnInit {
   private readonly managementDataClient = inject(MANAGEMENT_DATA_CLIENT);
   private readonly dialog = inject(MatDialog);
+  private readonly channelUsageService = inject(ChannelUsageService);
   private snackbarTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private readonly emptyCanBusConfig: CanBusConfigModel = { canBusEnabled: [], interfaces: [] };
+
+  private readonly _syncUsedChannelIds = effect(() => {
+    this.channelUsageService.updateFromConfiguration(this.activeConfiguration());
+  });
 
   readonly canBusEnabled = signal(true);
   readonly selectedNodeId = signal('general-settings');
