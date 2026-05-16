@@ -11,4 +11,6 @@ public class CarHubConnectionState
     public string ClientId { get; set; } = string.Empty;
     [Key(2)]
     public DateTime ConnectedTimestamp { get; set; }
+    [Key(3)]
+    public string CarKey { get; set; } = string.Empty;
 }

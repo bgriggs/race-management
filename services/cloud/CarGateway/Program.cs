@@ -1,4 +1,6 @@
 using Cloud.Shared.Extensions;
+using Cloud.Shared.Hubs;
+using Microsoft.Extensions.Caching.Hybrid;
 using NLog.Extensions.Logging;
 
 namespace CarGateway;
@@ -22,6 +24,7 @@ public class Program
         builder.Services.AddRedisConnectionMultiplexer(builder.Configuration);
 
         builder.Services.AddPostgres(builder.Configuration);
+        builder.Services.AddHybridCache(o => o.DefaultEntryOptions = new HybridCacheEntryOptions { Expiration = TimeSpan.FromHours(24), LocalCacheExpiration = TimeSpan.FromHours(8) });
 
         builder.Services.AddControllers();
         // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -39,6 +42,7 @@ public class Program
         app.UseAuthorization();
         app.MapControllers();
         app.MapHealthCheckEndpoints();
+        app.MapHub<CarHub>("/car-status");
         app.Run();
     }
 }

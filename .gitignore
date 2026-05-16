@@ -67,3 +67,6 @@ nunit-*.xml
 /services/RaceManagementService/race-management.db-wal
 /services/car/Racecar/config.json
 /services/car/Racecar/config-versions/
+/services/car/Racecar/config.json
+
+services/car/Racecar/config-versions/

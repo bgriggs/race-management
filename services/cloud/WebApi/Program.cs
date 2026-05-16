@@ -1,4 +1,5 @@
 using Cloud.Shared.Extensions;
+using Cloud.Shared.Hubs;
 using NLog.Extensions.Logging;
 
 namespace WebApi;
@@ -41,6 +42,7 @@ public class Program
 
         app.MapControllers();
         app.MapHealthCheckEndpoints();
+        app.MapHub<WebHub>("/web-status");
         app.Run();
     }
 }

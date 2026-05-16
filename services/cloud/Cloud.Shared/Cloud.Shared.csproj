@@ -25,10 +25,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Database\Models\" />
-	</ItemGroup>
-
-	<ItemGroup>
 	  <ProjectReference Include="..\..\Channels\Channels.csproj" />
 	</ItemGroup>
 

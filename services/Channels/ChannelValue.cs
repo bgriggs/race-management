@@ -1,5 +1,4 @@
 ﻿using MessagePack;
-using System.Text;
 using UnitsNet;
 
 namespace Channels;
@@ -33,16 +32,6 @@ public class ChannelValue
     public double GetValueDouble()
     {
         return double.TryParse(Value, out var result) ? result : 0;
-    }
-
-    private static string GetZeros(int count)
-    {
-        var sb = new StringBuilder();
-        for (int i = 0; i < count; i++)
-        {
-            _ = sb.Append('0');
-        }
-        return sb.ToString();
     }
 
     public IQuantity? GetOutputQuantity(ChannelDefinition definition)
