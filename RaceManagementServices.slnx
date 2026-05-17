@@ -6,8 +6,8 @@
     <Project Path="services/car/Racecar/Racecar.csproj" Id="31a63780-7243-4c01-b532-38d86e2b75d7" />
   </Folder>
   <Folder Name="/cloud/">
-    <Project Path="ChannelProcessor/ChannelProcessor.csproj" Id="1f4febe1-95a9-43af-a629-0c156a8da388" />
     <Project Path="services/cloud/CarGateway/CarGateway.csproj" Id="9fe9d38b-1d5e-4ad6-b799-616c2b518d8a" />
+    <Project Path="services/cloud/ChannelProcessor/ChannelProcessor.csproj" />
     <Project Path="services/cloud/Cloud.Shared/Cloud.Shared.csproj" Id="c84ff7be-0ca2-4806-a9a7-7203cc86dbae" />
     <Project Path="services/cloud/Cloud.Tests/Cloud.Tests.csproj" Id="81b3bc3e-db2d-455d-9025-6439a34da51e" />
     <Project Path="services/cloud/WebApi/WebApi.csproj" Id="23144e18-c115-4b6c-8a5d-1745dee21679" />
