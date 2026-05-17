@@ -1,3 +1,4 @@
+using ChannelProcessor.Telemetry;
 using Cloud.Shared.Extensions;
 using NLog.Extensions.Logging;
 
@@ -17,6 +18,9 @@ public class Program
         builder.Services.AddRedisConnectionMultiplexer(builder.Configuration);
         
         builder.Services.AddPostgres(builder.Configuration);
+
+        builder.Services.AddSingleton<ICarChannelStateRepository, CarChannelStateRepository>();
+        builder.Services.AddHostedService<TelemetryStreamConsumer>();
 
         builder.Services.AddControllers();
         // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi

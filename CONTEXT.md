@@ -138,6 +138,53 @@ ChannelProcessor subscribes to the `car-events` Redis pub/sub channel. On receiv
 
 ---
 
+## Race Monitor
+The primary race-day view in the cloud UI. A single dedicated page (not a generic configurable widget layout) purpose-built for real-time race oversight. The page uses **vertical scroll** with four layout rows:
+
+```
+┌─────────────────────────────────────────────────┐  ~200px
+│  1. Car Status Table                            │
+├────────────────────────────┬────────────────────┤  ~350px
+│  2. Race Position (2/3)    │  3. Active Alarms  │
+│     RedMist timing view    │     (1/3)          │
+├────────────────────────────┬────────────────────┤  ~220px
+│  4. Fuel & Pit Strategy    │  5. Race Strategy  │
+│     (2/3)                  │     Assistant (1/3)│
+├─────────────────────────────────────────────────┤
+│  6. Competitor Analysis                         │
+└─────────────────────────────────────────────────┘
+```
+
+### Section definitions
+
+1. **Car Status Table** — a table of team cars (designed for 1–3 cars) with fixed identity columns (car name/number, connection status, last telemetry timestamp) and user-configurable channel value columns to the right. All cars display the same channel columns; if a car has no value for a column, the cell is empty/grayed. Column configuration is **per-user** and is done inline via a settings panel on the Race Monitor itself (no separate configuration page). Column headers show the channel display name; cells show the numeric value. When an alarm is active for that channel on that car, the cell background uses the alarm's `displayChannelSourceColorHex` (no severity hierarchy — one color per alarm, user-configured). The WebApi SignalR hub broadcasts all team channel values to all connected browser clients; the column configurator is a **client-side display filter only** — adding or removing columns requires no hub re-subscription.
+
+2. **Race Position** — a modified port of the RedMist timing-viewer component (from the RedMist landing UI codebase, which is team-owned) showing the current running order for the active race session. Connects to RedMist using a dedicated Keycloak client (client ID + secret stored in race-management secrets).
+
+3. **Active Alarms** — lists currently active (unacknowledged) alarms across all team cars. Engineers can acknowledge an alarm; it is suppressed for `timeAfterAckToDisplaySecs` and reappears if still active after that period.
+
+4. **Fuel & Pit Strategy** — a horizontal Gantt-style chart visualizing planned stints for all team cars. Y-axis = each car; X-axis = elapsed race time; chart width = full race duration. Each bar represents a **Stint**. Fuel range data is computed by the backend (not the UI); the UI provides data entry for pit-stop fuel additions and displays the backend-computed range output. Supports two fuel tracking modes per car:
+   - **Fuel-used mode** — driven by a direct fuel consumption channel (e.g., the `FuelConsumption` Reserved Channel integrated over time)
+   - **Volume-entry mode** — user manually enters the fuel volume added at each pit stop; range is calculated from car fuel capacity (a car-level setting) minus accumulated consumption
+
+   Pit stops are auto-detected when data is available (RedMist race data, or car lat/lon position against a configured pit lane geo-fence). Engineers can also manually record a pit stop via a gas can icon button on each car row; the entry form captures fuel added (volume only) and a pit stop timestamp that defaults to the current race time but can be adjusted to a past time (to cover cases where the engineer forgot to log it in the moment).
+
+5. **Race Strategy Assistant** — an AI chatbot panel that can answer strategy questions during the race (e.g., "Should I pit under the next yellow?", "What pace do I need to stay ahead of the car behind me by the end of the race?"). Context-aware: has access to current race state, car telemetry summary, and fuel/stint data. Backend uses **Microsoft Semantic Kernel** with **Anthropic Claude** as the LLM provider for orchestration and context assembly; responses are streamed to the UI over **SignalR**.
+
+6. **Competitor Analysis** — shows estimated strategy data for competitor cars (not team-owned): estimated fuel range, expected number of pit stops remaining, and estimated time to next pit stop. All data is derived from the RedMist race position feed (no manual override). The engineer selects which competitors to track; defaults to the car immediately ahead and the car immediately behind each team car in the same class.
+
+The Race Monitor operates against the **current Race Session** — the session whose `StartTime`/`EndTime` brackets the current time. No manual session selection. When no session is active, the Car Status Table and Active Alarms sections remain fully functional (cars may be connected and transmitting pre-race); session-dependent sections (Race Position, Fuel & Pit Strategy, Competitor Analysis) show a "no active session" waiting state placeholder.
+
+The Race Monitor is what CRUD APIs refer to when they reference Dashboard configuration — the configurable column set for the Car Status Table is stored as the Dashboard configuration record.
+
+### Stint
+A continuous period of on-track running for a single car between pit stops (or between race start and first pit stop, or last pit stop and finish). The fundamental unit of the Fuel & Pit Strategy visualization. Each stint has an estimated start time, end time, and fuel range.
+
+### Competitor Analysis
+Intelligence about cars not owned by the team, derived solely from the RedMist race position feed. Used to anticipate competitor pit windows and strategy decisions.
+
+---
+
 ## Race Event / Session Metadata
 
 - `RaceEvents` and `RaceSessions` are stored as first-class entities with `StartTime`/`EndTime`.

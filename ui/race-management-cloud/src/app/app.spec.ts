@@ -1,12 +1,29 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { signal } from '@angular/core';
+import { KEYCLOAK_EVENT_SIGNAL, KeycloakEventType } from 'keycloak-angular';
+import Keycloak from 'keycloak-js';
 import { App } from './app';
 
 describe('App', () => {
   beforeEach(async () => {
+    const keycloakStub = {
+      authenticated: false,
+      tokenParsed: undefined,
+      login: () => Promise.resolve(),
+      logout: () => Promise.resolve(),
+    } as unknown as Keycloak;
+
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideRouter([])]
+      providers: [
+        provideRouter([]),
+        { provide: Keycloak, useValue: keycloakStub },
+        {
+          provide: KEYCLOAK_EVENT_SIGNAL,
+          useValue: signal({ type: KeycloakEventType.KeycloakAngularNotInitialized }),
+        },
+      ],
     }).compileComponents();
   });
 
@@ -16,11 +33,11 @@ describe('App', () => {
     expect(app).toBeTruthy();
   });
 
-  it('should render title', async () => {
+  it('should render brand and default guest user', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.brand')?.textContent).toContain('RedMist-Race Management');
+    expect(compiled.querySelector('.brand')?.textContent).toContain('Race Management');
     expect(compiled.querySelector('.username')?.textContent).toContain('Guest');
   });
 });

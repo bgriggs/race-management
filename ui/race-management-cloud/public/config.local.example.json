@@ -1,0 +1,10 @@
+{
+  "keycloak": {
+    "url": "https://auth.redmist.racing",
+    "realm": "race-management",
+    "clientId": "race-management-ui"
+  },
+  "api": {
+    "baseUrl": "http://localhost:5000"
+  }
+}

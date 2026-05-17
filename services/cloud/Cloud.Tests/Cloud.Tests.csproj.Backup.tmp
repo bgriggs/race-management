@@ -16,4 +16,8 @@
     <ProjectReference Include="..\..\..\ChannelProcessor\ChannelProcessor.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="ChannelProcessor\" />
+  </ItemGroup>
+
 </Project>

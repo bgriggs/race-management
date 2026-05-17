@@ -1,0 +1,42 @@
+.race-monitor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  overflow-y: auto;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.row-car-status {
+  min-height: 200px;
+}
+
+.row-position-alarms {
+  min-height: 350px;
+}
+
+.row-fuel-strategy {
+  min-height: 220px;
+}
+
+.row-competitor-analysis {
+  min-height: 200px;
+}
+
+.col-two-thirds {
+  flex: 2;
+}
+
+.col-one-third {
+  flex: 1;
+}
+
+.race-position-placeholder {
+  background-color: color-mix(in srgb, currentColor 5%, transparent);
+  border-radius: 4px;
+}

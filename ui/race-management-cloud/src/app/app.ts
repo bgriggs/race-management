@@ -1,9 +1,10 @@
 import { Component } from '@angular/core';
-import { CarConfigurationComponent } from '../../../shared-ui/src/lib/configuration/car-configuration/car-configuration.component';
+import { RouterOutlet } from '@angular/router';
+import { Nav } from './nav/nav';
 
 @Component({
   selector: 'app-root',
-  imports: [CarConfigurationComponent],
+  imports: [RouterOutlet, Nav],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

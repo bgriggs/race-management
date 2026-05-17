@@ -1,0 +1,31 @@
+<div class="race-monitor">
+  <!-- Row 1: Car Status Table -->
+  <div class="row row-car-status">
+    <app-car-status-table />
+  </div>
+
+  <!-- Row 2: Race Position (2/3) | Active Alarms (1/3) -->
+  <div class="row row-position-alarms">
+    <div class="col-two-thirds race-position-placeholder">
+      <!-- Race Position (RedMist timing view) - not yet implemented -->
+    </div>
+    <div class="col-one-third">
+      <app-alarms-list />
+    </div>
+  </div>
+
+  <!-- Row 3: Fuel & Pit Strategy (2/3) | Race Strategy Assistant (1/3) -->
+  <div class="row row-fuel-strategy">
+    <div class="col-two-thirds">
+      <app-fuel-pit-strategy />
+    </div>
+    <div class="col-one-third">
+      <app-race-strategy-chat />
+    </div>
+  </div>
+
+  <!-- Row 4: Competitor Analysis (full width) -->
+  <div class="row row-competitor-analysis">
+    <app-competitor-analysis />
+  </div>
+</div>
