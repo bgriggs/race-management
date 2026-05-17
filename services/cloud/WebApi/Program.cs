@@ -1,5 +1,6 @@
 using Cloud.Shared.Extensions;
 using Cloud.Shared.Hubs;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using NLog.Extensions.Logging;
 
 namespace WebApi;
@@ -11,6 +12,19 @@ public class Program
         var builder = WebApplication.CreateBuilder(args);
         builder.Logging.ClearProviders();
         builder.Logging.AddNLog("NLog");
+
+        // Add services to the container.
+        builder.Services.AddControllers(options =>
+            options.Conventions.Add(new RouteTokenTransformerConvention(new KebabCaseParameterTransformer())));
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("LocalUi", policy =>
+            {
+                policy.WithOrigins("http://localhost:4200")
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+            });
+        });
 
         // Add services to the container.
         builder.Services.AddKeycloakAuthentication(builder.Configuration);
@@ -39,8 +53,6 @@ public class Program
         }
 
         app.UseAuthorization();
-
-
         app.MapControllers();
         app.MapHealthCheckEndpoints();
         app.MapHub<WebHub>("/web-status");

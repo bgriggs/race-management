@@ -13,8 +13,8 @@
     <Project Path="services/cloud/WebApi/WebApi.csproj" Id="23144e18-c115-4b6c-8a5d-1745dee21679" />
   </Folder>
   <Folder Name="/onprem/">
-    <Project Path="services/RaceManagementService.Tests/RaceManagementService.Tests.csproj" />
-    <Project Path="services/RaceManagementService/RaceManagementService.csproj" />
+    <Project Path="services/onprem/RaceManagementService.Tests/RaceManagementService.Tests.csproj" />
+    <Project Path="services/onprem/RaceManagementService/RaceManagementService.csproj" />
   </Folder>
   <Folder Name="/shared/">
     <Project Path="services/Channels/Channels.csproj" />

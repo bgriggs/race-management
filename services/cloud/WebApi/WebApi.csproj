@@ -8,6 +8,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" Version="5.1.0" />
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.8" />
 		<PackageReference Include="Keycloak.AuthServices.Authorization" Version="3.0.0" />
 		<PackageReference Include="Keycloak.AuthServices.Authentication" Version="3.0.0" />
