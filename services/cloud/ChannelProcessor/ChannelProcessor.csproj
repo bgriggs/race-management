@@ -18,7 +18,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\services\cloud\Cloud.Shared\Cloud.Shared.csproj" />
+	  <ProjectReference Include="..\Cloud.Shared\Cloud.Shared.csproj" />
 	</ItemGroup>
 
 </Project>
