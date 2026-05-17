@@ -4,19 +4,24 @@
 		<TargetFramework>net10.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
+		<UserSecretsId>028975bb-5b61-4bec-a13e-5e1034cf0977</UserSecretsId>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.8" />
-		<PackageReference Include="Keycloak.AuthServices.Authorization" Version="2.9.0" />
-		<PackageReference Include="Keycloak.AuthServices.Authentication" Version="2.9.0" />
+		<PackageReference Include="Keycloak.AuthServices.Authorization" Version="3.0.0" />
+		<PackageReference Include="Keycloak.AuthServices.Authentication" Version="3.0.0" />
 		<PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
 		<PackageReference Include="AspNetCore.HealthChecks.System" Version="9.0.0" />
 		<PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
 		<PackageReference Include="AspNetCore.HealthChecks.Redis" Version="9.0.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.8">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
 		<PackageReference Include="StackExchange.Redis" Version="2.13.1" />
-		<PackageReference Include="NLog.Extensions.Logging" Version="6.1.2" />
-		<PackageReference Include="Microsoft.Extensions.Caching.Hybrid" Version="10.5.0" />
+		<PackageReference Include="NLog.Extensions.Logging" Version="6.1.3" />
+		<PackageReference Include="Microsoft.Extensions.Caching.Hybrid" Version="10.6.0" />
 	</ItemGroup>
 
 	<ItemGroup>

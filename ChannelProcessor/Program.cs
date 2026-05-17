@@ -23,6 +23,7 @@ public class Program
         builder.Services.AddOpenApi();
 
         var app = builder.Build();
+        app.LogAssemblyInfo<Program>();
 
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())

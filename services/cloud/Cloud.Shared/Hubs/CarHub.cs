@@ -63,7 +63,7 @@ public class CarHub(IConnectionMultiplexer cacheMux, ILogger<CarHub> logger, IDb
         logger.LogInformation("Client {id} disconnected: {ConnectionId}", clientId, Context.ConnectionId);
     }
 
-    public async Task SendChannelValuesAsync(ChannelValue[] channelValues, string car)
+    public async Task SendChannelValuesAsync(ChannelValue[] channelValues, string car, Guid configurationId)
     {
         var clientId = Helpers.GetClientId(this);
         if (clientId == null) return;
