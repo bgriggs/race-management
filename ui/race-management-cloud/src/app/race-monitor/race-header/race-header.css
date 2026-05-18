@@ -1,0 +1,132 @@
+.race-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0.75rem;
+  background: #0f1f33;
+  color: #f8fbff;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgb(9 18 31 / 25%);
+}
+
+.info-group {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.info-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #9bb0cf;
+}
+
+.info-value {
+  font-size: 1rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.race-select {
+  position: relative;
+}
+
+.race-select-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgb(255 255 255 / 8%);
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 4px;
+  color: #f8fbff;
+  cursor: pointer;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  min-width: 180px;
+  justify-content: space-between;
+}
+
+.race-select-btn:hover {
+  background: rgb(255 255 255 / 14%);
+}
+
+.race-select-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.caret {
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid #f8fbff;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.race-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  background: #1a2e45;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 6px;
+  min-width: 240px;
+  padding: 4px 0;
+  list-style: none;
+  margin: 0;
+  box-shadow: 0 6px 20px rgb(0 0 0 / 30%);
+  z-index: 20;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.race-option {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 1rem;
+  background: none;
+  border: none;
+  color: #d9e3f2;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.race-option:hover {
+  background: rgb(255 255 255 / 8%);
+  color: #fff;
+}
+
+.race-option.selected {
+  color: #fff;
+  background: rgb(228 80 80 / 18%);
+}
+
+.race-option.empty {
+  color: #6c7a91;
+  cursor: default;
+  font-style: italic;
+}
+
+.race-option.empty:hover {
+  background: none;
+}
+
+.separator {
+  height: 1px;
+  background: rgb(255 255 255 / 12%);
+  margin: 4px 0;
+}

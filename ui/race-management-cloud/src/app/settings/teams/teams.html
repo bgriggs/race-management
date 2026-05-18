@@ -1,0 +1,102 @@
+<section class="list-actions">
+  <button type="button" class="primary" (click)="startAdd()">Add Team</button>
+</section>
+
+@if (loading()) {
+  <p class="status-text">Loading…</p>
+} @else if (error(); as msg) {
+  <p class="field-error">{{ msg }}</p>
+} @else if (teams().length === 0) {
+  <p class="list-empty">There are no teams configured.</p>
+} @else {
+  <div class="list-table-wrap">
+    <table class="list-table">
+      <thead>
+        <tr>
+          <th scope="col" class="row-action-column"><span class="sr-only">Edit</span></th>
+          <th scope="col" class="row-action-column"><span class="sr-only">Delete</span></th>
+          <th scope="col">Name</th>
+          <th scope="col">Client ID</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (team of teams(); track team.id) {
+          <tr>
+            <td class="row-action-cell">
+              <button
+                type="button"
+                class="row-action-button"
+                (click)="startEdit(team)"
+                aria-label="Edit team"
+              >
+                <span class="material-icons" aria-hidden="true">edit</span>
+              </button>
+            </td>
+            <td class="row-action-cell">
+              <button
+                type="button"
+                class="row-action-button delete"
+                (click)="deleteTeam(team)"
+                aria-label="Delete team"
+              >
+                <span class="material-icons" aria-hidden="true">delete</span>
+              </button>
+            </td>
+            <td>{{ team.name }}</td>
+            <td>{{ team.clientId }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+@if (isEditing()) {
+  <div class="editor-backdrop" (click)="stopEdit()"></div>
+  <div class="editor-popup" role="dialog" aria-modal="true" [attr.aria-label]="editorTitle()">
+    <h3>{{ editorTitle() }}</h3>
+
+    <div class="config-form">
+      <div class="field">
+        <label for="team-name" class="field-label">
+          Name <span class="required-mark">*</span>
+        </label>
+        <input
+          id="team-name"
+          type="text"
+          class="field-input"
+          autocomplete="off"
+          [value]="draftName()"
+          (input)="onNameInput($any($event.target).value)"
+          [disabled]="saving()"
+        />
+      </div>
+
+      <div class="field">
+        <label for="team-client-id" class="field-label">
+          Client ID <span class="required-mark">*</span>
+        </label>
+        <input
+          id="team-client-id"
+          type="text"
+          class="field-input"
+          autocomplete="off"
+          [value]="draftClientId()"
+          (input)="onClientIdInput($any($event.target).value)"
+          [disabled]="saving()"
+        />
+      </div>
+
+      @if (saveError(); as msg) {
+        <p class="field-error">{{ msg }}</p>
+      }
+    </div>
+
+    <section class="editor-actions">
+      <button type="button" class="secondary" (click)="stopEdit()" [disabled]="saving()">Cancel</button>
+      <button type="button" class="primary" (click)="saveDraft()" [disabled]="!isDraftValid() || saving()">
+        {{ saving() ? 'Saving…' : 'OK' }}
+      </button>
+    </section>
+  </div>
+}

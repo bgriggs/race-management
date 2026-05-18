@@ -99,7 +99,7 @@ public class TelemetryStreamConsumerTests
 
         Assert.IsTrue(_channelState.WasSetIfChangedCalledWith(CarKey, 0, "100"));
         Assert.IsTrue(_channelState.WasSetIfChangedCalledWith(CarKey, 1, "200"));
-        Assert.AreEqual(2, _channelState.SetIfChangedCalls.Count);
+        Assert.HasCount(2, _channelState.SetIfChangedCalls);
     }
 
     [TestMethod]
@@ -127,7 +127,7 @@ public class TelemetryStreamConsumerTests
         await done.WaitAsync(TimeSpan.FromSeconds(2));
         await _consumer.StopAsync(CancellationToken.None);
 
-        Assert.AreEqual(0, _channelState.SetIfChangedCalls.Count);
+        Assert.IsEmpty(_channelState.SetIfChangedCalls);
     }
 
     [TestMethod]
@@ -141,7 +141,7 @@ public class TelemetryStreamConsumerTests
         await done.WaitAsync(TimeSpan.FromSeconds(2));
         await _consumer.StopAsync(CancellationToken.None);
 
-        Assert.AreEqual(0, _channelState.SetIfChangedCalls.Count);
+        Assert.IsEmpty(_channelState.SetIfChangedCalls);
         _db.Verify(d => d.StreamAcknowledgeAsync(
             It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<RedisValue>(),
             It.IsAny<CommandFlags>()), Times.Once);
@@ -181,7 +181,7 @@ public class TelemetryStreamConsumerTests
 
         Assert.IsTrue(_channelState.WasSetIfChangedCalledWith(CarKey, 0, "5"));
         Assert.IsTrue(_channelState.WasSetIfChangedCalledWith(carKey2, 0, "5"));
-        Assert.AreEqual(2, _channelState.SetIfChangedCalls.Count);
+        Assert.HasCount(2, _channelState.SetIfChangedCalls);
     }
 
     [TestMethod]
@@ -210,6 +210,6 @@ public class TelemetryStreamConsumerTests
         await _consumer.StopAsync(CancellationToken.None);
 
         // Two batches processed; fake's change-detection means only first is "changed"
-        Assert.IsTrue(_channelState.SetIfChangedCalls.Count >= 2);
+        Assert.IsGreaterThanOrEqualTo(2, _channelState.SetIfChangedCalls.Count);
     }
 }

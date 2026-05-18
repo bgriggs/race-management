@@ -5,7 +5,6 @@ using MessagePack;
 using MessagePack.Resolvers;
 using Microsoft.Extensions.Caching.Hybrid;
 using NLog.Extensions.Logging;
-using StackExchange.Redis;
 
 namespace CarGateway;
 
@@ -30,7 +29,6 @@ public class Program
         builder.Services.AddPostgres(builder.Configuration);
         builder.Services.AddHybridCache(o => o.DefaultEntryOptions = new HybridCacheEntryOptions { Expiration = TimeSpan.FromHours(24), LocalCacheExpiration = TimeSpan.FromHours(8) });
 
-        var redisConn = builder.Configuration["ConnectionStrings:Redis"] ?? throw new InvalidOperationException("Redis connection string is not configured");
         builder.Services.AddSignalR(o =>
         {
             o.MaximumParallelInvocationsPerClient = 3;
@@ -38,19 +36,7 @@ public class Program
             o.KeepAliveInterval = TimeSpan.FromSeconds(15);
             o.HandshakeTimeout = TimeSpan.FromSeconds(30);
         })
-        .AddStackExchangeRedis(redisConn, options =>
-        {
-            options.Configuration.ChannelPrefix = RedisChannel.Literal("car-status");
-
-            // Enhanced Redis configuration for reliable backplane operation
-            options.Configuration.ConnectRetry = 10;
-            options.Configuration.ConnectTimeout = 10000;
-            options.Configuration.SyncTimeout = 10000;
-            options.Configuration.AsyncTimeout = 10000;
-            options.Configuration.AbortOnConnectFail = false;
-            options.Configuration.KeepAlive = 60;
-            options.Configuration.ReconnectRetryPolicy = new ExponentialRetry(5000);
-        })
+        .AddRedisBackplane(builder.Services, channelPrefix: "car-status")
         .AddMessagePackProtocol(options =>
         {
             options.SerializerOptions = MessagePackSerializerOptions.Standard

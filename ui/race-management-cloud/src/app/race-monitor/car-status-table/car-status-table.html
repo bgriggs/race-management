@@ -1,1 +1,81 @@
-<p>car-status-table works!</p>
+@if (loading()) {
+  <div class="status">Loading…</div>
+} @else if (error()) {
+  <div class="status error">{{ error() }}</div>
+} @else {
+  <div class="table-scroll">
+    <table class="car-status-table">
+      <thead>
+        <tr>
+          <th class="fixed">Car</th>
+          <th class="fixed">Connection</th>
+          <th class="fixed">Last Telemetry</th>
+          @for (col of columns(); track col.channelDefinitionId) {
+            <th
+              class="draggable"
+              [class.dragging]="draggingColumnId() === col.channelDefinitionId"
+              [class.drop-left]="dropTargetId() === col.channelDefinitionId && dropSide() === 'left'"
+              [class.drop-right]="dropTargetId() === col.channelDefinitionId && dropSide() === 'right'"
+              draggable="true"
+              (dragstart)="onColumnDragStart(col, $event)"
+              (dragover)="onColumnDragOver(col, $event)"
+              (dragleave)="onColumnDragLeave(col)"
+              (drop)="onColumnDrop(col, $event)"
+              (dragend)="onColumnDragEnd()"
+              (contextmenu)="onColumnContextMenu(col, $event)"
+              title="Drag to reorder · Right-click to remove"
+            >{{ columnLabel(col) }}</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (car of cars(); track car.number) {
+          <tr>
+            <td class="car-id">{{ car.number }}</td>
+            <td [class.muted]="connectionLabel(car) === 'Disconnected'">{{ connectionLabel(car) }}</td>
+            <td [class.muted]="lastTelemetryLabel(car) === '—'">{{ lastTelemetryLabel(car) }}</td>
+            @for (col of columns(); track col.channelDefinitionId) {
+              <td [class.muted]="channelCellValue(car, col) === '—'">{{ channelCellValue(car, col) }}</td>
+            }
+          </tr>
+        } @empty {
+          <tr>
+            <td class="muted empty" [attr.colspan]="columnCount()">No cars configured for this team.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <button
+    type="button"
+    class="edit-columns-btn"
+    aria-label="Edit columns"
+    title="Edit columns"
+    (click)="openColumnConfig()"
+  >
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <line x1="9" y1="3" x2="9" y2="21" />
+      <line x1="15" y1="3" x2="15" y2="21" />
+    </svg>
+  </button>
+}
+
+@if (columnConfigOpen() && teamSelection.selectedTeamId() !== null) {
+  <app-column-config-dialog
+    [teamId]="teamSelection.selectedTeamId()!"
+    [cars]="cars()"
+    (closed)="closeColumnConfig()"
+  />
+}

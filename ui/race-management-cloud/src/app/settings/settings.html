@@ -1,0 +1,20 @@
+<div class="settings-page">
+  <div class="tab-strip" role="tablist" aria-label="Settings sections">
+    @for (tab of tabs; track tab.path) {
+      <a
+        role="tab"
+        class="tab"
+        [routerLink]="['/settings', tab.path]"
+        routerLinkActive="active"
+        #rla="routerLinkActive"
+        [attr.aria-selected]="rla.isActive"
+      >
+        {{ tab.label }}
+      </a>
+    }
+  </div>
+
+  <div class="tab-panel" role="tabpanel">
+    <router-outlet />
+  </div>
+</div>

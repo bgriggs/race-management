@@ -4,7 +4,9 @@
 
 <nav class="drawer-nav" [class.open]="drawerOpen()" aria-label="Main navigation">
   <a routerLink="/race-monitor" routerLinkActive="active" (click)="closeDrawer()">Race Monitor</a>
-  <a routerLink="/settings" routerLinkActive="active" (click)="closeDrawer()">Settings</a>
+  @if (teamSelection.isAdmin()) {
+    <a routerLink="/settings" routerLinkActive="active" (click)="closeDrawer()">Settings</a>
+  }
 </nav>
 
 <header class="top-bar" aria-label="Primary navigation">
@@ -18,7 +20,9 @@
 
   <nav class="inline-nav" aria-label="Main navigation">
     <a routerLink="/race-monitor" routerLinkActive="active">Race Monitor</a>
-    <a routerLink="/settings" routerLinkActive="active">Settings</a>
+    @if (teamSelection.isAdmin()) {
+      <a routerLink="/settings" routerLinkActive="active">Settings</a>
+    }
   </nav>
 
   <div class="user-area">

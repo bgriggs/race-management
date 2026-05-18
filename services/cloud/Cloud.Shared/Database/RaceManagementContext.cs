@@ -8,6 +8,11 @@ public class RaceManagementContext(DbContextOptions<RaceManagementContext> optio
     public DbSet<Team> Teams { get; set; } = null!;
     public DbSet<Car> Cars { get; set; } = null!;
     public DbSet<UserRoleMapping> UserRoleMappings { get; set; } = null!;
+    public DbSet<CarConfigurationTable> CarConfigurations { get; set; } = null!;
+    public DbSet<ChannelStatusTableConfiguration> ChannelStatusTableConfigurations { get; set; } = null!;
+    public DbSet<Race> Races { get; set; } = null!;
+    public DbSet<SiteSettings> SiteSettings { get; set; } = null!;
+
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -36,6 +41,36 @@ public class RaceManagementContext(DbContextOptions<RaceManagementContext> optio
             .HasOne<Team>()
             .WithMany()
             .HasForeignKey(u => u.TeamId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<CarConfigurationTable>()
+            .HasOne<Team>()
+            .WithMany()
+            .HasForeignKey(u => u.TeamId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<CarConfigurationTable>()
+            .HasIndex(c => new { c.TeamId, c.Car });
+
+        modelBuilder.Entity<ChannelStatusTableConfiguration>()
+            .HasOne<Team>()
+            .WithMany()
+            .HasForeignKey(u => u.TeamId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ChannelStatusTableConfiguration>()
+            .HasIndex(c => new { c.TeamId, c.UserId });
+
+        modelBuilder.Entity<Race>()
+            .HasOne<Team>()
+            .WithMany()
+            .HasForeignKey(r => r.TeamId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<SiteSettings>()
+            .HasOne<Team>()
+            .WithMany()
+            .HasForeignKey(s => s.TeamId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

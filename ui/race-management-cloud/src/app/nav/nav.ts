@@ -1,6 +1,7 @@
 import { Component, HostListener, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../auth.service';
+import { TeamSelectionService } from '../teams/team-selection.service';
 
 @Component({
   selector: 'app-nav',
@@ -10,6 +11,7 @@ import { AuthService } from '../auth.service';
 })
 export class Nav {
   protected readonly auth = inject(AuthService);
+  protected readonly teamSelection = inject(TeamSelectionService);
   protected readonly drawerOpen = signal(false);
   protected readonly userMenuOpen = signal(false);
 

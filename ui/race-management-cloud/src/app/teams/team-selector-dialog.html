@@ -1,0 +1,32 @@
+<div class="backdrop" role="presentation"></div>
+
+@if (teamSelection.loadFailed()) {
+  <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="team-error-title">
+    <h2 id="team-error-title">Couldn't load your teams</h2>
+    <p class="subtitle">Something went wrong reaching the server. Check your connection and try again.</p>
+    <div class="actions">
+      <button type="button" class="primary" (click)="retry()" [disabled]="teamSelection.loading()">
+        {{ teamSelection.loading() ? 'Retrying…' : 'Retry' }}
+      </button>
+    </div>
+  </div>
+} @else if (teamSelection.hasNoTeams()) {
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="no-teams-title">
+    <h2 id="no-teams-title">No teams yet</h2>
+    <p class="subtitle">
+      Your account isn't a member of any team. Ask a team admin to add you, then refresh this page.
+    </p>
+  </div>
+} @else {
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="team-selector-title">
+    <h2 id="team-selector-title">Select a team</h2>
+    <p class="subtitle">You belong to more than one team. Pick which one to work with.</p>
+
+    <ul class="team-list">@for (team of teamSelection.teams(); track team.id) {<li>
+        <button type="button" class="team-button" (click)="select(team.id)">
+          <span class="team-name">{{ team.name }}</span>
+          <span class="team-roles">{{ team.roles }}</span>
+        </button>
+      </li>}</ul>
+  </div>
+}

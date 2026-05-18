@@ -1,0 +1,68 @@
+<header class="race-header">
+  <div class="info-group">
+    <div class="info-item">
+      <span class="info-label">Local</span>
+      <span class="info-value">{{ localTime() }}</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">Race Time</span>
+      <span class="info-value">{{ raceTime() }}</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">To Go</span>
+      <span class="info-value">{{ timeToGo() }}</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">Lap</span>
+      <span class="info-value">{{ currentLap() }}</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">Flag</span>
+      <span class="info-value">{{ flagState() }}</span>
+    </div>
+  </div>
+
+  <div class="race-select">
+    <button
+      class="race-select-btn"
+      type="button"
+      aria-haspopup="true"
+      [attr.aria-expanded]="dropdownOpen()"
+      (click)="toggleDropdown($event)"
+    >
+      <span class="race-select-label">
+        {{ selectedRace() ? raceLabel(selectedRace()!) : 'Select Race' }}
+      </span>
+      <span class="caret" aria-hidden="true"></span>
+    </button>
+
+    @if (dropdownOpen()) {
+      <ul class="race-dropdown" role="menu">
+        @for (race of races(); track race.id) {
+          <li role="none">
+            <button
+              role="menuitem"
+              type="button"
+              class="race-option"
+              [class.selected]="race.id === selectedRaceId()"
+              (click)="selectRace(race, $event)"
+            >
+              {{ raceLabel(race) }}
+            </button>
+          </li>
+        }
+        @if (races().length === 0) {
+          <li role="none">
+            <span class="race-option empty">No races</span>
+          </li>
+        }
+        <li role="separator" class="separator"></li>
+        <li role="none">
+          <button role="menuitem" type="button" class="race-option edit" (click)="onEdit($event)">
+            Edit...
+          </button>
+        </li>
+      </ul>
+    }
+  </div>
+</header>

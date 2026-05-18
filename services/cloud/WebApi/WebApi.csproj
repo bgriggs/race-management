@@ -5,6 +5,7 @@
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<UserSecretsId>028975bb-5b61-4bec-a13e-5e1034cf0977</UserSecretsId>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -23,10 +24,18 @@
 		<PackageReference Include="StackExchange.Redis" Version="2.13.1" />
 		<PackageReference Include="NLog.Extensions.Logging" Version="6.1.3" />
 		<PackageReference Include="Microsoft.Extensions.Caching.Hybrid" Version="10.6.0" />
+		<PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="10.0.8" />
+		<PackageReference Include="TypeGen" Version="7.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\..\Common\Common.csproj" />
 		<ProjectReference Include="..\Cloud.Shared\Cloud.Shared.csproj" />
 	</ItemGroup>
+
+	<Target Name="GenerateTypeScriptModels" AfterTargets="Build">
+		<Exec Command="dotnet tool restore" WorkingDirectory="$(MSBuildProjectDirectory)\..\..\.." />
+		<Exec Command="dotnet tool run dotnet-typegen generate" WorkingDirectory="$(MSBuildProjectDirectory)" />
+	</Target>
 
 </Project>

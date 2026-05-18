@@ -1,0 +1,53 @@
+<section class="settings-section">
+  <header>
+    <h2>RedMist</h2>
+    <p class="section-subtitle">Credentials used to connect to RedMist services.</p>
+  </header>
+
+  @if (loading()) {
+    <p class="status-text">Loading…</p>
+  } @else {
+    <div class="config-form">
+      <div class="field">
+        <label for="redmist-client-id" class="field-label">Client ID</label>
+        <input
+          id="redmist-client-id"
+          type="text"
+          class="field-input"
+          autocomplete="off"
+          [value]="clientId()"
+          (input)="onClientIdInput($any($event.target).value)"
+          [disabled]="saving()"
+        />
+      </div>
+
+      <div class="field">
+        <label for="redmist-client-secret" class="field-label">Client Secret</label>
+        <input
+          id="redmist-client-secret"
+          type="password"
+          class="field-input"
+          autocomplete="off"
+          placeholder="Leave blank to keep the current secret"
+          [value]="secret()"
+          (input)="onSecretInput($any($event.target).value)"
+          [disabled]="saving()"
+        />
+        <p class="field-hint">For security, the existing secret is never displayed.</p>
+      </div>
+
+      @if (error(); as msg) {
+        <p class="field-error">{{ msg }}</p>
+      }
+
+      <div class="actions">
+        <button type="button" class="primary" (click)="save()" [disabled]="saving()">
+          {{ saving() ? 'Saving…' : 'Save' }}
+        </button>
+        @if (saved()) {
+          <span class="saved-indicator">Saved</span>
+        }
+      </div>
+    </div>
+  }
+</section>

@@ -1,6 +1,6 @@
 using MessagePack;
 
-namespace ChannelProcessor.Telemetry;
+namespace Cloud.Shared.Telemetry;
 
 /// <summary>
 /// Published to the Redis pub/sub change channel when a channel value transitions to a new value.

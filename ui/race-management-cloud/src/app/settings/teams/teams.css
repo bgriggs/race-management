@@ -1,0 +1,18 @@
+.row-action-button .material-icons {
+  font-size: 1.1rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  line-height: 1;
+}
+
+.status-text {
+  margin: 0;
+  color: #5b6a82;
+  font-size: 0.9rem;
+}
+
+.editor-popup h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: #1f2937;
+}

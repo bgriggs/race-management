@@ -56,6 +56,8 @@ public class CarHub(IConnectionMultiplexer cacheMux, ILogger<CarHub> logger, IDb
             {
                 var connByCarKey = string.Format(Consts.CAR_CONNECTION_BY_CAR, connState.CarKey);
                 await cache.KeyDeleteAsync(connByCarKey);
+                var activeConfigKey = string.Format(Consts.CAR_ACTIVE_CONFIG_KEY, connState.CarKey);
+                await cache.KeyDeleteAsync(activeConfigKey);
             }
         }
         await cache.HashDeleteAsync(hashKey, fieldKey);
@@ -72,6 +74,10 @@ public class CarHub(IConnectionMultiplexer cacheMux, ILogger<CarHub> logger, IDb
         var cache = cacheMux.GetDatabase();
         var carKey = string.Format(Consts.CAR_STREAM_FIELD, teamId, car);
         await cache.StreamAddAsync(Consts.CAR_CHANNEL_VALUES_STREAM_KEY, carKey, MessagePackSerializer.Serialize(channelValues));
+
+        var activeConfigKey = string.Format(Consts.CAR_ACTIVE_CONFIG_KEY, carKey);
+        await cache.StringSetAsync(activeConfigKey, configurationId.ToString());
+
         if (!Context.Items.ContainsKey(carKey))
         {
             var connByCarKey = string.Format(Consts.CAR_CONNECTION_BY_CAR, carKey);

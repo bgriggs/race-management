@@ -1,0 +1,13 @@
+{
+  "generationSpecs": [
+    "WebApi.TypeScript.ModelGenerationSpec"
+  ],
+  "outputPath": "../../../ui/shared-ui/src/cloud-api",
+  "csNullableTranslation": "null",
+  "customTypeMappings": {
+    "System.Guid": "string",
+    "System.TimeSpan": "string",
+    "System.DateTime": "string",
+    "System.DateTimeOffset": "string"
+  }
+}

@@ -1,5 +1,6 @@
 using Channels;
 using Cloud.Shared;
+using Cloud.Shared.Telemetry;
 using MessagePack;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;

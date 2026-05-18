@@ -1,6 +1,6 @@
 using MessagePack;
 
-namespace ChannelProcessor.Telemetry;
+namespace Cloud.Shared.Telemetry;
 
 /// <summary>
 /// The latest value for a single channel on a car, persisted as a Redis Hash field value.

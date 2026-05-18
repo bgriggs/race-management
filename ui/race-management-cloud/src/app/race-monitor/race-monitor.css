@@ -35,8 +35,3 @@
 .col-one-third {
   flex: 1;
 }
-
-.race-position-placeholder {
-  background-color: color-mix(in srgb, currentColor 5%, transparent);
-  border-radius: 4px;
-}

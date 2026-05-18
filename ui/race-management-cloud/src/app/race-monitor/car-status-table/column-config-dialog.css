@@ -1,0 +1,145 @@
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(17, 32, 51, 0.55);
+}
+
+.dialog {
+  position: relative;
+  background: #ffffff;
+  color: #112033;
+  border-radius: 8px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  width: min(640px, 92vw);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem 0.75rem;
+  border-bottom: 1px solid #eef1f6;
+}
+
+.dialog-header h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: #4a5b73;
+  cursor: pointer;
+  padding: 0 0.25rem;
+}
+
+.close-btn:hover,
+.close-btn:focus-visible {
+  color: #112033;
+  outline: none;
+}
+
+.dialog-body {
+  padding: 0.75rem 1.25rem 1rem;
+  overflow: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  border: 1px solid #d6dde7;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #112033;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.status {
+  color: #4a5b73;
+  font-size: 0.9rem;
+  padding: 0.5rem 0;
+}
+
+.status.error {
+  color: #b91c1c;
+}
+
+.channels-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.channels-table th,
+.channels-table td {
+  text-align: left;
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid #eef1f6;
+  vertical-align: middle;
+}
+
+.channels-table thead th {
+  background: #f6f8fb;
+  color: #112033;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+}
+
+.name-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+
+.bolt-icon {
+  color: #f59e0b;
+  font-size: 1.1rem;
+}
+
+.channel-name {
+  font-weight: 500;
+}
+
+.cars-cell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.car-badge {
+  display: inline-block;
+  padding: 0.1rem 0.45rem;
+  border: 1px solid #d6dde7;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background: #f6f8fb;
+  color: #112033;
+}

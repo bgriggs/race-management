@@ -1,4 +1,5 @@
 using ChannelProcessor.Telemetry;
+using Cloud.Shared.Telemetry;
 using MessagePack;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -77,7 +78,7 @@ public class CarChannelStateRepositoryContractTests
 
         var result = await _repo.GetAllAsync("car-A");
 
-        Assert.AreEqual(2, result.Count);
+        Assert.HasCount(2, result);
         Assert.AreEqual("1", result[0].Value);
         Assert.AreEqual("2", result[1].Value);
     }
@@ -86,7 +87,7 @@ public class CarChannelStateRepositoryContractTests
     public async Task GetAll_NoChannels_ReturnsEmptyDictionary()
     {
         var result = await _repo.GetAllAsync(CarKey);
-        Assert.AreEqual(0, result.Count);
+        Assert.IsEmpty(result);
     }
 
     [TestMethod]
@@ -97,8 +98,8 @@ public class CarChannelStateRepositoryContractTests
 
         await _repo.ClearAsync("car-A");
 
-        Assert.AreEqual(0, (await _repo.GetAllAsync("car-A")).Count);
-        Assert.AreEqual(1, (await _repo.GetAllAsync("car-B")).Count);
+        Assert.IsEmpty(await _repo.GetAllAsync("car-A"));
+        Assert.HasCount(1, await _repo.GetAllAsync("car-B"));
     }
 
     [TestMethod]

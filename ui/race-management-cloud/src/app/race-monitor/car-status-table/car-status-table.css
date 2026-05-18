@@ -1,0 +1,124 @@
+:host {
+  display: block;
+  position: relative;
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #d6dde7;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.edit-columns-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: calc(0.5rem * 2 + 1.2em);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  background: #f6f8fb;
+  border: none;
+  border-left: 1px solid #eef1f6;
+  border-bottom: 1px solid #eef1f6;
+  border-top-right-radius: 6px;
+  color: #4a5b73;
+  cursor: pointer;
+  z-index: 2;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.edit-columns-btn:hover,
+.edit-columns-btn:focus-visible {
+  background: #e7eef8;
+  color: #112033;
+  outline: none;
+}
+
+.table-scroll {
+  overflow: auto;
+}
+
+.status {
+  padding: 1rem;
+  color: #4a5b73;
+  font-size: 0.9rem;
+}
+
+.status.error {
+  color: #b91c1c;
+}
+
+.car-status-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.car-status-table th,
+.car-status-table td {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #eef1f6;
+  white-space: nowrap;
+}
+
+.car-status-table thead th {
+  background: #f6f8fb;
+  color: #112033;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.car-status-table th.fixed {
+  background: #eef2f8;
+}
+
+.car-status-table th.draggable {
+  cursor: grab;
+  -webkit-user-select: none;
+  user-select: none;
+  position: relative;
+}
+
+.car-status-table th.draggable:active {
+  cursor: grabbing;
+}
+
+.car-status-table th.dragging {
+  opacity: 0.4;
+}
+
+.car-status-table th.drop-left::before,
+.car-status-table th.drop-right::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #2563eb;
+  pointer-events: none;
+}
+
+.car-status-table th.drop-left::before {
+  left: -1px;
+}
+
+.car-status-table th.drop-right::after {
+  right: -1px;
+}
+
+.car-id {
+  font-weight: 600;
+}
+
+.muted {
+  color: #98a2b3;
+}
+
+.empty {
+  text-align: center;
+  font-style: italic;
+}

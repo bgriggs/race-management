@@ -1,4 +1,5 @@
 using Cloud.Shared;
+using Cloud.Shared.Telemetry;
 using MessagePack;
 using StackExchange.Redis;
 

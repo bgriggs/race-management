@@ -1,0 +1,108 @@
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(17, 32, 51, 0.55);
+}
+
+.dialog {
+  position: relative;
+  background: #ffffff;
+  color: #112033;
+  border-radius: 8px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  padding: 1.5rem 1.75rem;
+  width: min(420px, 92vw);
+  max-height: 80vh;
+  overflow: auto;
+}
+
+.dialog h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1.25rem;
+}
+
+.subtitle {
+  margin: 0 0 1rem;
+  color: #4a5b73;
+  font-size: 0.9rem;
+}
+
+.team-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.team-button {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  padding: 0.75rem 1rem;
+  background: #f6f8fb;
+  border: 1px solid #d6dde7;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.team-button:hover,
+.team-button:focus-visible {
+  background: #e7eef8;
+  border-color: #98b3d6;
+  outline: none;
+}
+
+.team-name {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.team-roles {
+  font-size: 0.8rem;
+  color: #4a5b73;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.primary {
+  background: #2563eb;
+  color: #ffffff;
+  border: 1px solid #1d4ed8;
+  border-radius: 6px;
+  padding: 0.55rem 1.1rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.primary:hover:not(:disabled),
+.primary:focus-visible:not(:disabled) {
+  background: #1d4ed8;
+  outline: none;
+}
+
+.primary:disabled {
+  background: #9bb4e0;
+  border-color: #9bb4e0;
+  cursor: progress;
+}

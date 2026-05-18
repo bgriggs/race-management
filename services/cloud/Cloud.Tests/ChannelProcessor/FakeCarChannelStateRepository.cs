@@ -1,4 +1,5 @@
 using ChannelProcessor.Telemetry;
+using Cloud.Shared.Telemetry;
 
 namespace Cloud.Tests.ChannelProcessor;
 

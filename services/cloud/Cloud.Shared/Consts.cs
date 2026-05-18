@@ -12,4 +12,8 @@ public static class Consts
     public const string CHANNEL_PROC_CONSUMER_GROUP = "channelproc";
     public const string CAR_CHANNEL_STATE_KEY = "car-channels:{0}";
     public const string CAR_CHANNEL_CHANGES_CHANNEL = "car-channel-changes:{0}";
+
+    // Currently-active CarConfiguration ID for a connected car, keyed by carKey.
+    // Written by CarHub on each SendChannelValuesAsync, deleted on disconnect.
+    public const string CAR_ACTIVE_CONFIG_KEY = "car-active-config:{0}";
 }

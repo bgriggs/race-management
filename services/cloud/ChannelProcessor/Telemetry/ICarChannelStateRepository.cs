@@ -1,3 +1,5 @@
+using Cloud.Shared.Telemetry;
+
 namespace ChannelProcessor.Telemetry;
 
 /// <summary>

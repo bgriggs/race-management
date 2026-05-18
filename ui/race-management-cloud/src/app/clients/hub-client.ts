@@ -4,8 +4,15 @@ import * as signalR from '@microsoft/signalr';
 import { MessagePackHubProtocol } from '@microsoft/signalr-protocol-msgpack';
 import Keycloak from 'keycloak-js';
 import { APP_CONFIG } from '../config/app-config';
+import { CarChannelSnapshot } from '../../../../shared-ui/src/cloud-api/car-channel-snapshot';
+import { ChannelChangeNotification } from '../../../../shared-ui/src/cloud-api/channel-change-notification';
 
 export type HubConnectionStatus = 'Disconnected' | 'Connecting' | 'Connected' | 'Reconnecting';
+
+export interface ChannelValueChange {
+  carKey: string;
+  change: ChannelChangeNotification;
+}
 
 const HUB_PATH = '/web-status';
 
@@ -18,6 +25,8 @@ export class HubClient implements OnDestroy {
   private reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
 
   readonly connectionStatus$ = new Subject<HubConnectionStatus>();
+  readonly channelSnapshot$ = new Subject<CarChannelSnapshot[]>();
+  readonly channelValueChanged$ = new Subject<ChannelValueChange>();
 
   async connect(): Promise<void> {
     if (this.connection) return;
@@ -28,6 +37,11 @@ export class HubClient implements OnDestroy {
 
   async disconnect(): Promise<void> {
     await this.disposeConnection();
+  }
+
+  async subscribeToTeam(teamId: number): Promise<void> {
+    if (!this.connection || this.connection.state !== signalR.HubConnectionState.Connected) return;
+    await this.connection.invoke('SubscribeToTeam', teamId);
   }
 
   ngOnDestroy(): void {
@@ -52,6 +66,10 @@ export class HubClient implements OnDestroy {
     this.connection.onreconnecting(() => this.connectionStatus$.next('Reconnecting'));
     this.connection.onreconnected(() => this.connectionStatus$.next('Connected'));
     this.connection.onclose(() => this.connectionStatus$.next('Disconnected'));
+    this.connection.on('ChannelSnapshot', (cars: CarChannelSnapshot[]) =>
+      this.channelSnapshot$.next(cars));
+    this.connection.on('ChannelValueChanged', (carKey: string, change: ChannelChangeNotification) =>
+      this.channelValueChanged$.next({ carKey, change }));
   }
 
   private async startWithRetry(): Promise<void> {

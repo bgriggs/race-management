@@ -1,0 +1,55 @@
+<div class="backdrop" role="presentation" (click)="close()"></div>
+
+<div class="dialog" role="dialog" aria-modal="true" aria-labelledby="column-config-title">
+  <header class="dialog-header">
+    <h2 id="column-config-title">Add columns</h2>
+    <button type="button" class="close-btn" aria-label="Close" (click)="close()">&times;</button>
+  </header>
+
+  <div class="dialog-body">
+    <input
+      type="search"
+      class="search-input"
+      placeholder="Search channels…"
+      [value]="search()"
+      (input)="onSearchInput($event)"
+      aria-label="Search channels"
+    />
+
+    @if (loading()) {
+      <div class="status">Loading channels…</div>
+    } @else if (loadError()) {
+      <div class="status error">{{ loadError() }}</div>
+    } @else if (filteredRows().length === 0) {
+      <div class="status">
+        @if (search()) { No channels match your search. } @else { No channels available. }
+      </div>
+    } @else {
+      <table class="channels-table">
+        <thead>
+          <tr>
+            <th>Channel</th>
+            <th>Cars</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of filteredRows(); track row.channel.id) {
+            <tr>
+              <td class="name-cell">
+                @if (row.channel.isReserved) {
+                  <span class="material-icons bolt-icon" aria-label="Reserved Channel">bolt</span>
+                }
+                <span class="channel-name">{{ row.channel.name }}</span>
+              </td>
+              <td class="cars-cell">
+                @for (carNumber of row.cars; track carNumber) {
+                  <span class="car-badge">{{ carNumber }}</span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</div>
