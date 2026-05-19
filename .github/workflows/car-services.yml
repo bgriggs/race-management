@@ -1,0 +1,42 @@
+name: car-services
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'services/car/**'
+      - 'Car.slnx'
+      - 'Directory.Build.props'
+      - '.github/workflows/car-services.yml'
+  pull_request:
+    paths:
+      - 'services/car/**'
+      - 'Car.slnx'
+      - 'Directory.Build.props'
+      - '.github/workflows/car-services.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore Car.slnx
+
+      - name: Build
+        run: dotnet build Car.slnx --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test Car.slnx --configuration Release --no-build --logger "trx;LogFileName=test-results.trx"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: car-services-test-results
+          path: '**/TestResults/*.trx'
