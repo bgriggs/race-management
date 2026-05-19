@@ -4,6 +4,7 @@ import { signal } from '@angular/core';
 import { KEYCLOAK_EVENT_SIGNAL, KeycloakEventType } from 'keycloak-angular';
 import Keycloak from 'keycloak-js';
 import { App } from './app';
+import { LocalManagementDataClient } from './data/local-management-data-client';
 
 describe('App', () => {
   beforeEach(async () => {
@@ -14,6 +15,10 @@ describe('App', () => {
       logout: () => Promise.resolve()
     } as unknown as Keycloak;
 
+    const localClientStub = {
+      listMyTeamsAsync: vi.fn().mockResolvedValue([])
+    } as unknown as LocalManagementDataClient;
+
     await TestBed.configureTestingModule({
       imports: [App],
       providers: [
@@ -22,7 +27,8 @@ describe('App', () => {
         {
           provide: KEYCLOAK_EVENT_SIGNAL,
           useValue: signal({ type: KeycloakEventType.KeycloakAngularNotInitialized })
-        }
+        },
+        { provide: LocalManagementDataClient, useValue: localClientStub }
       ]
     }).compileComponents();
   });

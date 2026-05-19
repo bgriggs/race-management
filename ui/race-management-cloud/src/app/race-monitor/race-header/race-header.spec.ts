@@ -1,8 +1,9 @@
-import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
+import { provideRouter } from '@angular/router';
 
-import { APP_CONFIG } from '../../config/app-config';
+import { ConfigurationClient } from '../../clients/configuration-client';
+import { TeamSelectionService } from '../../teams/team-selection.service';
 import { RaceHeader } from './race-header';
 
 describe('RaceHeader', () => {
@@ -10,12 +11,28 @@ describe('RaceHeader', () => {
   let fixture: ComponentFixture<RaceHeader>;
 
   beforeEach(async () => {
+    const configClientStub = {
+      listRaces: vi.fn().mockResolvedValue([]),
+    } as unknown as ConfigurationClient;
+
+    const teamSelectionStub = {
+      selectedTeamId: signal<number | null>(null),
+      selectedTeam: signal(null),
+      teams: signal([]),
+      isAdmin: signal(false),
+      loading: signal(false),
+      loadFailed: signal(false),
+      needsSelection: signal(false),
+      hasNoTeams: signal(false),
+      showsOverlay: signal(false),
+    } as unknown as TeamSelectionService;
+
     await TestBed.configureTestingModule({
       imports: [RaceHeader],
       providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-        { provide: APP_CONFIG, useValue: { api: { baseUrl: 'http://localhost' } } },
+        provideRouter([]),
+        { provide: ConfigurationClient, useValue: configClientStub },
+        { provide: TeamSelectionService, useValue: teamSelectionStub },
       ],
     }).compileComponents();
 

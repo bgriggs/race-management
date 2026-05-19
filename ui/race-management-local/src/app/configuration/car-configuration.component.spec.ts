@@ -13,26 +13,24 @@ function buildConfig(name: string): CarConfiguration {
     name,
     notes: 'notes',
     lastUpdated: new Date('2026-01-01T00:00:00Z'),
+    lastUpdatedOnCarTimestamp: null,
     car: 'car-1',
+    isCloudConnectionEnabled: false,
     clientId: 'client-id',
     clientSecret: 'client-secret',
     canConfig: {
-      isEnabled: false,
-      canId: 0,
-      canBusId: 0,
-      isExtended: false,
-      length: 8,
-      isBigEndian: true,
-      isReceive: true,
-      transmitRate: '00:00:01',
-      channelAssignments: []
+      canBusEnabled: [false, false],
+      interfaces: []
     },
     channelDefinitions: [],
+    alarmDefinitions: [],
     counterDefinitions: [],
     mathDefinitions: [],
-    tableMappings: [],
+    tableDefinitions: [],
     timerDefinitions: [],
-    userConditions: []
+    userConditions: [],
+    loggingDefinitions: [],
+    enumDefinitions: []
   };
 }
 
@@ -41,6 +39,9 @@ describe('CarConfigurationComponent', () => {
 
   beforeEach(async () => {
     mockClient = {
+      listDiscoveredRacecarsAsync: vi.fn().mockResolvedValue([]),
+      getActiveRacecarAsync: vi.fn().mockResolvedValue(null),
+      selectRacecarAsync: vi.fn(),
       loadCarConfigurationSummariesAsync: vi.fn().mockResolvedValue([
         {
           id: 'summary-1',
