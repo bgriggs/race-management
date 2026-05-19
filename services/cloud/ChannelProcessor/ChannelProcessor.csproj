@@ -25,4 +25,8 @@
 	  <ProjectReference Include="..\Cloud.Shared\Cloud.Shared.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="Controllers\" />
+	</ItemGroup>
+
 </Project>
