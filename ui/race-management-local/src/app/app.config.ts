@@ -1,6 +1,12 @@
-import { provideHttpClient } from '@angular/common/http';
-import { APP_INITIALIZER, ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter } from '@angular/router';
+import {
+  INCLUDE_BEARER_TOKEN_INTERCEPTOR_CONFIG,
+  IncludeBearerTokenCondition,
+  includeBearerTokenInterceptor,
+  provideKeycloak
+} from 'keycloak-angular';
 import {
   MANAGEMENT_DATA_CLIENT,
   type ManagementDataClient
@@ -14,35 +20,55 @@ import { LocalManagementDataClient } from './data/local-management-data-client';
 
 import { routes } from './app.routes';
 
-export const appConfig: ApplicationConfig = {
-  providers: [
-    provideBrowserGlobalErrorListeners(),
-    provideRouter(routes),
-    provideHttpClient(),
-    {
-      provide: APP_INITIALIZER,
-      multi: true,
-      deps: [SiteSettingsService],
-      useFactory: (siteSettingsService: SiteSettingsService) => {
-        return () => siteSettingsService.loadAsync();
-      }
-    },
-    {
-      provide: MANAGEMENT_DATA_CLIENT_SETTINGS,
-      deps: [SiteSettingsService],
-      useFactory: (siteSettingsService: SiteSettingsService): ManagementDataClientSettings => {
-        return {
-          baseServerUrl: siteSettingsService.value.managementDataServiceBaseUrl
-        };
-      }
-    },
-    {
-      provide: MANAGEMENT_DATA_CLIENT,
-      deps: [LocalManagementDataClient],
-      useFactory: (localManagementDataClient: LocalManagementDataClient): ManagementDataClient => {
-        return localManagementDataClient;
-      }
-    },
-    LocalManagementDataClient
-  ]
-};
+export function buildAppConfig(siteSettings: SiteSettingsService): ApplicationConfig {
+  const settings = siteSettings.value;
+  const apiBearerCondition: IncludeBearerTokenCondition = {
+    urlPattern: new RegExp(`^${escapeRegex(settings.managementDataServiceBaseUrl)}(/.*)?$`, 'i')
+  };
+
+  return {
+    providers: [
+      provideBrowserGlobalErrorListeners(),
+      provideRouter(routes),
+      provideHttpClient(withInterceptors([includeBearerTokenInterceptor])),
+      provideKeycloak({
+        config: {
+          url: settings.keycloak.url,
+          realm: settings.keycloak.realm,
+          clientId: settings.keycloak.clientId
+        },
+        initOptions: {
+          onLoad: 'check-sso',
+          silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
+          pkceMethod: 'S256',
+          checkLoginIframe: false
+        },
+        providers: [
+          {
+            provide: INCLUDE_BEARER_TOKEN_INTERCEPTOR_CONFIG,
+            useValue: [apiBearerCondition]
+          }
+        ]
+      }),
+      { provide: SiteSettingsService, useValue: siteSettings },
+      {
+        provide: MANAGEMENT_DATA_CLIENT_SETTINGS,
+        useValue: {
+          baseServerUrl: settings.managementDataServiceBaseUrl
+        } satisfies ManagementDataClientSettings
+      },
+      {
+        provide: MANAGEMENT_DATA_CLIENT,
+        deps: [LocalManagementDataClient],
+        useFactory: (localManagementDataClient: LocalManagementDataClient): ManagementDataClient => {
+          return localManagementDataClient;
+        }
+      },
+      LocalManagementDataClient
+    ]
+  };
+}
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}

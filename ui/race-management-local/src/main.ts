@@ -1,6 +1,10 @@
 import { bootstrapApplication } from '@angular/platform-browser';
-import { appConfig } from './app/app.config';
+import { buildAppConfig } from './app/app.config';
 import { App } from './app/app';
+import { SiteSettingsService } from './app/config/site-settings';
 
-bootstrapApplication(App, appConfig)
-  .catch((err: unknown) => console.error(err));
+const siteSettings = new SiteSettingsService();
+siteSettings
+  .loadAsync()
+  .then(() => bootstrapApplication(App, buildAppConfig(siteSettings)))
+  .catch((err: unknown) => console.error('Application bootstrap failed:', err));

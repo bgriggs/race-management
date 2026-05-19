@@ -46,12 +46,26 @@
 	border-bottom-color: #e45050;
 }
 
-.user-info {
+.user-area {
 	margin-left: auto;
+	position: relative;
+}
+
+.user-btn {
 	display: inline-flex;
 	align-items: center;
 	gap: 0.5rem;
+	background: none;
+	border: none;
+	cursor: pointer;
 	color: #f8fbff;
+	font-size: 0.9rem;
+	padding: 0.35rem 0.5rem;
+	border-radius: 4px;
+}
+
+.user-btn:hover {
+	background: rgb(255 255 255 / 8%);
 }
 
 .user-icon {
@@ -61,6 +75,7 @@
 	border: 2px solid #f8fbff;
 	display: inline-block;
 	position: relative;
+	flex-shrink: 0;
 }
 
 .user-icon::before,
@@ -89,6 +104,47 @@
 	font-weight: 600;
 }
 
+.caret {
+	width: 0;
+	height: 0;
+	border-left: 4px solid transparent;
+	border-right: 4px solid transparent;
+	border-top: 5px solid #f8fbff;
+	display: inline-block;
+}
+
+.user-dropdown {
+	position: absolute;
+	right: 0;
+	top: calc(100% + 6px);
+	background: #1a2e45;
+	border: 1px solid rgb(255 255 255 / 12%);
+	border-radius: 6px;
+	min-width: 130px;
+	padding: 4px 0;
+	list-style: none;
+	margin: 0;
+	box-shadow: 0 6px 20px rgb(0 0 0 / 30%);
+	z-index: 20;
+}
+
+.user-dropdown li button {
+	display: block;
+	width: 100%;
+	padding: 0.5rem 1rem;
+	background: none;
+	border: none;
+	color: #d9e3f2;
+	text-align: left;
+	cursor: pointer;
+	font-size: 0.9rem;
+}
+
+.user-dropdown li button:hover {
+	background: rgb(255 255 255 / 8%);
+	color: #fff;
+}
+
 .app-content {
 	padding: 1rem;
 }
@@ -106,7 +162,7 @@
 		gap: 0.45rem;
 	}
 
-	.user-info {
+	.user-area {
 		margin-left: 0;
 	}
 }

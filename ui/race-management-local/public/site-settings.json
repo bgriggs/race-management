@@ -1,3 +1,8 @@
 {
-  "managementDataServiceBaseUrl": "http://localhost:5206"
+  "managementDataServiceBaseUrl": "http://localhost:5206",
+  "keycloak": {
+    "url": "https://auth.redmist.racing",
+    "realm": "race-management",
+    "clientId": "race-management-ui"
+  }
 }

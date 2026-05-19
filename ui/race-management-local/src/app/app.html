@@ -6,9 +6,32 @@
 		<a routerLink="/configuration" routerLinkActive="active">Configuration</a>
 	</nav>
 
-	<div class="user-info" aria-label="Current user">
-		<span class="user-icon" aria-hidden="true"></span>
-		<span class="username">{{ userDisplayName }}</span>
+	<div class="user-area">
+		<button
+			type="button"
+			class="user-btn"
+			aria-haspopup="true"
+			[attr.aria-expanded]="userMenuOpen()"
+			(click)="toggleUserMenu($event)"
+		>
+			<span class="user-icon" aria-hidden="true"></span>
+			<span class="username">{{ auth.displayName() }}</span>
+			<span class="caret" aria-hidden="true"></span>
+		</button>
+
+		@if (userMenuOpen()) {
+			<ul class="user-dropdown" role="menu">
+				@if (auth.isLoggedIn()) {
+					<li role="none">
+						<button type="button" role="menuitem" (click)="auth.logout()">Logout</button>
+					</li>
+				} @else {
+					<li role="none">
+						<button type="button" role="menuitem" (click)="auth.login()">Login</button>
+					</li>
+				}
+			</ul>
+		}
 	</div>
 </header>
 
