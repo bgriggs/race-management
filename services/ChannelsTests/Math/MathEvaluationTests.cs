@@ -34,13 +34,13 @@ public class MathEvaluationTests
     private MathEvaluation CreateEvaluation() =>
         new(mathRepo, channelRepo, channelDefRepo);
 
-    private void SetupInputChannel(Guid id, string value, string baseUnit = "km") =>
-        SetupChannel(id, value, baseUnit, 2);
+    private void SetupInputChannel(Guid id, string value, string baseUnit = "Kilometer", string dataType = "Length") =>
+        SetupChannel(id, value, baseUnit, 2, dataType);
 
-    private void SetupChannel(Guid id, string value, string baseUnit, int decimalPlaces)
+    private void SetupChannel(Guid id, string value, string baseUnit, int decimalPlaces, string dataType = "Length")
     {
         channelRepo.Set(id, value);
-        channelDefRepo.Set(new ChannelDefinition { Id = id, BaseUnitType = baseUnit });
+        channelDefRepo.Set(new ChannelDefinition { Id = id, BaseUnitType = baseUnit, DataType = dataType });
     }
 
     private void SetupOutputChannel(Guid id, int decimalPlaces = 2) =>

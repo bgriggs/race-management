@@ -251,8 +251,8 @@ public class LogicEvaluationTests
     [TestMethod]
     public async Task ChannelComparison_SameUnit_GreaterThan_ReturnsTrue()
     {
-        SetupChannel(Ch1, "100", "cm");
-        SetupChannel(Ch2, "50", "cm");
+        SetupChannel(Ch1, "100", "Centimeter");
+        SetupChannel(Ch2, "50", "Centimeter");
         var stmt = new StatementDefinition { Id = StatementId(1), ActivateComparisons = [[ChannelComparison(Ch1, LogicType.GreaterThan, Ch2)]] };
 
         Assert.IsTrue(await CreateEvaluation().EvaluateAsync(stmt));
@@ -262,8 +262,8 @@ public class LogicEvaluationTests
     public async Task ChannelComparison_CompatibleUnits_ConvertsBeforeComparing_ReturnsTrue()
     {
         // 1 km > 500 cm (= 5 m) → true
-        SetupChannel(Ch1, "1", "km");
-        SetupChannel(Ch2, "500", "cm");
+        SetupChannel(Ch1, "1", "Kilometer");
+        SetupChannel(Ch2, "500", "Centimeter");
         var stmt = new StatementDefinition { Id = StatementId(1), ActivateComparisons = [[ChannelComparison(Ch1, LogicType.GreaterThan, Ch2)]] };
 
         Assert.IsTrue(await CreateEvaluation().EvaluateAsync(stmt));
@@ -273,8 +273,8 @@ public class LogicEvaluationTests
     public async Task ChannelComparison_CompatibleUnits_ConvertsBeforeComparing_ReturnsFalse()
     {
         // 100 cm < 1 km → GreaterThan is false
-        SetupChannel(Ch1, "100", "cm");
-        SetupChannel(Ch2, "1", "km");
+        SetupChannel(Ch1, "100", "Centimeter");
+        SetupChannel(Ch2, "1", "Kilometer");
         var stmt = new StatementDefinition { Id = StatementId(1), ActivateComparisons = [[ChannelComparison(Ch1, LogicType.GreaterThan, Ch2)]] };
 
         Assert.IsFalse(await CreateEvaluation().EvaluateAsync(stmt));
@@ -293,8 +293,8 @@ public class LogicEvaluationTests
     [TestMethod]
     public async Task ChannelComparison_IncompatibleUnits_ThrowsIncompatibleUnitException()
     {
-        SetupChannel(Ch1, "100", "cm");  // Length
-        SetupChannel(Ch2, "100", "kg");  // Mass
+        SetupChannel(Ch1, "100", "Centimeter");  // Length
+        SetupChannel(Ch2, "100", "Kilogram");    // Mass
         var stmt = new StatementDefinition { Id = StatementId(1), ActivateComparisons = [[ChannelComparison(Ch1, LogicType.GreaterThan, Ch2)]] };
 
         await Assert.ThrowsAsync<IncompatibleUnitException>(
@@ -304,7 +304,7 @@ public class LogicEvaluationTests
     [TestMethod]
     public async Task ChannelComparison_UnitVsDimensionless_ThrowsIncompatibleUnitException()
     {
-        SetupChannel(Ch1, "100", "m");
+        SetupChannel(Ch1, "100", "Meter");
         SetupChannel(Ch2, "50", "");
         var stmt = new StatementDefinition { Id = StatementId(1), ActivateComparisons = [[ChannelComparison(Ch1, LogicType.GreaterThan, Ch2)]] };
 
