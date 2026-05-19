@@ -41,7 +41,7 @@ public sealed class SignalRTransmitConsumerTests
         var client = new FakeCloudClient();
         var config = BuildConfig(1);
 
-        var consumer = new CloudTransmitConsumer(client, () => config, time, NullLogger.Instance);
+        var consumer = new CloudTransmitConsumer(client, () => config, time, NullLogger<CloudTransmitConsumer>.Instance);
         consumer.Start();
         await Task.Delay(50, TestContext.CancellationToken); // let both loops register their initial Task.Delay timers
 
@@ -51,7 +51,7 @@ public sealed class SignalRTransmitConsumerTests
         await Task.Delay(200, TestContext.CancellationToken); // let the loop body run
 
         Assert.IsGreaterThanOrEqualTo(1, client.Sends.Count, "Delta should have been sent.");
-        Assert.AreEqual(1, client.Sends[0].Length);
+        Assert.HasCount(1, client.Sends[0]);
         Assert.AreEqual("5", client.Sends[0][0].Value);
 
         await consumer.DisposeAsync();
@@ -64,7 +64,7 @@ public sealed class SignalRTransmitConsumerTests
         var client = new FakeCloudClient();
         var config = BuildConfig(1);
 
-        var consumer = new CloudTransmitConsumer(client, () => config, time, NullLogger.Instance);
+        var consumer = new CloudTransmitConsumer(client, () => config, time, NullLogger<CloudTransmitConsumer>.Instance);
         consumer.Start();
         await Task.Delay(50, TestContext.CancellationToken);
         await consumer.HandleAsync(new[] { new InternalChannelValue(1, 7.0, 0, time.GetUtcNow().UtcDateTime) }, default);
@@ -73,7 +73,7 @@ public sealed class SignalRTransmitConsumerTests
         await Task.Delay(200, TestContext.CancellationToken);
 
         Assert.IsGreaterThanOrEqualTo(1, client.Sends.Count, "Full should have been sent.");
-        Assert.AreEqual(1, client.Sends[0].Length);
+        Assert.HasCount(1, client.Sends[0]);
 
         await consumer.DisposeAsync();
     }

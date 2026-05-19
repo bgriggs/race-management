@@ -4,7 +4,8 @@
 		<TargetFramework>net10.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
-	</PropertyGroup>
+	    <UserSecretsId>fd4d6dcf-7e6d-440e-8c70-43b3965588be</UserSecretsId>
+  </PropertyGroup>
 
 	<ItemGroup>
 		<InternalsVisibleTo Include="Racecar.Tests" />

@@ -39,18 +39,34 @@ public class ChannelValue
         if (!double.TryParse(Value, out double v))
             return null;
 
-        if (string.IsNullOrEmpty(definition.BaseUnitType))
+        if (string.IsNullOrEmpty(definition.BaseUnitType) || string.IsNullOrEmpty(definition.DataType))
             return null;
 
-        // Create the quantity expressed in its stored base unit.
-        IQuantity baseQuantity = Quantity.FromUnitAbbreviation(v, definition.BaseUnitType);
+        // Create the quantity expressed in its stored base unit using the enum name.
+        if (!TryParseUnitEnum(definition.DataType, definition.BaseUnitType, out var baseUnit) || baseUnit is null)
+            return null;
+
+        IQuantity baseQuantity = Quantity.From(v, baseUnit);
 
         // If no output unit is configured, or it matches the base unit, return as-is.
         if (string.IsNullOrEmpty(definition.OutputUnitType) || definition.OutputUnitType == definition.BaseUnitType)
             return baseQuantity;
 
-        // Resolve the target unit enum from its abbreviation and convert.
-        IQuantity targetReference = Quantity.FromUnitAbbreviation(0, definition.OutputUnitType);
-        return baseQuantity.ToUnit(targetReference.Unit);
+        // Resolve the target unit enum from its name and convert.
+        if (!TryParseUnitEnum(definition.DataType, definition.OutputUnitType, out var outputUnit) || outputUnit is null)
+            return baseQuantity;
+
+        return baseQuantity.ToUnit(outputUnit);
+    }
+
+    private static bool TryParseUnitEnum(string dataType, string unitName, out Enum? unit)
+    {
+        unit = null;
+        if (!Quantity.ByName.TryGetValue(dataType, out var quantityInfo))
+            return false;
+        if (!Enum.TryParse(quantityInfo.UnitType, unitName, ignoreCase: false, out var result))
+            return false;
+        unit = (Enum)result;
+        return true;
     }
 }

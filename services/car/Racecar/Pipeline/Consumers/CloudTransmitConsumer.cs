@@ -1,5 +1,6 @@
 using Channels;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.Hosting;
 using Racecar.Clients;
 using Racecar.Pipeline.Dispatch;
 
@@ -9,18 +10,17 @@ namespace Racecar.Pipeline.Consumers;
 /// Channel consumer that ships values to the cloud via <see cref="ICloudClient"/> on a
 /// 100 ms delta cadence and a 2.5 s full-state cadence.
 /// </summary>
-public sealed class CloudTransmitConsumer : IChannelConsumer, IAsyncDisposable
+public sealed class CloudTransmitConsumer(
+    ICloudClient cloudClient,
+    Func<ActiveConfiguration> configAccessor,
+    TimeProvider time,
+    ILogger<CloudTransmitConsumer> logger,
+    ChannelConsumerOptions? options = null) : IChannelConsumer, IHostedService, IAsyncDisposable
 {
     private static readonly TimeSpan DeltaInterval = TimeSpan.FromMilliseconds(100);
     private static readonly TimeSpan FullInterval = TimeSpan.FromMilliseconds(2500);
     private static readonly TimeSpan SendTimeout = TimeSpan.FromSeconds(2);
     private const int ReconnectFailureThreshold = 5;
-
-    private readonly ICloudClient _cloudClient;
-    private readonly Func<ActiveConfiguration> _configAccessor;
-    private readonly TimeProvider _time;
-    private readonly ILogger _logger;
-
     private readonly Lock _stateLock = new();
     private readonly Dictionary<int, ChannelValue> _full = [];
     private readonly HashSet<int> _changes = [];
@@ -31,23 +31,8 @@ public sealed class CloudTransmitConsumer : IChannelConsumer, IAsyncDisposable
     private int _consecutiveSendFailures;
     private long _sendTimeouts;
 
-    public CloudTransmitConsumer(
-        ICloudClient cloudClient,
-        Func<ActiveConfiguration> configAccessor,
-        TimeProvider time,
-        ILogger logger,
-        ChannelConsumerOptions? options = null)
-    {
-        _cloudClient = cloudClient;
-        _configAccessor = configAccessor;
-        _time = time;
-        _logger = logger;
-        Options = options ?? new ChannelConsumerOptions();
-        Name = "signalr:cloud";
-    }
-
-    public string Name { get; }
-    public ChannelConsumerOptions Options { get; }
+    public string Name { get; } = "signalr:cloud";
+    public ChannelConsumerOptions Options { get; } = options ?? new ChannelConsumerOptions();
 
     public long SendTimeouts => Interlocked.Read(ref _sendTimeouts);
 
@@ -55,7 +40,7 @@ public sealed class CloudTransmitConsumer : IChannelConsumer, IAsyncDisposable
 
     public ValueTask HandleAsync(ReadOnlyMemory<InternalChannelValue> values, CancellationToken ct)
     {
-        var config = _configAccessor();
+        var config = configAccessor();
         var span = values.Span;
         lock (_stateLock)
         {
@@ -82,11 +67,19 @@ public sealed class CloudTransmitConsumer : IChannelConsumer, IAsyncDisposable
         return ValueTask.CompletedTask;
     }
 
+    public Task StartAsync(CancellationToken cancellationToken)
+    {
+        Start();
+        return Task.CompletedTask;
+    }
+
+    public async Task StopAsync(CancellationToken cancellationToken) => await DisposeAsync().ConfigureAwait(false);
+
     public void Start()
     {
         if (_cts is not null) return;
         _cts = new CancellationTokenSource();
-        _cloudClient.ConnectionStatusChanged += OnConnectionStatusChanged;
+        cloudClient.ConnectionStatusChanged += OnConnectionStatusChanged;
         _deltaLoop = Task.Run(() => DeltaLoopAsync(_cts.Token));
         _fullLoop = Task.Run(() => FullLoopAsync(_cts.Token));
     }
@@ -107,11 +100,11 @@ public sealed class CloudTransmitConsumer : IChannelConsumer, IAsyncDisposable
         {
             while (!ct.IsCancellationRequested)
             {
-                await Task.Delay(DeltaInterval, _time, ct).ConfigureAwait(false);
+                await Task.Delay(DeltaInterval, time, ct).ConfigureAwait(false);
 
                 var batch = TakeChanges();
                 if (batch.Count == 0) continue;
-                await SendWithTimeoutAsync(_cloudClient.SendChannelValuesAsync([.. batch]), ct).ConfigureAwait(false);
+                await SendWithTimeoutAsync(cloudClient.SendChannelValuesAsync([.. batch]), ct).ConfigureAwait(false);
             }
         }
         catch (OperationCanceledException) { }
@@ -123,11 +116,11 @@ public sealed class CloudTransmitConsumer : IChannelConsumer, IAsyncDisposable
         {
             while (!ct.IsCancellationRequested)
             {
-                await Task.Delay(FullInterval, _time, ct).ConfigureAwait(false);
+                await Task.Delay(FullInterval, time, ct).ConfigureAwait(false);
 
                 var snapshot = SnapshotFull();
                 if (snapshot.Count == 0) continue;
-                await SendWithTimeoutAsync(_cloudClient.SendChannelValuesAsync([.. snapshot]), ct).ConfigureAwait(false);
+                await SendWithTimeoutAsync(cloudClient.SendChannelValuesAsync([.. snapshot]), ct).ConfigureAwait(false);
             }
         }
         catch (OperationCanceledException) { }
@@ -145,13 +138,13 @@ public sealed class CloudTransmitConsumer : IChannelConsumer, IAsyncDisposable
                 var snapshot = SnapshotFull();
                 if (snapshot.Count > 0)
                 {
-                    await SendWithTimeoutAsync(_cloudClient.SendChannelValuesAsync([.. snapshot]), ct).ConfigureAwait(false);
+                    await SendWithTimeoutAsync(cloudClient.SendChannelValuesAsync([.. snapshot]), ct).ConfigureAwait(false);
                 }
                 lock (_stateLock) { _changes.Clear(); }
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Full-on-reconnect send failed for cloud target.");
+                logger.LogWarning(ex, "Full-on-reconnect send failed for cloud target.");
             }
         });
     }
@@ -182,17 +175,17 @@ public sealed class CloudTransmitConsumer : IChannelConsumer, IAsyncDisposable
     private async Task SendWithTimeoutAsync(Task send, CancellationToken ct)
     {
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        var timeout = Task.Delay(SendTimeout, _time, cts.Token);
+        var timeout = Task.Delay(SendTimeout, time, cts.Token);
         var winner = await Task.WhenAny(send, timeout).ConfigureAwait(false);
 
         if (winner == timeout)
         {
             Interlocked.Increment(ref _sendTimeouts);
             var fails = Interlocked.Increment(ref _consecutiveSendFailures);
-            _logger.LogWarning("SignalR send to cloud timed out (consecutiveFailures={Fails}).", fails);
+            logger.LogWarning("SignalR send to cloud timed out (consecutiveFailures={Fails}).", fails);
             if (fails >= ReconnectFailureThreshold)
             {
-                _logger.LogWarning("SignalR cloud target exceeded failure threshold; consider reconnect.");
+                logger.LogWarning("SignalR cloud target exceeded failure threshold; consider reconnect.");
                 Interlocked.Exchange(ref _consecutiveSendFailures, 0);
             }
             return;
@@ -207,13 +200,13 @@ public sealed class CloudTransmitConsumer : IChannelConsumer, IAsyncDisposable
         catch (Exception ex)
         {
             var fails = Interlocked.Increment(ref _consecutiveSendFailures);
-            _logger.LogWarning(ex, "SignalR send to cloud failed (consecutiveFailures={Fails}).", fails);
+            logger.LogWarning(ex, "SignalR send to cloud failed (consecutiveFailures={Fails}).", fails);
         }
     }
 
     public async ValueTask DisposeAsync()
     {
-        _cloudClient.ConnectionStatusChanged -= OnConnectionStatusChanged;
+        cloudClient.ConnectionStatusChanged -= OnConnectionStatusChanged;
         if (_cts is null) return;
         _cts.Cancel();
         try

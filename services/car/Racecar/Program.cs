@@ -6,6 +6,8 @@ using Racecar.CanBus;
 using Racecar.Clients;
 using Racecar.Logging;
 using Racecar.Pipeline;
+using Racecar.Pipeline.Consumers;
+using Racecar.Pipeline.Dispatch;
 using Racecar.Services;
 
 namespace Racecar;
@@ -41,13 +43,20 @@ public class Program
         builder.Services.AddSingleton<ActiveConfigurationFactory>();
         builder.Services.AddSingleton<RacecarPipelineHost>();
         builder.Services.AddHostedService(sp => sp.GetRequiredService<RacecarPipelineHost>());
+        builder.Services.AddSingleton<Func<ActiveConfiguration>>(sp =>
+            () => sp.GetRequiredService<RacecarPipelineHost>().ActiveConfiguration);
         builder.Services.AddHostedService<TestChannelValues>();
 
         // Pipeline startup: build initial ActiveConfiguration and attach CAN buses.
         builder.Services.AddHostedService<PipelineStartupService>();
 
         builder.Services.AddSingleton<CloudClient>();
+        builder.Services.AddSingleton<ICloudClient, CloudClient>(sp => sp.GetRequiredService<CloudClient>());
         builder.Services.AddHostedService(sp => sp.GetRequiredService<CloudClient>());
+
+        builder.Services.AddSingleton<CloudTransmitConsumer>();
+        builder.Services.AddSingleton<IChannelConsumer>(sp => sp.GetRequiredService<CloudTransmitConsumer>());
+        builder.Services.AddHostedService(sp => sp.GetRequiredService<CloudTransmitConsumer>());
 
         var app = builder.Build();
 

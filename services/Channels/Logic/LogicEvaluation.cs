@@ -227,8 +227,14 @@ public class LogicEvaluation(
         if (sourceUnit == targetUnit)
             return value;
 
-        IQuantity sourceQuantity = Quantity.FromUnitAbbreviation(value, sourceUnit);
-        IQuantity targetReference = Quantity.FromUnitAbbreviation(0, targetUnit);
+        if (!TryParseUnitByName(sourceUnit, out var sourceUnitEnum) || sourceUnitEnum is null)
+            throw new IncompatibleUnitException(sourceUnit, targetUnit, $"Cannot resolve unit '{sourceUnit}'.");
+
+        if (!TryParseUnitByName(targetUnit, out var targetUnitEnum) || targetUnitEnum is null)
+            throw new IncompatibleUnitException(sourceUnit, targetUnit, $"Cannot resolve unit '{targetUnit}'.");
+
+        IQuantity sourceQuantity = Quantity.From(value, sourceUnitEnum);
+        IQuantity targetReference = Quantity.From(0, targetUnitEnum);
 
         if (sourceQuantity.QuantityInfo.Name != targetReference.QuantityInfo.Name)
             throw new IncompatibleUnitException(
@@ -237,6 +243,20 @@ public class LogicEvaluation(
                 $"Cannot compare {sourceQuantity.QuantityInfo.Name} ({sourceUnit}) with {targetReference.QuantityInfo.Name} ({targetUnit}).");
 
         return sourceQuantity.ToUnit(targetReference.Unit).Value;
+    }
+
+    private static bool TryParseUnitByName(string unitName, out Enum? unit)
+    {
+        unit = null;
+        foreach (var qInfo in Quantity.Infos)
+        {
+            if (Enum.TryParse(qInfo.UnitType, unitName, ignoreCase: false, out var result))
+            {
+                unit = (Enum)result;
+                return true;
+            }
+        }
+        return false;
     }
 
     private static bool Compare(double left, double right, LogicType logic) => logic switch

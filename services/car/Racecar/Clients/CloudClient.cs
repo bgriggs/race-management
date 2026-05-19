@@ -193,7 +193,7 @@ public class CloudClient : HubClientBase, ICloudClient
         var h = hub;
         if (h != null)
         {
-            await h.InvokeAsync("SendChannelValuesAsync", channelValues);
+            await h.InvokeAsync("SendChannelValuesAsync", channelValues, carConfiguration.Car, carConfiguration.ConfigurationId);
         }
     }
 
