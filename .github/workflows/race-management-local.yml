@@ -4,11 +4,21 @@ on:
   push:
     branches: [main]
     paths:
+      - 'ui/package.json'
+      - 'ui/package-lock.json'
+      - 'ui/angular.json'
+      - 'ui/tsconfig.json'
       - 'ui/race-management-local/**'
+      - 'ui/shared-ui/**'
       - '.github/workflows/race-management-local.yml'
   pull_request:
     paths:
+      - 'ui/package.json'
+      - 'ui/package-lock.json'
+      - 'ui/angular.json'
+      - 'ui/tsconfig.json'
       - 'ui/race-management-local/**'
+      - 'ui/shared-ui/**'
       - '.github/workflows/race-management-local.yml'
 
 jobs:
@@ -16,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ui/race-management-local
+        working-directory: ui
     steps:
       - uses: actions/checkout@v4
 
@@ -24,13 +34,13 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: ui/race-management-local/package-lock.json
+          cache-dependency-path: ui/package-lock.json
 
       - name: Install
         run: npm ci
 
       - name: Build
-        run: npm run build
+        run: npm run build:local
 
       - name: Test
-        run: npm test -- --watch=false
+        run: npm run test:local -- --watch=false
