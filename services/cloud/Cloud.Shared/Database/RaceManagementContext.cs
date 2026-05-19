@@ -61,6 +61,12 @@ public class RaceManagementContext(DbContextOptions<RaceManagementContext> optio
         modelBuilder.Entity<ChannelStatusTableConfiguration>()
             .HasIndex(c => new { c.TeamId, c.UserId });
 
+        modelBuilder.Entity<ChannelStatusTableConfiguration>()
+            .HasMany(c => c.Columns)
+            .WithOne()
+            .HasForeignKey(c => new { c.TeamId, c.UserId })
+            .OnDelete(DeleteBehavior.Cascade);
+
         modelBuilder.Entity<Race>()
             .HasOne<Team>()
             .WithMany()

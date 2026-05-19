@@ -4,6 +4,8 @@
  */
 
 export interface ChannelStatusTableColumnConfiguration {
+    teamId: number;
+    userId: string;
     channelDefinitionId: string;
     order: number;
     nameOverride: string | null;

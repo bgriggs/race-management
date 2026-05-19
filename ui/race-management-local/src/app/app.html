@@ -6,6 +6,40 @@
 		<a routerLink="/configuration" routerLinkActive="active">Configuration</a>
 	</nav>
 
+	@if (auth.isLoggedIn() && teamSelection.selectedTeam()) {
+		<div class="team-area">
+			@if (teamSelection.hasMultipleTeams()) {
+				<button
+					type="button"
+					class="team-btn"
+					aria-haspopup="true"
+					[attr.aria-expanded]="teamMenuOpen()"
+					(click)="toggleTeamMenu($event)"
+				>
+					<span class="team-name">{{ teamSelection.selectedTeam()!.name }}</span>
+					<span class="caret" aria-hidden="true"></span>
+				</button>
+
+				@if (teamMenuOpen()) {
+					<ul class="team-dropdown" role="menu">
+						@for (team of teamSelection.teams(); track team.id) {
+							<li role="none">
+								<button
+									type="button"
+									role="menuitem"
+									[class.active]="team.id === teamSelection.selectedTeamId()"
+									(click)="selectTeam(team.id, $event)"
+								>{{ team.name }}</button>
+							</li>
+						}
+					</ul>
+				}
+			} @else {
+				<span class="team-name team-name-static">{{ teamSelection.selectedTeam()!.name }}</span>
+			}
+		</div>
+	}
+
 	<div class="user-area">
 		<button
 			type="button"

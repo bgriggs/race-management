@@ -6,8 +6,6 @@
   "csNullableTranslation": "null",
   "customTypeMappings": {
     "System.Guid": "string",
-    "System.TimeSpan": "string",
-    "System.DateTime": "string",
-    "System.DateTimeOffset": "string"
+    "System.TimeSpan": "string"
   }
 }

@@ -197,6 +197,18 @@ export class ConfigurationClient {
     }
   }
 
+  saveChannelStatusTableConfiguration(
+    teamId: number,
+    userId: string,
+    configuration: ChannelStatusTableConfiguration,
+  ): Promise<void> {
+    return firstValueFrom(
+      this.http.post<void>(this.url('save-channel-status-table-configuration'), configuration, {
+        params: { teamId, userId },
+      }),
+    );
+  }
+
   private url(action: string): string {
     const base = this.config.api.baseUrl.replace(/\/$/, '');
     return `${base}/${API_PREFIX}/${CONTROLLER}/${action}`;

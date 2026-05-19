@@ -3,11 +3,11 @@ using System.Text;
 
 namespace Common.TypeScript;
 
-internal static class MessagePackConverterGenerator
+public static class MessagePackConverterGenerator
 {
     private const string OutputFileName = "message-pack-converter.ts";
 
-    internal static void Generate(IEnumerable<Type> types, string outputDirectory)
+    public static void Generate(IEnumerable<Type> types, string outputDirectory)
     {
         var classTypes = types.Where(t => t.IsClass && !t.IsAbstract).Distinct().ToList();
         if (classTypes.Count == 0)
@@ -49,18 +49,57 @@ internal static class MessagePackConverterGenerator
         sb.AppendLine("    return encode(value);");
         sb.AppendLine("}");
         sb.AppendLine();
+        sb.AppendLine("function convertDictionary<V>(raw: unknown, convertValue: (v: unknown) => V): { [key: string]: V } {");
+        sb.AppendLine("    const out: { [key: string]: V } = {};");
+        sb.AppendLine("    if (raw == null) return out;");
+        sb.AppendLine("    if (raw instanceof Map) {");
+        sb.AppendLine("        for (const [k, v] of raw) out[String(k)] = convertValue(v);");
+        sb.AppendLine("    } else {");
+        sb.AppendLine("        for (const k of Object.keys(raw as object)) {");
+        sb.AppendLine("            out[k] = convertValue((raw as Record<string, unknown>)[k]);");
+        sb.AppendLine("        }");
+        sb.AppendLine("    }");
+        sb.AppendLine("    return out;");
+        sb.AppendLine("}");
+        sb.AppendLine();
+
+        var nullabilityContext = new NullabilityInfoContext();
 
         foreach (var type in classTypes)
         {
             var fn = ToCamelCase(type.Name);
-            sb.AppendLine($"export function {fn}FromMessagePack(obj: Record<string, unknown>): {type.Name} {{");
-            sb.AppendLine("    return {");
-
             var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
                 .Where(p => p.CanRead)
                 .ToList();
 
-            var nullabilityContext = new NullabilityInfoContext();
+            var intKeys = TryGetIntegerKeyOrder(type, props);
+            if (intKeys is not null)
+            {
+                sb.AppendLine($"export function {fn}FromMessagePack(arr: unknown[]): {type.Name} {{");
+                sb.AppendLine("    return {");
+                for (int i = 0; i < props.Count; i++)
+                {
+                    var prop = props[i];
+                    var tsName = ToCamelCase(prop.Name);
+                    var source = $"arr[{intKeys[i]}]";
+                    bool isNullable = Nullable.GetUnderlyingType(prop.PropertyType) != null
+                                      || nullabilityContext.Create(prop).WriteState == NullabilityState.Nullable;
+                    var expr = GetMessagePackExpression(prop.PropertyType, source, decodableTypes, isNullable);
+                    sb.AppendLine($"        {tsName}: {expr},");
+                }
+                sb.AppendLine("    };");
+                sb.AppendLine("}");
+                sb.AppendLine();
+
+                sb.AppendLine($"export function decode{type.Name}MessagePack(bytes: Uint8Array): {type.Name} {{");
+                sb.AppendLine($"    return {fn}FromMessagePack(decode(bytes) as unknown[]);");
+                sb.AppendLine("}");
+                sb.AppendLine();
+                continue;
+            }
+
+            sb.AppendLine($"export function {fn}FromMessagePack(obj: Record<string, unknown>): {type.Name} {{");
+            sb.AppendLine("    return {");
 
             foreach (var prop in props)
             {
@@ -86,6 +125,39 @@ internal static class MessagePackConverterGenerator
         File.WriteAllText(Path.Combine(outputDirectory, OutputFileName), sb.ToString());
     }
 
+    /// <summary>
+    /// Detects whether the type is decorated with <c>[MessagePackObject]</c> and all
+    /// public readable properties carry an integer <c>[Key(N)]</c>. Returns the
+    /// per-property key indices when array-form serialization is in use, else null.
+    /// Uses reflection by attribute full name so this assembly does not need to
+    /// reference the MessagePack package.
+    /// </summary>
+    private static int[]? TryGetIntegerKeyOrder(Type type, List<PropertyInfo> props)
+    {
+        var hasMessagePackObject = type.GetCustomAttributes()
+            .Any(a => a.GetType().FullName == "MessagePack.MessagePackObjectAttribute");
+        if (!hasMessagePackObject) return null;
+        if (props.Count == 0) return null;
+
+        var result = new int[props.Count];
+        for (int i = 0; i < props.Count; i++)
+        {
+            var keyAttr = props[i].GetCustomAttributes()
+                .FirstOrDefault(a => a.GetType().FullName == "MessagePack.KeyAttribute");
+            if (keyAttr is null) return null;
+
+            var keyAttrType = keyAttr.GetType();
+            var stringKey = keyAttrType.GetProperty("StringKey")?.GetValue(keyAttr);
+            if (stringKey is not null) return null;
+
+            var intKey = keyAttrType.GetProperty("IntKey")?.GetValue(keyAttr);
+            if (intKey is not int n) return null;
+
+            result[i] = n;
+        }
+        return result;
+    }
+
     private static string GetMessagePackExpression(Type type, string accessor, HashSet<Type> decodableTypes, bool isNullable)
     {
         var underlying = Nullable.GetUnderlyingType(type);
@@ -105,9 +177,20 @@ internal static class MessagePackConverterGenerator
             return isNullable ? $"{accessor} != null ? {mapped} : null" : mapped;
         }
 
+        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Dictionary<,>))
+        {
+            var valueType = type.GetGenericArguments()[1];
+            var valueExpr = GetMessagePackExpression(valueType, "v", decodableTypes, false);
+            var converted = $"convertDictionary({accessor}, v => {valueExpr})";
+            return isNullable ? $"{accessor} != null ? {converted} : null" : converted;
+        }
+
         if (decodableTypes.Contains(type))
         {
-            var call = $"{ToCamelCase(type.Name)}FromMessagePack({accessor} as Record<string, unknown>)";
+            var input = TryGetIntegerKeyOrder(type, type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanRead).ToList()) is not null
+                ? $"{accessor} as unknown[]"
+                : $"{accessor} as Record<string, unknown>";
+            var call = $"{ToCamelCase(type.Name)}FromMessagePack({input})";
             return isNullable ? $"{accessor} != null ? {call} : null" : call;
         }
 

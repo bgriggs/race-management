@@ -7,7 +7,7 @@ export interface Race {
     id: number;
     teamId: number;
     name: string;
-    start: string;
+    start: Date;
     duration: number;
     notes: string;
     redMistEventId: number | null;

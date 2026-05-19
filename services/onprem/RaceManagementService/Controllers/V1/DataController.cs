@@ -4,6 +4,8 @@ using Channels;
 using Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Primitives;
+using RaceManagementService.Cloud;
 using RaceManagementService.Data;
 using RaceManagementService.Discovery;
 using UnitsNet;
@@ -17,7 +19,8 @@ public class DataController(
     RaceManagementDbContext db,
     ILogger<DataController> logger,
     RacecarRegistry racecarRegistry,
-    IHttpClientFactory httpClientFactory) : ControllerBase
+    IHttpClientFactory httpClientFactory,
+    CloudConfigurationClient cloudConfigurationClient) : ControllerBase
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -75,7 +78,7 @@ public class DataController(
     [HttpPost]
     [Produces("application/json", "application/x-msgpack")]
     [ProducesResponseType<CarConfiguration>(StatusCodes.Status200OK)]
-    public async Task<ActionResult<CarConfiguration>> SaveCarConfigurationAsync([FromBody] CarConfiguration carConfiguration)
+    public async Task<ActionResult<CarConfiguration>> SaveCarConfigurationAsync([FromBody] CarConfiguration carConfiguration, int? teamId, CancellationToken ct)
     {
         logger.LogInformation("{MethodName} called", nameof(SaveCarConfigurationAsync));
 
@@ -86,8 +89,55 @@ public class DataController(
 
         UpsertCarConfigurationEntity(carConfiguration, await db.CarConfigurations.FindAsync(carConfiguration.ConfigurationId));
 
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
+
+        if (teamId.HasValue && TryGetBearerToken(out var jwt))
+        {
+            await cloudConfigurationClient.SaveCarConfigurationAsync(teamId.Value, carConfiguration, jwt, ct);
+        }
+
         return Ok(carConfiguration);
+    }
+
+    [HttpGet]
+    [Produces("application/json", "application/x-msgpack")]
+    [ProducesResponseType<List<UserTeam>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status502BadGateway)]
+    public async Task<ActionResult<List<UserTeam>>> ListMyTeamsAsync(CancellationToken ct)
+    {
+        logger.LogInformation("{MethodName} called", nameof(ListMyTeamsAsync));
+
+        if (!TryGetBearerToken(out var jwt))
+        {
+            return Unauthorized();
+        }
+
+        var teams = await cloudConfigurationClient.ListMyTeamsAsync(jwt, ct);
+        if (teams is null)
+        {
+            return StatusCode(StatusCodes.Status502BadGateway, "Failed to load teams from cloud.");
+        }
+
+        return Ok(teams.ToList());
+    }
+
+    private bool TryGetBearerToken(out string jwt)
+    {
+        if (Request.Headers.TryGetValue("Authorization", out StringValues values))
+        {
+            foreach (var value in values)
+            {
+                if (!string.IsNullOrEmpty(value) && value.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                {
+                    jwt = value.Substring("Bearer ".Length).Trim();
+                    if (jwt.Length > 0) return true;
+                }
+            }
+        }
+
+        jwt = string.Empty;
+        return false;
     }
 
     [HttpDelete]

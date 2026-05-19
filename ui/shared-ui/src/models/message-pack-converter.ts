@@ -37,6 +37,19 @@ export function encodeMessagePack<T>(value: T): Uint8Array {
     return encode(value);
 }
 
+function convertDictionary<V>(raw: unknown, convertValue: (v: unknown) => V): { [key: string]: V } {
+    const out: { [key: string]: V } = {};
+    if (raw == null) return out;
+    if (raw instanceof Map) {
+        for (const [k, v] of raw) out[String(k)] = convertValue(v);
+    } else {
+        for (const k of Object.keys(raw as object)) {
+            out[k] = convertValue((raw as Record<string, unknown>)[k]);
+        }
+    }
+    return out;
+}
+
 export function carConfigurationFromMessagePack(obj: Record<string, unknown>): CarConfiguration {
     return {
         configurationId: obj["ConfigurationId"] as string,

@@ -111,26 +111,39 @@
   top: 0;
 }
 
+.channel-row {
+  cursor: pointer;
+}
+
+.channel-row:hover,
+.channel-row:focus-visible {
+  background: #eef4ff;
+  outline: none;
+}
+
 .name-cell {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
   white-space: nowrap;
+  width: 1%;
 }
 
 .bolt-icon {
   color: #f59e0b;
   font-size: 1.1rem;
+  vertical-align: middle;
+  margin-right: 0.4rem;
 }
 
 .channel-name {
   font-weight: 500;
+  vertical-align: middle;
 }
 
 .cars-cell {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem;
+  display: table-cell;
+}
+
+.cars-cell .car-badge + .car-badge {
+  margin-left: 0.25rem;
 }
 
 .car-badge {

@@ -114,6 +114,16 @@
   font-weight: 600;
 }
 
+.status-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+  transition: background-color 200ms linear;
+}
+
 .muted {
   color: #98a2b3;
 }
@@ -121,4 +131,39 @@
 .empty {
   text-align: center;
   font-style: italic;
+}
+
+.context-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+}
+
+.context-menu {
+  position: fixed;
+  z-index: 1000;
+  background: #ffffff;
+  border: 1px solid #d6dde7;
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  min-width: 160px;
+  padding: 0.25rem 0;
+}
+
+.context-menu-item {
+  display: block;
+  width: 100%;
+  padding: 0.4rem 0.75rem;
+  background: transparent;
+  border: none;
+  text-align: left;
+  font-size: 0.9rem;
+  color: #112033;
+  cursor: pointer;
+}
+
+.context-menu-item:hover,
+.context-menu-item:focus-visible {
+  background: #eef4ff;
+  outline: none;
 }

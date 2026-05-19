@@ -77,7 +77,7 @@ export class TelemetryStore {
     if (!car) return null;
     let latestMs = 0;
     for (const ch of Object.values(this.channelsAsObject(car.channels))) {
-      const t = Date.parse(ch.timestamp);
+      const t = ch.timestamp.getTime();
       if (Number.isFinite(t) && t > latestMs) latestMs = t;
     }
     return latestMs === 0 ? null : new Date(latestMs);

@@ -458,6 +458,7 @@ public class ConfigurationController(
         await using var db = await dbFactory.CreateDbContextAsync(ct);
         var config = await db.ChannelStatusTableConfigurations
             .AsNoTracking()
+            .Include(c => c.Columns)
             .FirstOrDefaultAsync(c => c.TeamId == teamId && c.UserId == userId, ct);
 
         if (config is null) { return NotFound(); }
@@ -469,9 +470,17 @@ public class ConfigurationController(
     {
         if (!await teamRoleContext.IsUserInTeamAsync(teamId, ct)) { return Forbid(); }
 
+        foreach (var column in configuration.Columns)
+        {
+            column.TeamId = teamId;
+            column.UserId = userId;
+        }
+
         await using var db = await dbFactory.CreateDbContextAsync(ct);
 
-        var existing = await db.ChannelStatusTableConfigurations.FirstOrDefaultAsync(c => c.TeamId == teamId && c.UserId == userId, ct);
+        var existing = await db.ChannelStatusTableConfigurations
+            .Include(c => c.Columns)
+            .FirstOrDefaultAsync(c => c.TeamId == teamId && c.UserId == userId, ct);
         if (existing is null)
         {
             configuration.TeamId = teamId;
@@ -480,6 +489,7 @@ public class ConfigurationController(
         }
         else
         {
+            db.RemoveRange(existing.Columns);
             existing.Columns = configuration.Columns;
         }
 

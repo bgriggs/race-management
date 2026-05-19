@@ -14,9 +14,14 @@ public class ChannelStatusTableConfiguration
     public List<ChannelStatusTableColumnConfiguration> Columns { get; set; } = [];
 }
 
-[PrimaryKey(nameof(ChannelDefinitionId))]
+[PrimaryKey(nameof(TeamId), nameof(UserId), nameof(ChannelDefinitionId))]
 public class ChannelStatusTableColumnConfiguration
 {
+    public int TeamId { get; set; }
+
+    [MaxLength(128)]
+    public string UserId { get; set; } = string.Empty;
+
     public Guid ChannelDefinitionId { get; set; }
     public int Order { get; set; }
     public string? NameOverride { get; set; }

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.EntityFrameworkCore;
 using NLog;
 using NLog.Web;
+using RaceManagementService.Cloud;
 using RaceManagementService.Data;
 using RaceManagementService.Discovery;
 using RaceManagementService.Routing;
@@ -45,6 +46,15 @@ public class Program
             builder.Services.AddDbContext<RaceManagementDbContext>(options =>
                 options.UseSqlite(builder.Configuration.GetConnectionString("RaceManagement")));
             builder.Services.AddHttpClient();
+
+            builder.Services.AddHttpClient<CloudConfigurationClient>(client =>
+            {
+                var cloudUrl = builder.Configuration["Servers:CloudUrl"];
+                if (!string.IsNullOrWhiteSpace(cloudUrl))
+                {
+                    client.BaseAddress = new Uri(cloudUrl.TrimEnd('/') + "/");
+                }
+            });
 
             builder.Services.AddSingleton<RacecarRegistry>();
             builder.Services.AddHostedService<RacecarDiscoveryService>();

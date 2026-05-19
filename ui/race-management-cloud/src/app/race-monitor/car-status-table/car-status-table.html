@@ -8,8 +8,6 @@
       <thead>
         <tr>
           <th class="fixed">Car</th>
-          <th class="fixed">Connection</th>
-          <th class="fixed">Last Telemetry</th>
           @for (col of columns(); track col.channelDefinitionId) {
             <th
               class="draggable"
@@ -23,7 +21,7 @@
               (drop)="onColumnDrop(col, $event)"
               (dragend)="onColumnDragEnd()"
               (contextmenu)="onColumnContextMenu(col, $event)"
-              title="Drag to reorder · Right-click to remove"
+              title="Drag to reorder · Right-click for options"
             >{{ columnLabel(col) }}</th>
           }
         </tr>
@@ -31,9 +29,10 @@
       <tbody>
         @for (car of cars(); track car.number) {
           <tr>
-            <td class="car-id">{{ car.number }}</td>
-            <td [class.muted]="connectionLabel(car) === 'Disconnected'">{{ connectionLabel(car) }}</td>
-            <td [class.muted]="lastTelemetryLabel(car) === '—'">{{ lastTelemetryLabel(car) }}</td>
+            <td class="car-id">
+              <span class="status-dot" [style.background]="statusColor(car)" [title]="statusTitle(car)"></span>
+              {{ car.number }}
+            </td>
             @for (col of columns(); track col.channelDefinitionId) {
               <td [class.muted]="channelCellValue(car, col) === '—'">{{ channelCellValue(car, col) }}</td>
             }
@@ -72,10 +71,26 @@
   </button>
 }
 
+@if (contextMenu(); as menu) {
+  <div class="context-menu-backdrop" (click)="closeContextMenu()" (contextmenu)="closeContextMenu(); $event.preventDefault()"></div>
+  <div
+    class="context-menu"
+    [style.left.px]="menu.x"
+    [style.top.px]="menu.y"
+    role="menu"
+  >
+    <button type="button" role="menuitem" class="context-menu-item" (click)="removeColumn(menu.column)">
+      Remove column
+    </button>
+  </div>
+}
+
 @if (columnConfigOpen() && teamSelection.selectedTeamId() !== null) {
   <app-column-config-dialog
     [teamId]="teamSelection.selectedTeamId()!"
     [cars]="cars()"
+    [excludedChannelIds]="existingColumnIds()"
+    (selected)="onColumnSelected($event)"
     (closed)="closeColumnConfig()"
   />
 }

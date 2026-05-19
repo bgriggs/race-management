@@ -34,7 +34,15 @@
         </thead>
         <tbody>
           @for (row of filteredRows(); track row.channel.id) {
-            <tr>
+            <tr
+              class="channel-row"
+              role="button"
+              tabindex="0"
+              (click)="onRowClick(row)"
+              (keydown.enter)="onRowClick(row)"
+              (keydown.space)="onRowClick(row); $event.preventDefault()"
+              title="Add as column"
+            >
               <td class="name-cell">
                 @if (row.channel.isReserved) {
                   <span class="material-icons bolt-icon" aria-label="Reserved Channel">bolt</span>

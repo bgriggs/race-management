@@ -46,9 +46,82 @@
 	border-bottom-color: #e45050;
 }
 
+.team-area {
+	margin-left: auto;
+	position: relative;
+}
+
+.team-name {
+	color: #f8fbff;
+	font-weight: 600;
+	font-size: 0.9rem;
+}
+
+.team-name-static {
+	padding: 0.35rem 0.5rem;
+}
+
+.team-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	background: none;
+	border: none;
+	cursor: pointer;
+	color: #f8fbff;
+	font-size: 0.9rem;
+	padding: 0.35rem 0.5rem;
+	border-radius: 4px;
+}
+
+.team-btn:hover {
+	background: rgb(255 255 255 / 8%);
+}
+
+.team-dropdown {
+	position: absolute;
+	right: 0;
+	top: calc(100% + 6px);
+	background: #1a2e45;
+	border: 1px solid rgb(255 255 255 / 12%);
+	border-radius: 6px;
+	min-width: 160px;
+	padding: 4px 0;
+	list-style: none;
+	margin: 0;
+	box-shadow: 0 6px 20px rgb(0 0 0 / 30%);
+	z-index: 20;
+}
+
+.team-dropdown li button {
+	display: block;
+	width: 100%;
+	padding: 0.5rem 1rem;
+	background: none;
+	border: none;
+	color: #d9e3f2;
+	text-align: left;
+	cursor: pointer;
+	font-size: 0.9rem;
+}
+
+.team-dropdown li button:hover {
+	background: rgb(255 255 255 / 8%);
+	color: #fff;
+}
+
+.team-dropdown li button.active {
+	color: #fff;
+	background: rgb(228 80 80 / 18%);
+}
+
 .user-area {
 	margin-left: auto;
 	position: relative;
+}
+
+.team-area + .user-area {
+	margin-left: 0.75rem;
 }
 
 .user-btn {

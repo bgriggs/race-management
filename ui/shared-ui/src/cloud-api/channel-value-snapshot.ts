@@ -5,5 +5,5 @@
 
 export interface ChannelValueSnapshot {
     value: string;
-    timestamp: string;
+    timestamp: Date;
 }

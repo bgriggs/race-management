@@ -2,8 +2,6 @@ using Channels;
 using Cloud.Shared;
 using Cloud.Shared.Telemetry;
 using MessagePack;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 
 namespace ChannelProcessor.Telemetry;
@@ -82,7 +80,7 @@ public class TelemetryStreamConsumer(
             ChannelValue[] channelValues;
             try
             {
-                channelValues = MessagePackSerializer.Deserialize<ChannelValue[]>((byte[])field.Value!);
+                channelValues = MessagePackSerializer.Deserialize<ChannelValue[]>((byte[])field.Value!, cancellationToken: ct);
             }
             catch (Exception ex)
             {

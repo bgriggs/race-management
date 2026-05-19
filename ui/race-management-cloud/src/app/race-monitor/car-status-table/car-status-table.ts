@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { Car } from '../../../../../shared-ui/src/cloud-api/car';
 import { ChannelStatusTableColumnConfiguration } from '../../../../../shared-ui/src/cloud-api/channel-status-table-column-configuration';
 import { CarConfiguration } from '../../../../../shared-ui/src/models/car-configuration';
@@ -35,13 +35,27 @@ export class CarStatusTable {
   protected readonly draggingColumnId = signal<string | null>(null);
   protected readonly dropTargetId = signal<string | null>(null);
   protected readonly dropSide = signal<'left' | 'right' | null>(null);
+  protected readonly contextMenu = signal<{
+    column: ChannelStatusTableColumnConfiguration;
+    x: number;
+    y: number;
+  } | null>(null);
 
   private readonly configCache = signal<ReadonlyMap<string, ConfigEntry>>(new Map());
+  private readonly extraChannelDefs = signal<ReadonlyMap<string, ChannelDefinition>>(new Map());
   private readonly inflightConfigIds = new Set<string>();
 
-  protected readonly columnCount = computed(() => 3 + this.columns().length);
+  protected readonly columnCount = computed(() => 1 + this.columns().length);
+  protected readonly now = signal(Date.now());
+  protected readonly existingColumnIds = computed(() =>
+    this.columns().map(c => c.channelDefinitionId),
+  );
 
   constructor() {
+    const destroyRef = inject(DestroyRef);
+    const tick = setInterval(() => this.now.set(Date.now()), 500);
+    destroyRef.onDestroy(() => clearInterval(tick));
+
     effect(() => {
       const teamId = this.teamSelection.selectedTeamId();
       const userId = this.auth.user()?.email;
@@ -73,6 +87,51 @@ export class CarStatusTable {
 
   protected closeColumnConfig(): void {
     this.columnConfigOpen.set(false);
+  }
+
+  protected onColumnSelected(channel: ChannelDefinition): void {
+    this.columns.update(cols => {
+      if (cols.some(c => c.channelDefinitionId === channel.id)) return cols;
+      const nextOrder = cols.reduce((max, c) => Math.max(max, c.order), -1) + 1;
+      const teamId = this.teamSelection.selectedTeamId() ?? 0;
+      const userId = this.auth.user()?.email ?? '';
+      return [
+        ...cols,
+        {
+          teamId,
+          userId,
+          channelDefinitionId: channel.id,
+          order: nextOrder,
+          nameOverride: null,
+        },
+      ];
+    });
+    const nextDefs = new Map(this.extraChannelDefs());
+    nextDefs.set(channel.id, channel);
+    this.extraChannelDefs.set(nextDefs);
+    void this.persistColumns();
+  }
+
+  private async persistColumns(): Promise<void> {
+    const teamId = this.teamSelection.selectedTeamId();
+    const userId = this.auth.user()?.email;
+    if (teamId === null || !userId) return;
+    const columns = this.columns().map((c, idx) => ({
+      teamId,
+      userId,
+      channelDefinitionId: c.channelDefinitionId,
+      order: idx,
+      nameOverride: c.nameOverride,
+    }));
+    try {
+      await this.client.saveChannelStatusTableConfiguration(teamId, userId, {
+        teamId,
+        userId,
+        columns,
+      });
+    } catch (err) {
+      console.error('Failed to save channel status table configuration:', err);
+    }
   }
 
   protected onColumnDragStart(col: ChannelStatusTableColumnConfiguration, event: DragEvent): void {
@@ -118,6 +177,7 @@ export class CarStatusTable {
     if (side === 'right') insertIdx++;
     next.splice(insertIdx, 0, moved);
     this.columns.set(next);
+    void this.persistColumns();
   }
 
   protected onColumnDragEnd(): void {
@@ -126,9 +186,19 @@ export class CarStatusTable {
 
   protected onColumnContextMenu(col: ChannelStatusTableColumnConfiguration, event: MouseEvent): void {
     event.preventDefault();
+    this.contextMenu.set({ column: col, x: event.clientX, y: event.clientY });
+  }
+
+  protected closeContextMenu(): void {
+    this.contextMenu.set(null);
+  }
+
+  protected removeColumn(col: ChannelStatusTableColumnConfiguration): void {
+    this.contextMenu.set(null);
     this.columns.update(cols =>
       cols.filter(c => c.channelDefinitionId !== col.channelDefinitionId),
     );
+    void this.persistColumns();
   }
 
   private clearDragState(): void {
@@ -144,13 +214,23 @@ export class CarStatusTable {
     return column.channelDefinitionId.slice(0, 8);
   }
 
-  protected connectionLabel(car: Car): string {
-    return this.telemetry.carForNumber(car.number) ? 'Connected' : 'Disconnected';
+  protected statusColor(car: Car): string {
+    const last = this.telemetry.lastTelemetryFor(car.number);
+    if (!last) return 'rgb(220, 38, 38)';
+    const ageSec = (this.now() - last.getTime()) / 1000;
+    if (ageSec <= 0) return 'rgb(34, 197, 94)';
+    if (ageSec >= 5) return 'rgb(220, 38, 38)';
+    const t = ageSec / 5;
+    const r = Math.round(34 + (234 - 34) * t);
+    const g = Math.round(197 + (179 - 197) * t);
+    const b = Math.round(94 + (8 - 94) * t);
+    return `rgb(${r}, ${g}, ${b})`;
   }
 
-  protected lastTelemetryLabel(car: Car): string {
-    const t = this.telemetry.lastTelemetryFor(car.number);
-    return t ? t.toLocaleTimeString() : '—';
+  protected statusTitle(car: Car): string {
+    const last = this.telemetry.lastTelemetryFor(car.number);
+    if (!last) return 'Disconnected';
+    return `Last update: ${last.toLocaleString()}`;
   }
 
   protected channelCellValue(car: Car, column: ChannelStatusTableColumnConfiguration): string {
@@ -177,12 +257,27 @@ export class CarStatusTable {
       // set of reserved channels). Not implemented yet — leave empty for now.
       const columns = config?.columns ?? [];
       this.columns.set([...columns].sort((a, b) => a.order - b.order));
+      void this.seedChannelDefinitions(teamId, cars);
     } catch (err) {
       console.error('Failed to load car status table:', err);
       this.error.set('Failed to load car status data.');
     } finally {
       this.loading.set(false);
     }
+  }
+
+  private async seedChannelDefinitions(teamId: number, cars: Car[]): Promise<void> {
+    const results = await Promise.allSettled(
+      cars.map(car => this.client.loadCarConfigurationByCar(teamId, car.number)),
+    );
+    const nextDefs = new Map(this.extraChannelDefs());
+    for (const result of results) {
+      if (result.status !== 'fulfilled') continue;
+      for (const def of result.value.channelDefinitions ?? []) {
+        nextDefs.set(def.id, def);
+      }
+    }
+    this.extraChannelDefs.set(nextDefs);
   }
 
   private async fetchConfig(teamId: number, configurationId: string): Promise<void> {
@@ -208,6 +303,8 @@ export class CarStatusTable {
   }
 
   private findChannelDefinition(channelDefinitionId: string): ChannelDefinition | undefined {
+    const extra = this.extraChannelDefs().get(channelDefinitionId);
+    if (extra) return extra;
     for (const entry of this.configCache().values()) {
       const idx = entry.indexByDefinitionId.get(channelDefinitionId);
       if (idx !== undefined) return entry.definitions[idx];

@@ -1,22 +1,25 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Inject, Injectable } from '@angular/core';
+import { Inject, Injectable, Injector } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import {
   MANAGEMENT_DATA_CLIENT_SETTINGS,
   type ManagementDataClientSettings
 } from '../../../../shared-ui/src/lib/data/management-data-client-settings';
 import { ManagementDataClient } from '../../../../shared-ui/src/lib/data/management-data-client';
+import { UserTeam } from '../../../../shared-ui/src/cloud-api/user-team';
 import { CarConfiguration } from '../../../../shared-ui/src/models/car-configuration';
 import { CarConfigurationSummary } from '../../../../shared-ui/src/models/car-configuration-summary';
 import { ChannelDefinition } from '../../../../shared-ui/src/models/channel-definition';
 import { DiscoveredRacecar } from '../../../../shared-ui/src/models/discovered-racecar';
+import { TeamSelectionService } from '../teams/team-selection.service';
 
 @Injectable()
 export class LocalManagementDataClient implements ManagementDataClient {
   constructor(
     private readonly httpClient: HttpClient,
     @Inject(MANAGEMENT_DATA_CLIENT_SETTINGS)
-    private readonly settings: ManagementDataClientSettings
+    private readonly settings: ManagementDataClientSettings,
+    private readonly injector: Injector
   ) {}
 
   async listDiscoveredRacecarsAsync(): Promise<DiscoveredRacecar[]> {
@@ -83,11 +86,23 @@ export class LocalManagementDataClient implements ManagementDataClient {
   }
 
   async saveCarConfigurationAsync(carConfiguration: CarConfiguration): Promise<CarConfiguration> {
+    const teamId = this.injector.get(TeamSelectionService).selectedTeamId();
+    let params = new HttpParams();
+    if (teamId !== null) {
+      params = params.set('teamId', String(teamId));
+    }
     return await firstValueFrom(
         this.httpClient.post<CarConfiguration>(
           this.buildActionUrl('save-car-configuration'),
-          carConfiguration
+          carConfiguration,
+          { params }
         )
+    );
+  }
+
+  async listMyTeamsAsync(): Promise<UserTeam[]> {
+    return await firstValueFrom(
+      this.httpClient.get<UserTeam[]>(this.buildActionUrl('list-my-teams'))
     );
   }
 

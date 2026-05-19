@@ -6,5 +6,5 @@
 export interface ChannelChangeNotification {
     sessionIndex: number;
     value: string;
-    timestamp: string;
+    timestamp: Date;
 }

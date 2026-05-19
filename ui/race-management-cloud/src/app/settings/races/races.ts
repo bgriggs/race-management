@@ -87,9 +87,9 @@ export class Races {
   protected onEventIdInput(value: string): void { this.draftEventId.set(value); }
   protected onOrgIdInput(value: string): void { this.draftOrgId.set(value); }
 
-  protected formatStart(iso: string): string {
-    const date = new Date(iso);
-    if (Number.isNaN(date.getTime())) return iso;
+  protected formatStart(value: Date | string): string {
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
     return date.toLocaleString();
   }
 
@@ -102,7 +102,7 @@ export class Races {
       id: state.mode === 'edit' ? state.raceId : 0,
       teamId,
       name: this.draftName().trim(),
-      start: this.draftStart(),
+      start: new Date(this.draftStart()),
       duration: Number(this.draftDuration()),
       notes: this.draftNotes(),
       redMistEventId: this.draftEventId() === '' ? null : Number(this.draftEventId()),
@@ -153,9 +153,9 @@ export class Races {
   }
 }
 
-function toDatetimeLocalValue(iso: string): string {
-  if (!iso) return '';
-  const date = new Date(iso);
+function toDatetimeLocalValue(value: Date | string): string {
+  if (!value) return '';
+  const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return '';
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;

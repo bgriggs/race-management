@@ -5,5 +5,5 @@
 
 export interface SaveCarConfigurationResult {
     configurationId: string;
-    lastUpdated: string;
+    lastUpdated: Date;
 }

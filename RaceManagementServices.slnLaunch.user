@@ -11,6 +11,16 @@
         "Path": "services\\onprem\\RaceManagementService\\RaceManagementService.csproj",
         "Action": "Start",
         "DebugTarget": "http"
+      },
+      {
+        "Path": "services\\cloud\\CarGateway\\CarGateway.csproj",
+        "Action": "Start",
+        "DebugTarget": "http"
+      },
+      {
+        "Path": "services\\cloud\\ChannelProcessor\\ChannelProcessor.csproj",
+        "Action": "Start",
+        "DebugTarget": "http"
       }
     ]
   }

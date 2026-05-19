@@ -19,7 +19,9 @@ export class ColumnConfigDialog {
 
   readonly teamId = input.required<number>();
   readonly cars = input.required<Car[]>();
+  readonly excludedChannelIds = input<readonly string[]>([]);
   readonly closed = output<void>();
+  readonly selected = output<ChannelDefinition>();
 
   protected readonly loading = signal(false);
   protected readonly loadError = signal<string | null>(null);
@@ -28,7 +30,8 @@ export class ColumnConfigDialog {
 
   protected readonly filteredRows = computed<ChannelRow[]>(() => {
     const q = this.search().trim().toLowerCase();
-    const all = this.rows();
+    const excluded = new Set(this.excludedChannelIds());
+    const all = this.rows().filter(r => !excluded.has(r.channel.id));
     return q ? all.filter(r => r.channel.name.toLowerCase().includes(q)) : all;
   });
 
@@ -46,6 +49,10 @@ export class ColumnConfigDialog {
 
   protected onSearchInput(event: Event): void {
     this.search.set((event.target as HTMLInputElement).value);
+  }
+
+  protected onRowClick(row: ChannelRow): void {
+    this.selected.emit(row.channel);
   }
 
   private async loadAll(teamId: number, cars: Car[]): Promise<void> {

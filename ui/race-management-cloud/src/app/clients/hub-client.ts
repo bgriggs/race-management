@@ -6,6 +6,10 @@ import Keycloak from 'keycloak-js';
 import { APP_CONFIG } from '../config/app-config';
 import { CarChannelSnapshot } from '../../../../shared-ui/src/cloud-api/car-channel-snapshot';
 import { ChannelChangeNotification } from '../../../../shared-ui/src/cloud-api/channel-change-notification';
+import {
+  carChannelSnapshotFromMessagePack,
+  channelChangeNotificationFromMessagePack,
+} from '../../../../shared-ui/src/cloud-api/message-pack-converter';
 
 export type HubConnectionStatus = 'Disconnected' | 'Connecting' | 'Connected' | 'Reconnecting';
 
@@ -66,10 +70,10 @@ export class HubClient implements OnDestroy {
     this.connection.onreconnecting(() => this.connectionStatus$.next('Reconnecting'));
     this.connection.onreconnected(() => this.connectionStatus$.next('Connected'));
     this.connection.onclose(() => this.connectionStatus$.next('Disconnected'));
-    this.connection.on('ChannelSnapshot', (cars: CarChannelSnapshot[]) =>
-      this.channelSnapshot$.next(cars));
-    this.connection.on('ChannelValueChanged', (carKey: string, change: ChannelChangeNotification) =>
-      this.channelValueChanged$.next({ carKey, change }));
+    this.connection.on('ChannelSnapshot', (cars: unknown[]) =>
+      this.channelSnapshot$.next(cars.map(c => carChannelSnapshotFromMessagePack(c as unknown[]))));
+    this.connection.on('ChannelValueChanged', (carKey: string, change: unknown[]) =>
+      this.channelValueChanged$.next({ carKey, change: channelChangeNotificationFromMessagePack(change) }));
   }
 
   private async startWithRetry(): Promise<void> {

@@ -1,2 +1,2 @@
-dotnet ef migrations add SettingsRace --project services\cloud\Cloud.Shared --startup-project services\cloud\WebApi --context RaceManagementContext --output-dir Database\Migrations
+dotnet ef migrations add ChannelStatusTablePK --project services\cloud\Cloud.Shared --startup-project services\cloud\WebApi --context RaceManagementContext --output-dir Database\Migrations
 dotnet ef database update --project services\cloud\Cloud.Shared --startup-project services\cloud\WebApi --context RaceManagementContext
