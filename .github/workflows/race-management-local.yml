@@ -36,6 +36,9 @@ jobs:
           cache: 'npm'
           cache-dependency-path: ui/package-lock.json
 
+      - name: Pin npm
+        run: npm install -g npm@11.6.2
+
       - name: Install
         run: npm ci
 
