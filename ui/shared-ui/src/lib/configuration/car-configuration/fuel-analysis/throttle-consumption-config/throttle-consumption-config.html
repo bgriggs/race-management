@@ -1,0 +1,31 @@
+<section class="throttle-consumption-config">
+	<p>
+		Configure the in-car throttle-position consumption proxy. The car's Throttle Proxy Module
+		uses these parameters to size its alpha-N consumption grid and learn calibration from
+		ECU/FlowMeter ground truth.
+	</p>
+
+	<form [formGroup]="form" class="config-form" novalidate>
+		<div class="field">
+			<label for="maxRpm" class="field-label">
+				Max RPM <span class="required-mark">*</span>
+			</label>
+			<input
+				id="maxRpm"
+				type="number"
+				formControlName="maxRpm"
+				min="2000"
+				max="12000"
+				step="100"
+				class="field-input"
+				[class.input-error]="form.controls.maxRpm.invalid && form.controls.maxRpm.touched"
+			/>
+			<small class="field-hint">
+				Used to size the RPM axis of the alpha-N grid (10 bins of equal width).
+			</small>
+			@if (form.controls.maxRpm.touched && form.controls.maxRpm.invalid) {
+				<p class="field-error">Max RPM must be between 2000 and 12000.</p>
+			}
+		</div>
+	</form>
+</section>

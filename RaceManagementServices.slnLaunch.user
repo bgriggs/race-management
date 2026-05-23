@@ -1,6 +1,6 @@
 [
   {
-    "Name": "New Profile",
+    "Name": "Local HTTP",
     "Projects": [
       {
         "Path": "services\\cloud\\WebApi\\WebApi.csproj",

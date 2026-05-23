@@ -79,7 +79,7 @@ public sealed class ReservedChannels
         new() { Id = Guid.Parse("07e845bb-493b-4e63-b3d3-0d95480e5335"), Name = "WheelSpeed", IsReserved = true, Abbreviation = "WHLSP", DataType = "Speed", BaseUnitType = "MilePerHour", Category = "Speed" },
 
         // Other
-        new() { Id = Guid.Parse("74c57a58-d78d-499a-977b-11cee221926a"), Name = "RPM", IsReserved = true, Abbreviation = "RPM", DataType = "Unitless" },
+        new() { Id = Guid.Parse("74c57a58-d78d-499a-977b-11cee221926a"), Name = "EngineRPM", IsReserved = true, Abbreviation = "RPM", DataType = "Unitless" },
         new() { Id = Guid.Parse("52cba3bc-c5f5-4fb2-8060-c2444eb448c3"), Name = "Battery", IsReserved = true, Abbreviation = "BATT", DataType = "ElectricPotential", BaseUnitType = "Volt" },
         new() { Id = Guid.Parse("9c45a39f-a107-41db-86d2-1560c1d79cfd"), Name = "Odometer", IsReserved = true, Abbreviation = "ODOM", DataType = "Length", BaseUnitType = "Mile" },
         new() { Id = Guid.Parse("7d75b9ad-82e5-4449-b7b5-a1226dc5a824"), Name = "SmartyCamRecording", IsReserved = true, Abbreviation = "SCMREC", DataType = "Unitless" },

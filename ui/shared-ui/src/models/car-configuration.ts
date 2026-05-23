@@ -13,6 +13,7 @@ import { TimerDefinition } from "./timer-definition";
 import { ConditionDefinition } from "./condition-definition";
 import { LoggingDefinition } from "./logging-definition";
 import { EnumDefinition } from "./enum-definition";
+import { CarFuelConfig } from "./car-fuel-config";
 
 /**
  * Configuration settings for the service running in the car, such as on a Raspberry PI.
@@ -66,4 +67,5 @@ export interface CarConfiguration {
     userConditions: ConditionDefinition[];
     loggingDefinitions: LoggingDefinition[];
     enumDefinitions: EnumDefinition[];
+    fuelConfig: CarFuelConfig;
 }

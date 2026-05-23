@@ -1,0 +1,105 @@
+<section class="fuel-configuration">
+	<p>
+		Enable fuel range analysis to estimate remaining fuel time, gallons and laps during a race
+		session. Configure the per-car parameters used by the cloud reconciler.
+	</p>
+
+	<form [formGroup]="form" class="config-form" novalidate>
+		<div class="toggle-row">
+			<mat-slide-toggle formControlName="isEnabled" />
+			<div class="toggle-info">
+				<span class="toggle-label">Enable Fuel Analysis</span>
+				<span class="toggle-description">Activates the fuel reconciler and its estimators for this car.</span>
+			</div>
+		</div>
+
+		@if (form.controls.isEnabled.value) {
+			<div class="field">
+				<label for="tankCapacityGallons" class="field-label">
+					Tank Capacity (gallons) <span class="required-mark">*</span>
+				</label>
+				<input
+					id="tankCapacityGallons"
+					type="number"
+					formControlName="tankCapacityGallons"
+					min="1"
+					max="100"
+					step="0.1"
+					class="field-input"
+					[class.input-error]="form.controls.tankCapacityGallons.invalid && form.controls.tankCapacityGallons.touched"
+				/>
+				@if (form.controls.tankCapacityGallons.touched && form.controls.tankCapacityGallons.invalid) {
+					<p class="field-error">Tank capacity must be between 1 and 100 gallons.</p>
+				}
+			</div>
+
+			<div class="field">
+				<label for="defaultConsumptionGalPerMin" class="field-label">
+					Default Consumption (gal/min) <span class="required-mark">*</span>
+				</label>
+				<input
+					id="defaultConsumptionGalPerMin"
+					type="number"
+					formControlName="defaultConsumptionGalPerMin"
+					min="0.0001"
+					max="10"
+					step="0.001"
+					class="field-input"
+					[class.input-error]="form.controls.defaultConsumptionGalPerMin.invalid && form.controls.defaultConsumptionGalPerMin.touched"
+				/>
+				@if (form.controls.defaultConsumptionGalPerMin.touched && form.controls.defaultConsumptionGalPerMin.invalid) {
+					<p class="field-error">Default consumption must be between 0.0001 and 10 gal/min.</p>
+				}
+			</div>
+
+			<div class="field">
+				<label for="defaultYellowConsumptionMultiplier" class="field-label">
+					Default Yellow Consumption Multiplier <span class="required-mark">*</span>
+				</label>
+				<input
+					id="defaultYellowConsumptionMultiplier"
+					type="number"
+					formControlName="defaultYellowConsumptionMultiplier"
+					min="0"
+					max="1"
+					step="0.01"
+					class="field-input"
+					[class.input-error]="form.controls.defaultYellowConsumptionMultiplier.invalid && form.controls.defaultYellowConsumptionMultiplier.touched"
+				/>
+				@if (form.controls.defaultYellowConsumptionMultiplier.touched && form.controls.defaultYellowConsumptionMultiplier.invalid) {
+					<p class="field-error">Yellow consumption multiplier must be between 0 and 1.</p>
+				}
+			</div>
+
+			<div class="field">
+				<label for="defaultCode35ConsumptionMultiplier" class="field-label">
+					Default Code 35 Consumption Multiplier <span class="required-mark">*</span>
+				</label>
+				<input
+					id="defaultCode35ConsumptionMultiplier"
+					type="number"
+					formControlName="defaultCode35ConsumptionMultiplier"
+					min="0"
+					max="1"
+					step="0.01"
+					class="field-input"
+					[class.input-error]="form.controls.defaultCode35ConsumptionMultiplier.invalid && form.controls.defaultCode35ConsumptionMultiplier.touched"
+				/>
+				@if (form.controls.defaultCode35ConsumptionMultiplier.touched && form.controls.defaultCode35ConsumptionMultiplier.invalid) {
+					<p class="field-error">Code 35 consumption multiplier must be between 0 and 1.</p>
+				}
+			</div>
+
+			<div class="toggle-row nested-toggle">
+				<mat-slide-toggle formControlName="throttleConsumptionEnabled" />
+				<div class="toggle-info">
+					<span class="toggle-label">Enable Throttle Consumption</span>
+					<span class="toggle-description">
+						Adds the in-car throttle-position consumption proxy as a fourth estimator.
+						When enabled, a "Throttle Consumption" page appears under Fuel Analysis.
+					</span>
+				</div>
+			</div>
+		}
+	</form>
+</section>

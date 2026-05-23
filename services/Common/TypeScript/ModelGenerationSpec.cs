@@ -10,6 +10,7 @@ using Channels.Timers;
 using Channels.UserConditions;
 using Common.CanBus;
 using TypeGen.Core.SpecGeneration;
+using Common.FuelAnalysis;
 
 namespace Common.TypeScript;
 
@@ -46,7 +47,9 @@ public class ModelGenerationSpec : GenerationSpec
         typeof(AlarmDefinition),
         typeof(EnumDefinition),
         typeof(EnumValueDefinition),
-        typeof(LoggingDefinition)
+        typeof(LoggingDefinition),
+        typeof(CarFuelConfig),
+        typeof(ThrottleConsumptionConfig)
     ];
 
     private static readonly Type[] EnumTypes =

@@ -70,3 +70,8 @@ nunit-*.xml
 /services/car/Racecar/config.json
 
 services/car/Racecar/config-versions/
+/.claude/settings.local.json
+/services/cloud/CarGateway/CarGateway.csproj.user
+/services/cloud/ChannelProcessor/ChannelProcessor.csproj.user
+/services/cloud/WebApi/WebApi.csproj.user
+/ui/.angular/cache/21.2.11/race-management-local/vite/deps

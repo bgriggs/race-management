@@ -23,6 +23,8 @@ import { AlarmDefinition } from "./alarm-definition";
 import { EnumDefinition } from "./enum-definition";
 import { EnumValueDefinition } from "./enum-value-definition";
 import { LoggingDefinition } from "./logging-definition";
+import { CarFuelConfig } from "./car-fuel-config";
+import { ThrottleConsumptionConfig } from "./throttle-consumption-config";
 import { InterpolationType } from "./interpolation-type";
 import { LoggingFrequency } from "./logging-frequency";
 import { LogicType } from "./logic-type";
@@ -72,6 +74,7 @@ export function carConfigurationFromMessagePack(obj: Record<string, unknown>): C
         userConditions: (obj["UserConditions"] as unknown[]).map(v => conditionDefinitionFromMessagePack(v as Record<string, unknown>)),
         loggingDefinitions: (obj["LoggingDefinitions"] as unknown[]).map(v => loggingDefinitionFromMessagePack(v as Record<string, unknown>)),
         enumDefinitions: (obj["EnumDefinitions"] as unknown[]).map(v => enumDefinitionFromMessagePack(v as Record<string, unknown>)),
+        fuelConfig: carFuelConfigFromMessagePack(obj["FuelConfig"] as Record<string, unknown>),
     };
 }
 
@@ -354,5 +357,31 @@ export function loggingDefinitionFromMessagePack(obj: Record<string, unknown>): 
 
 export function decodeLoggingDefinitionMessagePack(bytes: Uint8Array): LoggingDefinition {
     return loggingDefinitionFromMessagePack(decode(bytes) as Record<string, unknown>);
+}
+
+export function carFuelConfigFromMessagePack(obj: Record<string, unknown>): CarFuelConfig {
+    return {
+        isEnabled: obj["IsEnabled"] as boolean,
+        tankCapacityGallons: obj["TankCapacityGallons"] as number,
+        defaultConsumptionGalPerMin: obj["DefaultConsumptionGalPerMin"] as number,
+        defaultYellowConsumptionMultiplier: obj["DefaultYellowConsumptionMultiplier"] as number,
+        defaultCode35ConsumptionMultiplier: obj["DefaultCode35ConsumptionMultiplier"] as number,
+        throttleConsumption: throttleConsumptionConfigFromMessagePack(obj["ThrottleConsumption"] as Record<string, unknown>),
+    };
+}
+
+export function decodeCarFuelConfigMessagePack(bytes: Uint8Array): CarFuelConfig {
+    return carFuelConfigFromMessagePack(decode(bytes) as Record<string, unknown>);
+}
+
+export function throttleConsumptionConfigFromMessagePack(obj: Record<string, unknown>): ThrottleConsumptionConfig {
+    return {
+        isEnabled: obj["IsEnabled"] as boolean,
+        maxRpm: obj["MaxRpm"] as number,
+    };
+}
+
+export function decodeThrottleConsumptionConfigMessagePack(bytes: Uint8Array): ThrottleConsumptionConfig {
+    return throttleConsumptionConfigFromMessagePack(decode(bytes) as Record<string, unknown>);
 }
 

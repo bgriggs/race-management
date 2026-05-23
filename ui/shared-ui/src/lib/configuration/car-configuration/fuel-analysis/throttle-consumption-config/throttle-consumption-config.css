@@ -1,0 +1,11 @@
+@import '../../../configuration-form.css';
+
+.throttle-consumption-config p {
+	margin: 0 0 1rem;
+	color: #465643;
+}
+
+.field-hint {
+	color: #6b7766;
+	font-size: 0.82rem;
+}

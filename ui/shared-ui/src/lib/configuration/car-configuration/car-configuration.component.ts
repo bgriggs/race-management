@@ -33,6 +33,10 @@ import { ChannelDefinition } from '../../../models/channel-definition';
 import { CanBusConfig as CanBusConfigModel } from '../../../models/can-bus-config';
 import { CanBusInterfaceConfig } from '../../../models/can-bus-interface-config';
 import { ChannelUsageService } from '../channels/channel-usage.service';
+import { CarFuelConfig } from '../../../models/car-fuel-config';
+import { ThrottleConsumptionConfig as ThrottleConsumptionConfigModel } from '../../../models/throttle-consumption-config';
+import { FuelConfiguration } from './fuel-analysis/fuel-configuration/fuel-configuration';
+import { ThrottleConsumptionConfig } from './fuel-analysis/throttle-consumption-config/throttle-consumption-config';
 
 @Component({
   selector: 'rm-car-configuration',
@@ -55,6 +59,8 @@ import { ChannelUsageService } from '../channels/channel-usage.service';
     EnumList,
     LogList,
     TableList,
+    FuelConfiguration,
+    ThrottleConsumptionConfig,
     MatIcon
   ],
   templateUrl: './car-configuration.component.html',
@@ -97,6 +103,22 @@ export class CarConfigurationComponent implements OnInit {
 
   readonly cloudConnectionEnabled = computed(
     () => this.activeConfiguration()?.isCloudConnectionEnabled ?? false
+  );
+
+  readonly fuelConfig = computed<CarFuelConfig | null>(
+    () => this.activeConfiguration()?.fuelConfig ?? null
+  );
+
+  readonly fuelAnalysisEnabled = computed(
+    () => this.activeConfiguration()?.fuelConfig?.isEnabled ?? false
+  );
+
+  readonly throttleConsumptionEnabled = computed(
+    () => this.activeConfiguration()?.fuelConfig?.throttleConsumption?.isEnabled ?? false
+  );
+
+  readonly throttleConsumption = computed<ThrottleConsumptionConfigModel | null>(
+    () => this.activeConfiguration()?.fuelConfig?.throttleConsumption ?? null
   );
 
   readonly cloudCredentials = computed<Pick<CarConfiguration, 'clientId' | 'clientSecret'> | null>(() => {
@@ -236,6 +258,14 @@ export class CarConfigurationComponent implements OnInit {
     enumerations: {
       label: 'Enumerations',
       description: 'Define enumerations that can change a numeric value to text. For example, gear can be converted from a value of 0 to N, etc.'
+    },
+    'fuel-analysis': {
+      label: 'Fuel Analysis',
+      description: 'Enable and configure the fuel range analysis for this car.'
+    },
+    'throttle-consumption': {
+      label: 'Throttle Consumption',
+      description: 'Configure the in-car throttle-position consumption proxy.'
     }
   };
 
@@ -565,6 +595,37 @@ export class CarConfigurationComponent implements OnInit {
     });
   }
 
+  onFuelConfigChange(fuelConfig: CarFuelConfig): void {
+    const current = this.activeConfiguration();
+    if (!current) {
+      return;
+    }
+
+    this.activeConfiguration.set({
+      ...current,
+      fuelConfig
+    });
+
+    if (!fuelConfig.throttleConsumption.isEnabled && this.selectedNodeId() === 'throttle-consumption') {
+      this.selectedNodeId.set('fuel-analysis');
+    }
+  }
+
+  onThrottleConsumptionChange(throttleConsumption: ThrottleConsumptionConfigModel): void {
+    const current = this.activeConfiguration();
+    if (!current) {
+      return;
+    }
+
+    this.activeConfiguration.set({
+      ...current,
+      fuelConfig: {
+        ...current.fuelConfig,
+        throttleConsumption
+      }
+    });
+  }
+
   private buildTreeNodes(): NavigationTreeNode[] {
     return [
       { id: 'general-settings', label: 'General Settings' },
@@ -596,7 +657,18 @@ export class CarConfigurationComponent implements OnInit {
       { id: 'math', label: 'Math' },
       { id: 'user-conditions', label: 'User Conditions' },
       { id: 'counters', label: 'Counters' },
-      { id: 'enumerations', label: 'Enumerations' }
+      { id: 'enumerations', label: 'Enumerations' },
+      {
+        id: 'fuel-analysis',
+        label: 'Fuel Analysis',
+        children: [
+          {
+            id: 'throttle-consumption',
+            label: 'Throttle Consumption',
+            visible: this.fuelAnalysisEnabled() && this.throttleConsumptionEnabled()
+          }
+        ]
+      }
     ];
   }
 
@@ -737,7 +809,15 @@ export class CarConfigurationComponent implements OnInit {
       timerDefinitions: [],
       userConditions: [],
       loggingDefinitions: [],
-      enumDefinitions: []
+      enumDefinitions: [],
+      fuelConfig: {
+        isEnabled: false,
+        tankCapacityGallons: 0,
+        defaultConsumptionGalPerMin: 0,
+        defaultYellowConsumptionMultiplier: 0.5,
+        defaultCode35ConsumptionMultiplier: 0.3,
+        throttleConsumption: { isEnabled: false, maxRpm: 0 }
+      }
     };
   }
 }

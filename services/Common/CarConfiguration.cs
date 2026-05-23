@@ -8,6 +8,7 @@ using Channels.Tables;
 using Channels.Timers;
 using Channels.UserConditions;
 using Common.CanBus;
+using Common.FuelAnalysis;
 using System.ComponentModel.DataAnnotations;
 
 namespace Common;
@@ -76,5 +77,5 @@ public class CarConfiguration
     public List<ConditionDefinition> UserConditions { get; set; } = [];
     public List<LoggingDefinition> LoggingDefinitions { get; set; } = [];
     public List<EnumDefinition> EnumDefinitions { get; set; } = [];
-
+    public CarFuelConfig FuelConfig { get; set; } = new();
 }

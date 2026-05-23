@@ -1,0 +1,36 @@
+@import '../../../configuration-form.css';
+
+.fuel-configuration p {
+	margin: 0 0 1rem;
+	color: #465643;
+}
+
+.toggle-row {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.85rem;
+	padding: 0.5rem 0;
+}
+
+.toggle-row.nested-toggle {
+	margin-top: 0.5rem;
+	padding-top: 0.85rem;
+	border-top: 1px solid #e5e7eb;
+}
+
+.toggle-info {
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+}
+
+.toggle-label {
+	font-weight: 600;
+	color: #2f3d2c;
+	font-size: 0.95rem;
+}
+
+.toggle-description {
+	color: #6b7766;
+	font-size: 0.85rem;
+}

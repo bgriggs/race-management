@@ -208,6 +208,20 @@
             (enumDefinitionsChange)="onEnumDefinitionsChange($event)"
           />
         }
+
+        @if (selectedNodeId() === 'fuel-analysis') {
+          <lib-fuel-configuration
+            [configuration]="fuelConfig()"
+            (configurationChange)="onFuelConfigChange($event)"
+          />
+        }
+
+        @if (selectedNodeId() === 'throttle-consumption') {
+          <lib-throttle-consumption-config
+            [configuration]="throttleConsumption()"
+            (configurationChange)="onThrottleConsumptionChange($event)"
+          />
+        }
       </article>
 
       <rm-error-list [items]="validationErrors()" (navigateToNode)="navigateFromError($event)" />

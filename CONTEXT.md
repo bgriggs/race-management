@@ -163,9 +163,14 @@ The primary race-day view in the cloud UI. A single dedicated page (not a generi
 
 3. **Active Alarms** — lists currently active (unacknowledged) alarms across all team cars. Engineers can acknowledge an alarm; it is suppressed for `timeAfterAckToDisplaySecs` and reappears if still active after that period.
 
-4. **Fuel & Pit Strategy** — a horizontal Gantt-style chart visualizing planned stints for all team cars. Y-axis = each car; X-axis = elapsed race time; chart width = full race duration. Each bar represents a **Stint**. Fuel range data is computed by the backend (not the UI); the UI provides data entry for pit-stop fuel additions and displays the backend-computed range output. Supports two fuel tracking modes per car:
-   - **Fuel-used mode** — driven by a direct fuel consumption channel (e.g., the `FuelConsumption` Reserved Channel integrated over time)
-   - **Volume-entry mode** — user manually enters the fuel volume added at each pit stop; range is calculated from car fuel capacity (a car-level setting) minus accumulated consumption
+4. **Fuel & Pit Strategy** — a horizontal Gantt-style chart visualizing planned stints for all team cars. Y-axis = each car; X-axis = elapsed race time; chart width = full race duration. Each bar represents a **Stint**. Fuel range data is computed by the backend (not the UI); the UI provides data entry for pit-stop fuel additions and displays the backend-computed range output.
+
+   Range is produced by a **Fuel Reconciler** that runs up to three concurrent **Fuel Estimators** per car and emits a single reconciled range value plus a per-estimator breakdown and confidence:
+   - **ECU Estimator** — derived from the `TripFuel` Reserved Channel (ECU-reported fuel used since last reset).
+   - **FlowMeter Estimator** — derived from the `FuelUsed` Reserved Channel (integrated fuel-flow-meter volume).
+   - **PitFill Estimator** — derived from manually entered fuel-jug volumes added at each pit stop, divided by the elapsed stint time to back into a consumption rate. Always-on baseline; the structural floor when sensor estimators are unavailable.
+
+   The estimators run simultaneously, not as exclusive modes. Each declares its own availability and confidence; the reconciler cross-validates them against each other and flags an estimator as an outlier when it diverges from the others beyond a threshold.
 
    Pit stops are auto-detected when data is available (RedMist race data, or car lat/lon position against a configured pit lane geo-fence). Engineers can also manually record a pit stop via a gas can icon button on each car row; the entry form captures fuel added (volume only) and a pit stop timestamp that defaults to the current race time but can be adjusted to a past time (to cover cases where the engineer forgot to log it in the moment).
 
@@ -178,7 +183,36 @@ The Race Monitor operates against the **current Race Session** — the session w
 The Race Monitor is what CRUD APIs refer to when they reference Dashboard configuration — the configurable column set for the Car Status Table is stored as the Dashboard configuration record.
 
 ### Stint
-A continuous period of on-track running for a single car between pit stops (or between race start and first pit stop, or last pit stop and finish). The fundamental unit of the Fuel & Pit Strategy visualization. Each stint has an estimated start time, end time, and fuel range.
+A continuous period of on-track running for a single car between pit stops (or between race start and first pit stop, or last pit stop and finish). The fundamental unit of the Fuel & Pit Strategy visualization. A stint may or may not begin with a refuel — tire-only pits also bound stints. Each stint has an estimated start time, end time, and a reference to the **FuelWindow** it belongs to.
+
+### FuelWindow
+A continuous period between two **Refuel Events** (or between session start and the first Refuel Event, or the last Refuel Event and session end / current time). Contains one or more **Stints**. The unit fuel-consumption math operates on. The PitFill Estimator computes consumption rate using the open FuelWindow's elapsed time and the volume entered at its starting Refuel Event.
+
+### Refuel Event
+A detected event indicating that fuel was added to a car. Detected by any of three anchors — `FuelFull` channel assertion (with stint-age and InPit/GPSSpeed guards), `FuelLevel` rise while stationary (`GPSSpeed < 3 mph`), or a pit lap from timing data more than 20 minutes after the last Refuel Event. The event carries a confidence tier (High = ≥2 anchors agreed, Medium = single strong anchor, Low = single weak anchor). Each Refuel Event opens a new FuelWindow.
+
+### Fuel Estimator
+A component that produces a fuel range estimate for a car from one specific data source. Three variants exist:
+- **ECU Estimator** — derived from the `TripFuel` Reserved Channel.
+- **FlowMeter Estimator** — derived from the `FuelUsed` Reserved Channel; emits both a raw range and a Calibration-Factor-corrected range.
+- **PitFill Estimator** — derived from the manually entered fuel-jug volume at the current FuelWindow's starting Refuel Event, projected forward over time. Always-on baseline.
+
+Each estimator declares its own availability and confidence interval. Estimators run concurrently — they are not selectable modes.
+
+### Fuel Reconciler
+The component that ingests all available Fuel Estimator outputs for a car and emits a single reconciled `FuelRangeSnapshot` carrying a primary range, a per-estimator breakdown, confidence intervals, and outlier flags. Outlier detection compares estimators against each other using their combined confidence intervals — an estimator is flagged as an outlier only when its value falls outside the overlap of the others' intervals.
+
+### High-Confidence Range
+A conservative lower bound on the primary range, computed as `primary.range − z(p) × primary.sigma`, where `p` is a configurable threshold (default 98%) and `z(p)` is the inverse normal CDF. Engineers use this number for pit-call decisions because it is the range they can bank on at the chosen confidence level. Distinct from the primary range, which is the most-likely estimate.
+
+### Driver-Pace Multiplier
+A multiplier applied to the consumption rate based on the current driver's lap-time pace relative to the session baseline (`sessionBaselineLapTime ÷ recentAvgLapTime`). Captures the variance in fuel consumption between drivers without requiring driver identity. Forced to 1.0 under any non-green flag state to avoid double-counting the slowdown already captured by the flag multiplier. Clamped to [0.85, 1.15].
+
+### Calibration Factor
+A learned multiplicative correction applied to the FlowMeter's raw output. Calibrated against the **ECU Estimator** as ground truth (PitFill confirms ECU within its ±1 gal noise band; PitFill only displaces ECU as ground truth when they disagree beyond combined uncertainty). Updated per closed FuelWindow with exponential moving average smoothing. Not applied until at least one FuelWindow with reset-confirmed ECU data has closed.
+
+### ECU Reset State
+Per-FuelWindow status of the ECU's TripFuel counter, inferred from the `FuelFull` and `TripFuel` channel behavior at each Refuel Event. Values: **Reset-Confirmed** (FuelFull asserted and TripFuel dropped to <1 gal within window), **Reset-Inferred** (TripFuel drop seen without FuelFull anchor — lower confidence), **Unreset** (Refuel Event detected but TripFuel did not drop; ECU Estimator is unavailable for this FuelWindow). The driver must manually press the reset button on the ECU; the Unreset state means they forgot.
 
 ### Competitor Analysis
 Intelligence about cars not owned by the team, derived solely from the RedMist race position feed. Used to anticipate competitor pit windows and strategy decisions.
