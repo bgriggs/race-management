@@ -23,6 +23,7 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\Cloud.Shared\Cloud.Shared.csproj" />
+	  <ProjectReference Include="..\..\Common\Common.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -1,6 +1,8 @@
 using Cloud.Shared.Auth;
 using Cloud.Shared.Extensions;
+using Cloud.Shared.FuelAnalysis;
 using Cloud.Shared.Hubs;
+using Cloud.Shared.Streaming;
 using Cloud.Shared.Telemetry;
 using MessagePack;
 using MessagePack.Resolvers;
@@ -64,6 +66,12 @@ public class Program
         builder.Services.AddSingleton<IConnectedTeamsTracker, ConnectedTeamsTracker>();
         builder.Services.AddSingleton<ITeamChannelSnapshotService, TeamChannelSnapshotService>();
         builder.Services.AddHostedService<ChannelPropagatorService>();
+
+        // Fuel Analysis — needed by FuelController to read snapshots from Redis and publish
+        // ManualFuelAddedGallons entries onto the telemetry stream per ADR-0005.
+        builder.Services.AddSingleton<IFuelSnapshotStore, FuelSnapshotStore>();
+        builder.Services.AddSingleton<ICarChannelDefinitionResolver, CarChannelDefinitionResolver>();
+        builder.Services.AddSingleton<ICarChannelPublisher, CarChannelPublisher>();
 
         builder.Services.AddApiVersioning(options =>
         {

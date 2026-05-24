@@ -33,4 +33,14 @@ public static class Consts
     // per (connection, carKey), SREM on disconnect. Used by CarGateway to fan-out team
     // values to every active car in the team without scanning the global CAR_CONNECTIONS hash.
     public const string TEAM_CONNECTED_CARS = "team-connected-cars:{0}";
+
+    // Fuel Analysis — independent consumer group on the car-channel-values stream so the
+    // reconciler sees every message (it does not share work with the state-cache consumer
+    // in CHANNEL_PROC_CONSUMER_GROUP).
+    public const string CHANNEL_PROC_FUEL_CONSUMER_GROUP = "channelproc-fuel";
+    // Per-car serialized FuelRangeSnapshot (latest only). Read by WebApi for the detail panel.
+    public const string FUEL_SNAPSHOT_KEY = "fuel-snapshot:{0}";
+    // Per-car serialized reconciler runtime state (open FuelWindow accumulators, debounce
+    // state, recent-lap-time window, etc.). Rebuildable from Postgres on session start.
+    public const string FUEL_STATE_KEY = "fuel-state:{0}";
 }

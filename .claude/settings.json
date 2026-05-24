@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cygpath -w /tmp/handoff-8v0SjX.md)",
+      "Read(//c/Users/brian/AppData/Local/Temp/**)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\brian\\AppData\\Local\\Temp"
+    ]
+  }
+}

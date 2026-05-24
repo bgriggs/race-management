@@ -1,4 +1,5 @@
 ﻿using Cloud.Shared.Database.Models;
+using Cloud.Shared.Database.Models.FuelAnalysis;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cloud.Shared.Database;
@@ -12,6 +13,12 @@ public class RaceManagementContext(DbContextOptions<RaceManagementContext> optio
     public DbSet<ChannelStatusTableConfiguration> ChannelStatusTableConfigurations { get; set; } = null!;
     public DbSet<Race> Races { get; set; } = null!;
     public DbSet<SiteSettings> SiteSettings { get; set; } = null!;
+
+    public DbSet<RefuelEvent> RefuelEvents { get; set; } = null!;
+    public DbSet<FuelWindow> FuelWindows { get; set; } = null!;
+    public DbSet<Stint> Stints { get; set; } = null!;
+    public DbSet<CalibrationFactor> CalibrationFactors { get; set; } = null!;
+    public DbSet<TeamFuelDefaults> TeamFuelDefaults { get; set; } = null!;
 
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -77,6 +84,57 @@ public class RaceManagementContext(DbContextOptions<RaceManagementContext> optio
             .HasOne<Team>()
             .WithMany()
             .HasForeignKey(s => s.TeamId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        ConfigureFuelAnalysis(modelBuilder);
+    }
+
+    private static void ConfigureFuelAnalysis(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<RefuelEvent>(e =>
+        {
+            e.HasOne<Car>().WithMany().HasForeignKey(r => new { r.TeamId, r.CarNumber }).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<Race>().WithMany().HasForeignKey(r => r.RaceId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(r => new { r.TeamId, r.CarNumber, r.RaceId, r.DetectedAt });
+            e.Property(r => r.ConfidenceTier).HasConversion<string>().HasMaxLength(16);
+            e.Property(r => r.Source).HasConversion<string>().HasMaxLength(32);
+            e.Property(r => r.EcuResetState).HasConversion<string>().HasMaxLength(16);
+        });
+
+        modelBuilder.Entity<FuelWindow>(e =>
+        {
+            e.HasOne<Car>().WithMany().HasForeignKey(w => new { w.TeamId, w.CarNumber }).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<Race>().WithMany().HasForeignKey(w => w.RaceId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<RefuelEvent>().WithMany().HasForeignKey(w => w.StartRefuelEventId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<RefuelEvent>().WithMany().HasForeignKey(w => w.EndRefuelEventId).OnDelete(DeleteBehavior.Restrict);
+            e.HasIndex(w => new { w.TeamId, w.CarNumber, w.RaceId, w.OpenedAt });
+            // Partial index for the at-most-one open window per car
+            e.HasIndex(w => new { w.TeamId, w.CarNumber, w.RaceId })
+                .HasFilter("\"ClosedAt\" IS NULL")
+                .IsUnique();
+        });
+
+        modelBuilder.Entity<Stint>(e =>
+        {
+            e.HasOne<Car>().WithMany().HasForeignKey(s => new { s.TeamId, s.CarNumber }).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<Race>().WithMany().HasForeignKey(s => s.RaceId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<FuelWindow>().WithMany().HasForeignKey(s => s.FuelWindowId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(s => new { s.TeamId, s.CarNumber, s.RaceId, s.StartAt });
+            e.HasIndex(s => s.FuelWindowId);
+        });
+
+        modelBuilder.Entity<CalibrationFactor>(e =>
+        {
+            e.HasOne<Car>().WithMany().HasForeignKey(c => new { c.TeamId, c.CarNumber }).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<Race>().WithMany().HasForeignKey(c => c.RaceId).OnDelete(DeleteBehavior.SetNull);
+            e.HasIndex(c => new { c.TeamId, c.CarNumber, c.EffectiveAt });
+            e.Property(c => c.Source).HasConversion<string>().HasMaxLength(16);
+        });
+
+        modelBuilder.Entity<TeamFuelDefaults>()
+            .HasOne<Team>()
+            .WithMany()
+            .HasForeignKey(d => d.TeamId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }
