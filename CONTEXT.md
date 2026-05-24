@@ -2,7 +2,7 @@
 
 ## Multi-Tenancy
 
-The application is **multi-tenant**. Each tenant is a **Team** (a racing organization). All team-scoped entities — Cars, ChannelDefinitions, AlarmRules, Dashboards, CarConfigurations, ChannelLogs, RaceEvents, RaceSessions — carry a `TeamId` FK. All API endpoints and queries are scoped to the authenticated user's team. Teams are isolated from each other; no cross-team data access.
+The application is **multi-tenant**. Each tenant is a **Team** (a racing organization). All team-scoped entities — Cars, ChannelDefinitions, AlarmRules, Dashboards, CarConfigurations, ChannelLogs, Races — carry a `TeamId` FK. All API endpoints and queries are scoped to the authenticated user's team. Teams are isolated from each other; no cross-team data access.
 
 Keycloak users are associated with a team via a custom claim. Initially one team; the data model supports multiple from day one.
 
@@ -25,11 +25,8 @@ A runtime/status record for a channel (e.g., current value, last-updated time). 
 ### Reserved Channel
 A channel well-known to the application and shared across cars and cloud services without per-car definition. Enables streamlined use in dashboards and alarms, and can unlock special features (e.g., fuel range analysis when a fuel usage channel is present).
 
-### Race Session
-A bounded period of on-track activity (practice, qualifying, race stint, etc.) with a `start_time` and `end_time`. Sessions are managed externally (RedMist.racing integration, planned) and stored as metadata. Channel log data is **not** tagged with a session FK — queries correlate logs to sessions by time-range lookup.
-
-### Race Event
-A race weekend or competition event. Contains one or more Race Sessions. Managed by the same external integration as Race Sessions.
+### Race
+A team-owned pairing record that ties the local system to one RedMist event. The `Race` table holds `RedMistEventId`, `Start`, and `Duration`. There is no separate local "session" entity; the system follows whichever RedMist session is currently active under the paired event in real time, and resets session-scoped state (Stints, FuelWindows, RefuelEvents) when that active session changes. Per-session fuel-analysis rows carry the RedMist `SessionId` (int) denormalized so post-race queries can filter by session without a join. See [ADR-0008](docs/adr/0008-redmist-consumer-in-channelprocessor.md).
 
 ### Telemetry Stream
 The single Redis Stream (`telemetry`) carrying all channel values — both car-sourced and cloud-sourced. Each message carries `teamId`, `carId` (nullable for PerTeam channels), `channelId`, `value`, `timestamp`, and `source` fields. Multiple services publish to and consume from this stream via separate consumer groups. Routing (transmit to car? transmit to cloud?) is determined by each value's `ChannelDefinition.Distribution`, looked up by consumers — there is no per-message routing flag (see [ADR-0007](docs/adr/0007-declarative-channel-routing.md)).
@@ -168,7 +165,7 @@ The primary race-day view in the cloud UI. A single dedicated page (not a generi
 
 1. **Car Status Table** — a table of team cars (designed for 1–3 cars) with fixed identity columns (car name/number, connection status, last telemetry timestamp) and user-configurable channel value columns to the right. All cars display the same channel columns; if a car has no value for a column, the cell is empty/grayed. Column configuration is **per-user** and is done inline via a settings panel on the Race Monitor itself (no separate configuration page). Column headers show the channel display name; cells show the numeric value. When an alarm is active for that channel on that car, the cell background uses the alarm's `displayChannelSourceColorHex` (no severity hierarchy — one color per alarm, user-configured). The WebApi SignalR hub broadcasts all team channel values to all connected browser clients; the column configurator is a **client-side display filter only** — adding or removing columns requires no hub re-subscription.
 
-2. **Race Position** — a modified port of the RedMist timing-viewer component (from the RedMist landing UI codebase, which is team-owned) showing the current running order for the active race session. Connects to RedMist using a dedicated Keycloak client (client ID + secret stored in race-management secrets).
+2. **Race Position** — rendered as an iframe of RedMist's own timing-viewer UI for the paired event. No integration code beyond the Race row's `RedMistEventId` pairing. The RedMist hub subscription used for fuel/pit/strategy data is held server-side by `RedmistConsumer` (see [ADR-0008](docs/adr/0008-redmist-consumer-in-channelprocessor.md)) and is independent of this iframe.
 
 3. **Active Alarms** — lists currently active (unacknowledged) alarms across all team cars. Engineers can acknowledge an alarm; it is suppressed for `timeAfterAckToDisplaySecs` and reappears if still active after that period.
 
@@ -187,7 +184,7 @@ The primary race-day view in the cloud UI. A single dedicated page (not a generi
 
 6. **Competitor Analysis** — shows estimated strategy data for competitor cars (not team-owned): estimated fuel range, expected number of pit stops remaining, and estimated time to next pit stop. All data is derived from the RedMist race position feed (no manual override). The engineer selects which competitors to track; defaults to the car immediately ahead and the car immediately behind each team car in the same class.
 
-The Race Monitor operates against the **current Race Session** — the session whose `StartTime`/`EndTime` brackets the current time. No manual session selection. When no session is active, the Car Status Table and Active Alarms sections remain fully functional (cars may be connected and transmitting pre-race); session-dependent sections (Race Position, Fuel & Pit Strategy, Competitor Analysis) show a "no active session" waiting state placeholder.
+The Race Monitor operates against the **active RedMist session** under the team's leased Race — whichever session RedMist currently reports as live for the paired `RedMistEventId`. No manual session selection. When no session is active, the Car Status Table and Active Alarms sections remain fully functional (cars may be connected and transmitting pre-race); session-dependent sections (Race Position, Fuel & Pit Strategy, Competitor Analysis) show a "no active session" waiting state placeholder.
 
 The Race Monitor is what CRUD APIs refer to when they reference Dashboard configuration — the configurable column set for the Car Status Table is stored as the Dashboard configuration record.
 
@@ -228,8 +225,9 @@ Intelligence about cars not owned by the team, derived solely from the RedMist r
 
 ---
 
-## Race Event / Session Metadata
+## Race Metadata
 
-- `RaceEvents` and `RaceSessions` are stored as first-class entities with `StartTime`/`EndTime`.
-- Populated initially by manual entry; planned integration with **RedMist.racing** for automatic population.
-- Not coupled to the telemetry pipeline — the logging worker has no dependency on session state.
+- `Races` is the only first-class entity for race scheduling — `(Id, TeamId, Name, Start, Duration, RedMistEventId?, RedMistOrganizationId?)`.
+- Race rows are created by the engineer; the `RedMistEventId` pairing is set at race-setup time using the WebApi event-picker endpoints (see [ADR-0008](docs/adr/0008-redmist-consumer-in-channelprocessor.md)).
+- The "current session" inside a paired Race is a runtime concept — read live from the RedMist `SessionState`, not stored as a row.
+- Not coupled to the telemetry logging path — `ChannelLogger` has no dependency on Race state.

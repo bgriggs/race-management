@@ -77,3 +77,6 @@ services/car/Racecar/config-versions/
 /ui/.angular/cache/21.2.11/race-management-local/vite/deps
 /ui/.angular/cache/21.2.11/race-management-cloud/vite/deps
 /ui/.angular/cache/21.2.11/race-management-cloud/.tsbuildinfo
+/.claude
+/ui/.angular/cache/21.2.11/race-management-cloud/vitest/da39a3ee5e6b4b0d3255bfef95601890afd80709/results.json
+/ui/.angular/cache/21.2.11/race-management-local/.tsbuildinfo
