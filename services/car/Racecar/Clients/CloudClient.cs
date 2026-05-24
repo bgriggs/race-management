@@ -13,6 +13,13 @@ public interface ICloudClient
     /// <summary>Raised when the hub connection state changes.</summary>
     event Action<HubConnectionState>? ConnectionStatusChanged;
 
+    /// <summary>
+    /// Raised when the cloud pushes channel values to this car via the
+    /// <c>ReceiveChannelValues</c> hub method. SessionIndex on each value refers
+    /// to the currently active <see cref="CarConfiguration"/> on this car.
+    /// </summary>
+    event Action<ChannelValue[]>? ChannelValuesReceived;
+
     Task SendChannelValuesAsync(ChannelValue[] channelValues);
 }
 
@@ -28,6 +35,8 @@ public class CloudClient : HubClientBase, ICloudClient
     private CarConfiguration carConfiguration;
     private readonly IDisposable? configChangeListener;
     private readonly IConfiguration configuration;
+
+    public event Action<ChannelValue[]>? ChannelValuesReceived;
 
     public CloudClient(ILoggerFactory loggerFactory, IConfiguration configuration, IOptionsMonitor<CarConfiguration> carConfig)
         : base(loggerFactory, configuration)
@@ -56,6 +65,7 @@ public class CloudClient : HubClientBase, ICloudClient
         this.stoppingToken = stoppingToken;
         hub = StartConnection(stoppingToken);
         hub.On("SendCarConfiguration", () => carConfiguration);
+        hub.On<ChannelValue[]>("ReceiveChannelValues", OnChannelValuesReceived);
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -168,6 +178,7 @@ public class CloudClient : HubClientBase, ICloudClient
             if (hub != null)
             {
                 hub.On("SendCarConfiguration", () => carConfiguration);
+                hub.On<ChannelValue[]>("ReceiveChannelValues", OnChannelValuesReceived);
                 logger.LogInformation("Hub connection restarted successfully");
                 return true;
             }
@@ -194,6 +205,18 @@ public class CloudClient : HubClientBase, ICloudClient
         if (h != null)
         {
             await h.InvokeAsync("SendChannelValuesAsync", channelValues, carConfiguration.Car, carConfiguration.ConfigurationId);
+        }
+    }
+
+    internal void OnChannelValuesReceived(ChannelValue[] channelValues)
+    {
+        try
+        {
+            ChannelValuesReceived?.Invoke(channelValues);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Subscriber to ChannelValuesReceived threw; ignoring");
         }
     }
 

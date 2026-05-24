@@ -14,6 +14,8 @@ describe('EditTable', () => {
 
     fixture = TestBed.createComponent(EditTable);
     component = fixture.componentInstance;
+    fixture.componentRef.setInput('channels', []);
+    fixture.detectChanges();
     await fixture.whenStable();
   });
 

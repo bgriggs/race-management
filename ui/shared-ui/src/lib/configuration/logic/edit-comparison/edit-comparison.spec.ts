@@ -14,6 +14,8 @@ describe('EditComparison', () => {
 
     fixture = TestBed.createComponent(EditComparison);
     component = fixture.componentInstance;
+    fixture.componentRef.setInput('channels', []);
+    fixture.detectChanges();
     await fixture.whenStable();
   });
 

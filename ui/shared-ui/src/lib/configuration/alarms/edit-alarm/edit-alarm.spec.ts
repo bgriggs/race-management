@@ -14,6 +14,17 @@ describe('EditAlarm', () => {
 
     fixture = TestBed.createComponent(EditAlarm);
     component = fixture.componentInstance;
+    fixture.componentRef.setInput('channels', []);
+    fixture.componentRef.setInput('alarm', {
+      id: '',
+      name: '',
+      statement: { id: '', activateComparisons: [], deactivateComparisons: null },
+      messsage: '',
+      displayChannelSourceColorHex: '',
+      timeAfterAckToDisplaySecs: 0,
+      alarmStatusChannelId: null,
+    });
+    fixture.detectChanges();
     await fixture.whenStable();
   });
 

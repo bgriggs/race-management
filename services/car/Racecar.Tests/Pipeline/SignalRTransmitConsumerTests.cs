@@ -14,6 +14,7 @@ public sealed class SignalRTransmitConsumerTests
     private sealed class FakeCloudClient : ICloudClient
     {
         public event Action<HubConnectionState>? ConnectionStatusChanged;
+        public event Action<ChannelValue[]>? ChannelValuesReceived;
         public List<ChannelValue[]> Sends { get; } = [];
         public Task SendChannelValuesAsync(ChannelValue[] channelValues)
         {
@@ -21,6 +22,7 @@ public sealed class SignalRTransmitConsumerTests
             return Task.CompletedTask;
         }
         public void RaiseConnected() => ConnectionStatusChanged?.Invoke(HubConnectionState.Connected);
+        public void RaiseChannelValuesReceived(ChannelValue[] values) => ChannelValuesReceived?.Invoke(values);
     }
 
     private static ActiveConfiguration BuildConfig(int channelId)
@@ -74,6 +76,44 @@ public sealed class SignalRTransmitConsumerTests
 
         Assert.IsGreaterThanOrEqualTo(1, client.Sends.Count, "Full should have been sent.");
         Assert.HasCount(1, client.Sends[0]);
+
+        await consumer.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task CarLocal_channels_are_not_transmitted()
+    {
+        var time = new FakeTimeProvider(new DateTimeOffset(2026, 5, 10, 0, 0, 0, TimeSpan.Zero));
+        var client = new FakeCloudClient();
+        var config = ActiveConfiguration.Empty with
+        {
+            Channels = new Dictionary<int, ChannelDefinition>
+            {
+                [1] = new ChannelDefinition { Distribution = ChannelDistribution.CarLocal },
+                [2] = new ChannelDefinition { Distribution = ChannelDistribution.CarToCloud },
+            },
+        };
+
+        var consumer = new CloudTransmitConsumer(client, () => config, time, NullLogger<CloudTransmitConsumer>.Instance);
+        consumer.Start();
+        await Task.Delay(50, TestContext.CancellationToken);
+
+        await consumer.HandleAsync(
+            new[]
+            {
+                new InternalChannelValue(1, 11.0, 0, time.GetUtcNow().UtcDateTime),
+                new InternalChannelValue(2, 22.0, 0, time.GetUtcNow().UtcDateTime),
+            },
+            default);
+
+        time.Advance(TimeSpan.FromMilliseconds(100));
+        await Task.Delay(200, TestContext.CancellationToken);
+
+        Assert.IsGreaterThanOrEqualTo(1, client.Sends.Count, "A delta should have been sent.");
+        var sent = client.Sends.SelectMany(batch => batch).ToList();
+        Assert.HasCount(1, sent);
+        Assert.AreEqual((ushort)2, sent[0].SessionIndex, "Only the CarToCloud channel should have been transmitted.");
+        Assert.AreEqual("22", sent[0].Value);
 
         await consumer.DisposeAsync();
     }

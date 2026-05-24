@@ -2,6 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { ChannelsList } from './channels-list';
 import type { CarConfiguration } from '../../../../models/car-configuration';
+import { ChannelDistribution } from '../../../../models/channel-distribution';
+import { ChannelScope } from '../../../../models/channel-scope';
 import { By } from '@angular/platform-browser';
 import { MANAGEMENT_DATA_CLIENT, type ManagementDataClient } from '../../../data/management-data-client';
 
@@ -41,20 +43,35 @@ function buildConfigurationWithChannels(channelCount: number): CarConfiguration 
       name: `Channel ${index + 1}`,
       abbreviation: `C${index + 1}`,
       dataType: 'number',
-      isStringValue: false,
       baseUnitType: 'Celsius',
-      baseDecimalPlaces: 1,
       outputUnitType: 'Celsius',
       outputDecimalPlaces: 1,
       lowRange: 0,
       highRange: 100,
-      groupTag: 'Powertrain'
+      defaultValue: 0,
+      groupTag: 'Powertrain',
+      enumConversion: null,
+      timeoutMs: 3000,
+      distribution: ChannelDistribution.CarToCloud,
+      scope: ChannelScope.PerCar,
+      managedByFeature: null,
     })),
+    alarmDefinitions: [],
     counterDefinitions: [],
     mathDefinitions: [],
-    tableMappings: [],
+    tableDefinitions: [],
     timerDefinitions: [],
-    userConditions: []
+    userConditions: [],
+    loggingDefinitions: [],
+    enumDefinitions: [],
+    fuelConfig: {
+      isEnabled: false,
+      tankCapacityGallons: 0,
+      defaultConsumptionGalPerMin: 0,
+      defaultYellowConsumptionMultiplier: 1,
+      defaultCode35ConsumptionMultiplier: 1,
+      throttleConsumption: { isEnabled: false, maxRpm: 0 },
+    },
   };
 }
 
@@ -65,6 +82,9 @@ describe('ChannelsList', () => {
 
   beforeEach(async () => {
     mockClient = {
+      listDiscoveredRacecarsAsync: vi.fn().mockResolvedValue([]),
+      getActiveRacecarAsync: vi.fn().mockResolvedValue(null),
+      selectRacecarAsync: vi.fn(),
       loadCarConfigurationSummariesAsync: vi.fn(),
       loadReservedChannelDefinitionsAsync: vi.fn().mockResolvedValue([]),
       loadAvailableUnitTypesAsync: vi.fn().mockResolvedValue([]),
@@ -103,7 +123,7 @@ describe('ChannelsList', () => {
 
     const text = fixture.nativeElement.textContent as string;
     expect(text).toContain('Name');
-    expect(text).toContain('IsReserved');
+    expect(text).toContain('Reserved');
     expect(text).toContain('Channel 1');
     expect(text).toContain('Channel 2');
     expect(text).toContain('✓');

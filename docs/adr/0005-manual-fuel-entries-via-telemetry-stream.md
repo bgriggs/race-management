@@ -34,6 +34,6 @@ Two new Reserved Channels are added:
 ## Consequences
 
 - WebApi gains a stream-publisher responsibility for these channel values, in addition to its existing direct Postgres writes for CRUD entities. This is a narrow exception (limited to the two channels above) and matches the pattern of any other cloud-origin telemetry source.
-- The `ReservedChannels.cs` list grows by these two channels — and by the Reconciler's emitted output channels (`FuelRangeMinutes`, `FuelRangeMinutesHighConfidence`, etc.) which are emitted by ChannelProcessor for the same architectural reason. This is the expected pattern, not new surface area.
+- The `ReservedChannels.cs` list grows by these two channels — and by the Reconciler's emitted output channels (`FuelRangeMinutes`, `FuelRangeMinutesHighConf`, etc.) which are emitted by ChannelProcessor for the same architectural reason. This is the expected pattern, not new surface area.
 - A future "manual flag-state override" UI (engineer overrides the auto-detected `RaceFlagState`) is trivial — same WebApi pattern, same channel.
 - The Reconciler's `RefuelEvents.EnteredFuelGallons` write happens as part of its message-handler logic and is subject to the same ACK-after-state-write rule (ADR-0002): the stream message is not ACKed until the Postgres write completes, so a mid-message pod termination causes redelivery and idempotent reprocessing.

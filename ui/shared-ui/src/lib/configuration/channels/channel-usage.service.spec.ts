@@ -2,10 +2,75 @@ import { ChannelUsageService } from './channel-usage.service';
 import { CanBusInterfaceConfig } from '../../../models/can-bus-interface-config';
 import { ConditionDefinition } from '../../../models/condition-definition';
 import { MathDefinition } from '../../../models/math-definition';
+import { MathType } from '../../../models/math-type';
+import { SimpleOperationType } from '../../../models/simple-operation-type';
 import { CounterDefinition } from '../../../models/counter-definition';
 import { TimerDefinition } from '../../../models/timer-definition';
 import { TableDefinition } from '../../../models/table-definition';
+import { InterpolationType } from '../../../models/interpolation-type';
 import { AlarmDefinition } from '../../../models/alarm-definition';
+import { StatementDefinition } from '../../../models/statement-definition';
+
+const emptyStatement = (): StatementDefinition => ({
+  id: '',
+  activateComparisons: [],
+  deactivateComparisons: null,
+});
+
+const EMPTY_GUID = '00000000-0000-0000-0000-000000000000';
+
+const mkCounter = (overrides: Partial<CounterDefinition>): CounterDefinition => ({
+  id: '',
+  name: '',
+  outputChId: EMPTY_GUID,
+  upChId: EMPTY_GUID,
+  downChId: EMPTY_GUID,
+  resetChId: EMPTY_GUID,
+  maxValue: 0,
+  minValue: 0,
+  rollAtLimit: false,
+  startValue: 0,
+  persistValue: false,
+  ...overrides,
+});
+
+const mkTimer = (overrides: Partial<TimerDefinition>): TimerDefinition => ({
+  id: '',
+  name: '',
+  outputChId: EMPTY_GUID,
+  statement: emptyStatement(),
+  countDown: false,
+  enableRollover: false,
+  rolloverSeconds: 0,
+  enableStartSeconds: false,
+  startSeconds: 0,
+  enableStopSeconds: false,
+  stopSeconds: 0,
+  ...overrides,
+});
+
+const mkTable = (overrides: Partial<TableDefinition>): TableDefinition => ({
+  id: '',
+  name: '',
+  isEnum: false,
+  ignoreCase: false,
+  inputChannel: EMPTY_GUID,
+  outputChannel: EMPTY_GUID,
+  interpolationType: InterpolationType.Linear,
+  mappings: [],
+  ...overrides,
+});
+
+const mkAlarm = (overrides: Partial<AlarmDefinition>): AlarmDefinition => ({
+  id: '',
+  name: '',
+  statement: emptyStatement(),
+  messsage: '',
+  displayChannelSourceColorHex: '',
+  timeAfterAckToDisplaySecs: 0,
+  alarmStatusChannelId: null,
+  ...overrides,
+});
 
 describe('ChannelUsageService', () => {
   let service: ChannelUsageService;
@@ -261,48 +326,48 @@ describe('ChannelUsageService - per-type output methods', () => {
 
   it('tracks math definition output channels', () => {
     const defs: MathDefinition[] = [
-      { id: 'm1', name: 'M1', type: 'SimpleOperation', a: 0, b: 0, channel1Id: 'ch-input', channel2Id: null, outputChannelId: 'ch-out-a', simpleOperationType: 'Add' },
-      { id: 'm2', name: 'M2', type: 'SimpleOperation', a: 0, b: 0, channel1Id: 'ch-input', channel2Id: null, outputChannelId: 'ch-out-b', simpleOperationType: 'Add' },
-      { id: 'm3', name: 'M3', type: 'SimpleOperation', a: 0, b: 0, channel1Id: 'ch-input', channel2Id: null, outputChannelId: 'ch-out-a', simpleOperationType: 'Add' },
-      { id: 'm4', name: 'M4', type: 'SimpleOperation', a: 0, b: 0, channel1Id: 'ch-input', channel2Id: null, outputChannelId: '00000000-0000-0000-0000-000000000000', simpleOperationType: 'Add' },
+      { id: 'm1', name: 'M1', type: MathType.SimpleOperation, a: 0, b: 0, channel1Id: 'ch-input', channel2Id: null, outputChannelId: 'ch-out-a', simpleOperationType: SimpleOperationType.Add },
+      { id: 'm2', name: 'M2', type: MathType.SimpleOperation, a: 0, b: 0, channel1Id: 'ch-input', channel2Id: null, outputChannelId: 'ch-out-b', simpleOperationType: SimpleOperationType.Add },
+      { id: 'm3', name: 'M3', type: MathType.SimpleOperation, a: 0, b: 0, channel1Id: 'ch-input', channel2Id: null, outputChannelId: 'ch-out-a', simpleOperationType: SimpleOperationType.Add },
+      { id: 'm4', name: 'M4', type: MathType.SimpleOperation, a: 0, b: 0, channel1Id: 'ch-input', channel2Id: null, outputChannelId: '00000000-0000-0000-0000-000000000000', simpleOperationType: SimpleOperationType.Add },
     ];
 
     expect(service.getUsedChannelIdsFromMathDefinitions(defs)).toEqual(['ch-out-a', 'ch-out-b']);
   });
 
   it('tracks counter definition output channels, ignores empty guid', () => {
-    const defs: Partial<CounterDefinition>[] = [
-      { id: 'c1', outputChId: 'ch-counter-a', upChId: 'ch-up', downChId: '00000000-0000-0000-0000-000000000000', resetChId: '00000000-0000-0000-0000-000000000000' },
-      { id: 'c2', outputChId: '00000000-0000-0000-0000-000000000000', upChId: 'ch-up', downChId: '00000000-0000-0000-0000-000000000000', resetChId: '00000000-0000-0000-0000-000000000000' },
-    ] as CounterDefinition[];
+    const defs: CounterDefinition[] = [
+      mkCounter({ id: 'c1', outputChId: 'ch-counter-a', upChId: 'ch-up' }),
+      mkCounter({ id: 'c2', outputChId: EMPTY_GUID, upChId: 'ch-up' }),
+    ];
 
     expect(service.getUsedChannelIdsFromCounterDefinitions(defs)).toEqual(['ch-counter-a']);
   });
 
   it('tracks timer definition output channels, ignores empty guid', () => {
-    const defs: Partial<TimerDefinition>[] = [
-      { id: 't1', outputChId: 'ch-timer-a', statement: { comparisons: [], logicType: 'And' } },
-      { id: 't2', outputChId: '00000000-0000-0000-0000-000000000000', statement: { comparisons: [], logicType: 'And' } },
-    ] as TimerDefinition[];
+    const defs: TimerDefinition[] = [
+      mkTimer({ id: 't1', outputChId: 'ch-timer-a' }),
+      mkTimer({ id: 't2', outputChId: EMPTY_GUID }),
+    ];
 
     expect(service.getUsedChannelIdsFromTimerDefinitions(defs)).toEqual(['ch-timer-a']);
   });
 
   it('tracks table definition output channels, ignores empty guid', () => {
-    const defs: Partial<TableDefinition>[] = [
-      { id: 'tbl1', outputChannel: 'ch-table-a', inputChannel: 'ch-in', mappings: [] },
-      { id: 'tbl2', outputChannel: '00000000-0000-0000-0000-000000000000', inputChannel: 'ch-in', mappings: [] },
-    ] as TableDefinition[];
+    const defs: TableDefinition[] = [
+      mkTable({ id: 'tbl1', outputChannel: 'ch-table-a', inputChannel: 'ch-in' }),
+      mkTable({ id: 'tbl2', outputChannel: EMPTY_GUID, inputChannel: 'ch-in' }),
+    ];
 
     expect(service.getUsedChannelIdsFromTableDefinitions(defs)).toEqual(['ch-table-a']);
   });
 
   it('tracks alarm definition status output channels, ignores null and empty guid', () => {
-    const defs: Partial<AlarmDefinition>[] = [
-      { id: 'a1', alarmStatusChannelId: 'ch-alarm-a', statement: { comparisons: [], logicType: 'And' } },
-      { id: 'a2', alarmStatusChannelId: null, statement: { comparisons: [], logicType: 'And' } },
-      { id: 'a3', alarmStatusChannelId: '00000000-0000-0000-0000-000000000000', statement: { comparisons: [], logicType: 'And' } },
-    ] as AlarmDefinition[];
+    const defs: AlarmDefinition[] = [
+      mkAlarm({ id: 'a1', alarmStatusChannelId: 'ch-alarm-a' }),
+      mkAlarm({ id: 'a2', alarmStatusChannelId: null }),
+      mkAlarm({ id: 'a3', alarmStatusChannelId: EMPTY_GUID }),
+    ];
 
     expect(service.getUsedChannelIdsFromAlarmDefinitions(defs)).toEqual(['ch-alarm-a']);
   });
@@ -342,14 +407,15 @@ describe('ChannelUsageService - per-type output methods', () => {
         ],
       },
       channelDefinitions: [],
-      alarmDefinitions: [{ id: 'a1', name: 'A', statement: { comparisons: [], logicType: 'And' }, messsage: '', displayChannelSourceColorHex: '', timeAfterAckToDisplaySecs: 0, alarmStatusChannelId: 'ch-alarm' }],
-      counterDefinitions: [{ id: 'c1', name: 'C', outputChId: 'ch-counter', upChId: '00000000-0000-0000-0000-000000000000', downChId: '00000000-0000-0000-0000-000000000000', resetChId: '00000000-0000-0000-0000-000000000000', startValue: 0, enableMinClamp: false, minClampValue: 0, enableMaxClamp: false, maxClampValue: 0 }],
-      mathDefinitions: [{ id: 'm1', name: 'M', type: 'SimpleOperation', a: 0, b: 0, channel1Id: 'ch-can', channel2Id: null, outputChannelId: 'ch-math', simpleOperationType: 'Add' }],
-      tableDefinitions: [{ id: 'tbl1', name: 'T', isEnum: false, ignoreCase: false, inputChannel: 'ch-can', outputChannel: 'ch-table', interpolationType: 'Linear', mappings: [] }],
-      timerDefinitions: [{ id: 't1', name: 'T', outputChId: 'ch-timer', statement: { comparisons: [], logicType: 'And' }, countDown: false, enableRollover: false, rolloverSeconds: 0, enableStartSeconds: false, startSeconds: 0, enableStopSeconds: false, stopSeconds: 0 }],
+      alarmDefinitions: [{ id: 'a1', name: 'A', statement: emptyStatement(), messsage: '', displayChannelSourceColorHex: '', timeAfterAckToDisplaySecs: 0, alarmStatusChannelId: 'ch-alarm' }],
+      counterDefinitions: [{ id: 'c1', name: 'C', outputChId: 'ch-counter', upChId: '00000000-0000-0000-0000-000000000000', downChId: '00000000-0000-0000-0000-000000000000', resetChId: '00000000-0000-0000-0000-000000000000', maxValue: 0, minValue: 0, rollAtLimit: false, startValue: 0, persistValue: false }],
+      mathDefinitions: [{ id: 'm1', name: 'M', type: MathType.SimpleOperation, a: 0, b: 0, channel1Id: 'ch-can', channel2Id: null, outputChannelId: 'ch-math', simpleOperationType: SimpleOperationType.Add }],
+      tableDefinitions: [{ id: 'tbl1', name: 'T', isEnum: false, ignoreCase: false, inputChannel: 'ch-can', outputChannel: 'ch-table', interpolationType: InterpolationType.Linear, mappings: [] }],
+      timerDefinitions: [{ id: 't1', name: 'T', outputChId: 'ch-timer', statement: emptyStatement(), countDown: false, enableRollover: false, rolloverSeconds: 0, enableStartSeconds: false, startSeconds: 0, enableStopSeconds: false, stopSeconds: 0 }],
       userConditions: [{ id: 'u1', name: 'U', outputChannelId: 'ch-uc', statements: [] }],
       loggingDefinitions: [],
       enumDefinitions: [],
+      fuelConfig: { isEnabled: false, tankCapacityGallons: 0, defaultConsumptionGalPerMin: 0, defaultYellowConsumptionMultiplier: 1, defaultCode35ConsumptionMultiplier: 1, throttleConsumption: { isEnabled: false, maxRpm: 0 } },
     });
 
     const ids = service.usedChannelIds();

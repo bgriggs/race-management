@@ -51,6 +51,10 @@ public sealed class CloudTransmitConsumer(
                 {
                     continue;
                 }
+                if (def.Distribution == ChannelDistribution.CarLocal)
+                {
+                    continue;
+                }
                 if (!_full.TryGetValue(v.ChannelId, out var existing))
                 {
                     existing = new ChannelValue

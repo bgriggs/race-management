@@ -59,6 +59,29 @@ public class ChannelDefinition
     /// Amount of time in milliseconds between updates from the channel source before considering the value timed out and set to default.
     /// </summary>
     public int TimeoutMs { get; set; } = 3000;
+
+    /// <summary>
+    /// Where the channel's values are produced and which tiers they are transmitted to.
+    /// Defaults to <see cref="ChannelDistribution.CarToCloud"/>, matching today's behavior
+    /// for car-side telemetry.
+    /// </summary>
+    public ChannelDistribution Distribution { get; set; } = ChannelDistribution.CarToCloud;
+
+    /// <summary>
+    /// What entity the channel's values are bound to. Defaults to <see cref="ChannelScope.PerCar"/>.
+    /// </summary>
+    public ChannelScope Scope { get; set; } = ChannelScope.PerCar;
+
+    /// <summary>
+    /// Identifier of the feature that owns this channel's lifecycle (e.g., "fuel-analysis",
+    /// "throttle-consumption"). When non-null on a reserved-channel template, the channel
+    /// is auto-injected into a car configuration when its feature is enabled, hidden from
+    /// the user's reserved-channel picker, and removed when the feature is disabled. The
+    /// value propagates to the per-car channel instance at injection time, where the UI
+    /// uses it to lock editing and deletion.
+    /// </summary>
+    [StringLength(32)]
+    public string? ManagedByFeature { get; set; }
 }
 
 [AttributeUsage(AttributeTargets.Property)]

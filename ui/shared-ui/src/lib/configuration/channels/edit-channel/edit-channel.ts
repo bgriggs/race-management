@@ -4,6 +4,8 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { MANAGEMENT_DATA_CLIENT } from '../../../data/management-data-client';
 import { ChannelDefinition } from '../../../../models/channel-definition';
+import { ChannelDistribution } from '../../../../models/channel-distribution';
+import { ChannelScope } from '../../../../models/channel-scope';
 import { createGuid } from '../../../utils/guid';
 import { EnumDefinition } from '../../../../models/enum-definition';
 
@@ -94,8 +96,19 @@ export class EditChannel implements OnInit {
     lowRange: new FormControl(0, { nonNullable: true }),
     highRange: new FormControl(100, { nonNullable: true }),
     defaultValue: new FormControl(0, { nonNullable: true }),
-    timeoutMs: new FormControl(0, { nonNullable: true })
+    timeoutMs: new FormControl(0, { nonNullable: true }),
+    distribution: new FormControl<ChannelDistribution>(ChannelDistribution.CarToCloud, { nonNullable: true }),
+    scope: new FormControl<ChannelScope>(ChannelScope.PerCar, { nonNullable: true })
   }, { validators: EditChannel.defaultValueInRangeValidator });
+
+  // Expose enums for template-level [value] bindings.
+  protected readonly ChannelDistribution = ChannelDistribution;
+  protected readonly ChannelScope = ChannelScope;
+
+  readonly distributionOptionsForCustom: Array<{ value: ChannelDistribution; label: string }> = [
+    { value: ChannelDistribution.CarToCloud, label: 'Car to Cloud' },
+    { value: ChannelDistribution.CarLocal, label: 'Car Local' }
+  ];
 
   static defaultValueInRangeValidator(group: AbstractControl): ValidationErrors | null {
     const low = Number((group as FormGroup).controls['lowRange'].value);
@@ -149,7 +162,9 @@ export class EditChannel implements OnInit {
         .map((channel) => channel.id)
     );
 
-    return this.reservedChannels().filter((channel) => !reservedIdsInUse.has(channel.id));
+    return this.reservedChannels().filter(
+      (channel) => !reservedIdsInUse.has(channel.id) && !channel.managedByFeature
+    );
   });
 
   constructor() {
@@ -174,7 +189,9 @@ export class EditChannel implements OnInit {
           lowRange: incomingChannel?.lowRange ?? 0,
           highRange: incomingChannel?.highRange ?? 100,
           defaultValue: incomingChannel?.defaultValue ?? 0,
-          timeoutMs: incomingChannel?.timeoutMs ?? 0
+          timeoutMs: incomingChannel?.timeoutMs ?? 0,
+          distribution: incomingChannel?.distribution ?? ChannelDistribution.CarToCloud,
+          scope: incomingChannel?.scope ?? ChannelScope.PerCar
         },
         { emitEvent: false }
       );
@@ -220,6 +237,9 @@ export class EditChannel implements OnInit {
     }
 
     this.form.controls.reservedChannelId.setValue('');
+    // Reset distribution to the custom-allowed default; scope is locked to PerCar.
+    this.form.controls.distribution.setValue(ChannelDistribution.CarToCloud);
+    this.form.controls.scope.setValue(ChannelScope.PerCar);
   }
 
   onReservedChannelChange(reservedChannelId: string): void {
@@ -263,7 +283,10 @@ export class EditChannel implements OnInit {
       defaultValue: Number(this.form.controls.defaultValue.value),
       groupTag: this.form.controls.groupTag.value.trim(),
       enumConversion: this.form.controls.enumConversion.value || null,
-      timeoutMs: Number(this.form.controls.timeoutMs.value)
+      timeoutMs: Number(this.form.controls.timeoutMs.value),
+      distribution: this.form.controls.distribution.value,
+      scope: this.form.controls.scope.value,
+      managedByFeature: null
     };
 
     if (isReserved && selectedReservedChannel) {
@@ -283,6 +306,9 @@ export class EditChannel implements OnInit {
       channel.groupTag = selectedReservedChannel.groupTag;
       channel.enumConversion = selectedReservedChannel.enumConversion;
       channel.timeoutMs = selectedReservedChannel.timeoutMs;
+      channel.distribution = selectedReservedChannel.distribution;
+      channel.scope = selectedReservedChannel.scope;
+      channel.managedByFeature = selectedReservedChannel.managedByFeature;
     }
 
     this.save.emit(channel);
@@ -303,10 +329,15 @@ export class EditChannel implements OnInit {
       this.form.controls.dataType.disable(opts);
       this.form.controls.baseUnitType.disable(opts);
       this.form.controls.outputUnitType.disable(opts);
+      this.form.controls.distribution.disable(opts);
+      this.form.controls.scope.disable(opts);
     } else {
       this.form.controls.dataType.enable(opts);
       this.form.controls.baseUnitType.enable(opts);
       this.form.controls.outputUnitType.enable(opts);
+      this.form.controls.distribution.enable(opts);
+      // Custom channels are locked to PerCar scope in v1 (ADR-0007).
+      this.form.controls.scope.disable(opts);
     }
   }
 
@@ -347,7 +378,9 @@ export class EditChannel implements OnInit {
       lowRange: selected.lowRange,
       highRange: selected.highRange,
       defaultValue: selected.defaultValue,
-      timeoutMs: selected.timeoutMs
+      timeoutMs: selected.timeoutMs,
+      distribution: selected.distribution,
+      scope: selected.scope
     });
 
     this.loadAvailableUnitTypes();

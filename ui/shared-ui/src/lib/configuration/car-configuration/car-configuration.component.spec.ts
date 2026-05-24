@@ -3,12 +3,17 @@ import {
   BrowserTestingModule,
   platformBrowserTesting
 } from '@angular/platform-browser/testing';
+import { MatDialog } from '@angular/material/dialog';
+import { of } from 'rxjs';
 import { CarConfigurationComponent } from './car-configuration.component';
 import {
   MANAGEMENT_DATA_CLIENT,
   type ManagementDataClient
 } from '../../data/management-data-client';
 import type { CarConfiguration } from '../../../models/car-configuration';
+import type { ChannelDefinition } from '../../../models/channel-definition';
+import { ChannelDistribution } from '../../../models/channel-distribution';
+import { ChannelScope } from '../../../models/channel-scope';
 
 try {
   getTestBed().initTestEnvironment(BrowserTestingModule, platformBrowserTesting());
@@ -46,11 +51,50 @@ function buildConfig(name: string): CarConfiguration {
       ]
     },
     channelDefinitions: [],
+    alarmDefinitions: [],
     counterDefinitions: [],
     mathDefinitions: [],
-    tableMappings: [],
+    tableDefinitions: [],
     timerDefinitions: [],
-    userConditions: []
+    userConditions: [],
+    loggingDefinitions: [],
+    enumDefinitions: [],
+    fuelConfig: {
+      isEnabled: false,
+      tankCapacityGallons: 0,
+      defaultConsumptionGalPerMin: 0,
+      defaultYellowConsumptionMultiplier: 0.5,
+      defaultCode35ConsumptionMultiplier: 0.3,
+      throttleConsumption: { isEnabled: false, maxRpm: 7000 }
+    }
+  };
+}
+
+function buildReservedChannel(
+  id: string,
+  name: string,
+  managedByFeature: string | null,
+  distribution: ChannelDistribution = ChannelDistribution.CarToCloud
+): ChannelDefinition {
+  return {
+    id,
+    isReserved: true,
+    category: 'Fuel',
+    name,
+    abbreviation: name.slice(0, 6).toUpperCase(),
+    dataType: 'Unitless',
+    baseUnitType: '',
+    outputUnitType: '',
+    outputDecimalPlaces: 0,
+    lowRange: 0,
+    highRange: 100,
+    defaultValue: 0,
+    groupTag: '',
+    enumConversion: null,
+    timeoutMs: 3000,
+    distribution,
+    scope: ChannelScope.PerCar,
+    managedByFeature
   };
 }
 
@@ -59,6 +103,9 @@ describe('CarConfigurationComponent', () => {
 
   beforeEach(async () => {
     mockClient = {
+      listDiscoveredRacecarsAsync: vi.fn().mockResolvedValue([]),
+      getActiveRacecarAsync: vi.fn().mockResolvedValue(null),
+      selectRacecarAsync: vi.fn(),
       loadCarConfigurationSummariesAsync: vi.fn().mockResolvedValue([
         {
           id: 'summary-1',
@@ -131,6 +178,9 @@ describe('CarConfigurationComponent', () => {
 
   it('shows empty-state message when no configuration summaries exist', async () => {
     const emptyClient: ManagementDataClient = {
+      listDiscoveredRacecarsAsync: vi.fn().mockResolvedValue([]),
+      getActiveRacecarAsync: vi.fn().mockResolvedValue(null),
+      selectRacecarAsync: vi.fn(),
       loadCarConfigurationSummariesAsync: vi.fn().mockResolvedValue([]),
       loadReservedChannelDefinitionsAsync: vi.fn().mockResolvedValue([]),
       loadAvailableUnitTypesAsync: vi.fn().mockResolvedValue([]),
@@ -338,6 +388,21 @@ describe('CarConfigurationComponent', () => {
   });
 
   it('deletes a configuration from the list and shows snackbar', async () => {
+    // deleteConfiguration opens a MatDialog confirmation and awaits afterClosed().
+    // Mock MatDialog so open(...).afterClosed() resolves to `true` (user confirms).
+    const dialogMock = {
+      open: vi.fn().mockReturnValue({ afterClosed: () => of(true) })
+    };
+
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [CarConfigurationComponent],
+      providers: [
+        { provide: MANAGEMENT_DATA_CLIENT, useValue: mockClient },
+        { provide: MatDialog, useValue: dialogMock }
+      ]
+    }).compileComponents();
+
     const fixture = TestBed.createComponent(CarConfigurationComponent);
     fixture.detectChanges();
     await fixture.whenStable();
@@ -349,5 +414,172 @@ describe('CarConfigurationComponent', () => {
 
     expect(mockClient.deleteCarConfigurationAsync).toHaveBeenCalledWith('summary-1');
     expect(component.snackbarMessage()).toBe('Configuration deleted.');
+  });
+
+  describe('Fuel Analysis channel auto-injection', () => {
+    const fuelReservedA = buildReservedChannel('fuel-1', 'FuelRangeMinutes', 'fuel-analysis');
+    const fuelReservedB = buildReservedChannel('fuel-2', 'RaceFlagState', 'fuel-analysis');
+    const throttleReservedA = buildReservedChannel('throttle-1', 'ThrottlePosition', 'throttle-consumption');
+    const throttleReservedB = buildReservedChannel('throttle-2', 'ThrottleProxyFuelUsed', 'throttle-consumption');
+    const unmanagedReserved = buildReservedChannel('unmanaged-1', 'CoolantTemp', null);
+
+    async function buildFixtureWithReservedChannels() {
+      const client: ManagementDataClient = {
+        ...mockClient,
+        loadReservedChannelDefinitionsAsync: vi.fn().mockResolvedValue([
+          fuelReservedA,
+          fuelReservedB,
+          throttleReservedA,
+          throttleReservedB,
+          unmanagedReserved
+        ])
+      };
+
+      TestBed.resetTestingModule();
+      await TestBed.configureTestingModule({
+        imports: [CarConfigurationComponent],
+        providers: [{ provide: MANAGEMENT_DATA_CLIENT, useValue: client }]
+      }).compileComponents();
+
+      const fixture = TestBed.createComponent(CarConfigurationComponent);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      return fixture;
+    }
+
+    it('injects fuel-analysis reserved channels when fuel analysis is toggled on', async () => {
+      const fixture = await buildFixtureWithReservedChannels();
+      const component = fixture.componentInstance;
+      component.activeConfiguration.set(buildConfig('Config A'));
+
+      component.onFuelConfigChange({
+        isEnabled: true,
+        tankCapacityGallons: 15,
+        defaultConsumptionGalPerMin: 0.3,
+        defaultYellowConsumptionMultiplier: 0.5,
+        defaultCode35ConsumptionMultiplier: 0.3,
+        throttleConsumption: { isEnabled: false, maxRpm: 7000 }
+      });
+
+      const ids = component.activeConfiguration()!.channelDefinitions.map((c) => c.id);
+      expect(ids).toContain('fuel-1');
+      expect(ids).toContain('fuel-2');
+      expect(ids).not.toContain('throttle-1');
+    });
+
+    it('removes fuel-analysis and throttle channels when fuel analysis is toggled off (cascade)', async () => {
+      const fixture = await buildFixtureWithReservedChannels();
+      const component = fixture.componentInstance;
+      component.activeConfiguration.set({
+        ...buildConfig('Config A'),
+        channelDefinitions: [
+          unmanagedReserved,
+          fuelReservedA,
+          fuelReservedB,
+          throttleReservedA,
+          throttleReservedB
+        ],
+        fuelConfig: {
+          isEnabled: true,
+          tankCapacityGallons: 15,
+          defaultConsumptionGalPerMin: 0.3,
+          defaultYellowConsumptionMultiplier: 0.5,
+          defaultCode35ConsumptionMultiplier: 0.3,
+          throttleConsumption: { isEnabled: true, maxRpm: 7000 }
+        }
+      });
+
+      component.onFuelConfigChange({
+        isEnabled: false,
+        tankCapacityGallons: 15,
+        defaultConsumptionGalPerMin: 0.3,
+        defaultYellowConsumptionMultiplier: 0.5,
+        defaultCode35ConsumptionMultiplier: 0.3,
+        throttleConsumption: { isEnabled: true, maxRpm: 7000 }
+      });
+
+      const ids = component.activeConfiguration()!.channelDefinitions.map((c) => c.id);
+      expect(ids).toEqual(['unmanaged-1']);
+      expect(component.activeConfiguration()!.fuelConfig.throttleConsumption.isEnabled).toBe(false);
+    });
+
+    it('adds throttle channels when throttle is toggled on (fuel already on)', async () => {
+      const fixture = await buildFixtureWithReservedChannels();
+      const component = fixture.componentInstance;
+      component.activeConfiguration.set({
+        ...buildConfig('Config A'),
+        channelDefinitions: [fuelReservedA, fuelReservedB],
+        fuelConfig: {
+          isEnabled: true,
+          tankCapacityGallons: 15,
+          defaultConsumptionGalPerMin: 0.3,
+          defaultYellowConsumptionMultiplier: 0.5,
+          defaultCode35ConsumptionMultiplier: 0.3,
+          throttleConsumption: { isEnabled: false, maxRpm: 7000 }
+        }
+      });
+
+      component.onFuelConfigChange({
+        isEnabled: true,
+        tankCapacityGallons: 15,
+        defaultConsumptionGalPerMin: 0.3,
+        defaultYellowConsumptionMultiplier: 0.5,
+        defaultCode35ConsumptionMultiplier: 0.3,
+        throttleConsumption: { isEnabled: true, maxRpm: 7000 }
+      });
+
+      const ids = component.activeConfiguration()!.channelDefinitions.map((c) => c.id);
+      expect(ids).toEqual(['fuel-1', 'fuel-2', 'throttle-1', 'throttle-2']);
+    });
+
+    it('removes only throttle channels when throttle is toggled off and fuel stays on', async () => {
+      const fixture = await buildFixtureWithReservedChannels();
+      const component = fixture.componentInstance;
+      component.activeConfiguration.set({
+        ...buildConfig('Config A'),
+        channelDefinitions: [fuelReservedA, fuelReservedB, throttleReservedA, throttleReservedB],
+        fuelConfig: {
+          isEnabled: true,
+          tankCapacityGallons: 15,
+          defaultConsumptionGalPerMin: 0.3,
+          defaultYellowConsumptionMultiplier: 0.5,
+          defaultCode35ConsumptionMultiplier: 0.3,
+          throttleConsumption: { isEnabled: true, maxRpm: 7000 }
+        }
+      });
+
+      component.onFuelConfigChange({
+        isEnabled: true,
+        tankCapacityGallons: 15,
+        defaultConsumptionGalPerMin: 0.3,
+        defaultYellowConsumptionMultiplier: 0.5,
+        defaultCode35ConsumptionMultiplier: 0.3,
+        throttleConsumption: { isEnabled: false, maxRpm: 7000 }
+      });
+
+      const ids = component.activeConfiguration()!.channelDefinitions.map((c) => c.id);
+      expect(ids).toEqual(['fuel-1', 'fuel-2']);
+    });
+
+    it('does not duplicate channels when injecting twice', async () => {
+      const fixture = await buildFixtureWithReservedChannels();
+      const component = fixture.componentInstance;
+      component.activeConfiguration.set({
+        ...buildConfig('Config A'),
+        channelDefinitions: [fuelReservedA] // already has one of the managed channels
+      });
+
+      component.onFuelConfigChange({
+        isEnabled: true,
+        tankCapacityGallons: 15,
+        defaultConsumptionGalPerMin: 0.3,
+        defaultYellowConsumptionMultiplier: 0.5,
+        defaultCode35ConsumptionMultiplier: 0.3,
+        throttleConsumption: { isEnabled: false, maxRpm: 7000 }
+      });
+
+      const ids = component.activeConfiguration()!.channelDefinitions.map((c) => c.id);
+      expect(ids).toEqual(['fuel-1', 'fuel-2']);
+    });
   });
 });

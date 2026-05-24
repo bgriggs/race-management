@@ -14,6 +14,8 @@ describe('EditCounter', () => {
 
     fixture = TestBed.createComponent(EditCounter);
     component = fixture.componentInstance;
+    fixture.componentRef.setInput('channels', []);
+    fixture.detectChanges();
     await fixture.whenStable();
   });
 

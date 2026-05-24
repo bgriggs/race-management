@@ -32,10 +32,16 @@ A bounded period of on-track activity (practice, qualifying, race stint, etc.) w
 A race weekend or competition event. Contains one or more Race Sessions. Managed by the same external integration as Race Sessions.
 
 ### Telemetry Stream
-The single Redis Stream (`telemetry`) carrying all channel values — both car-sourced and cloud-sourced. Each message carries `carId`, `channelId`, `value`, `timestamp`, `source`, and `sendToCar` fields. Multiple services publish to and consume from this stream via separate consumer groups.
+The single Redis Stream (`telemetry`) carrying all channel values — both car-sourced and cloud-sourced. Each message carries `teamId`, `carId` (nullable for PerTeam channels), `channelId`, `value`, `timestamp`, and `source` fields. Multiple services publish to and consume from this stream via separate consumer groups. Routing (transmit to car? transmit to cloud?) is determined by each value's `ChannelDefinition.Distribution`, looked up by consumers — there is no per-message routing flag (see [ADR-0007](docs/adr/0007-declarative-channel-routing.md)).
 
-### sendToCar
-A flag on a telemetry stream message indicating that CarGateway should forward the value to the car via its SignalR connection. Any cloud service may publish messages with this flag set; CarGateway is the sole forwarder.
+### Channel Distribution
+A field on `ChannelDefinition` (`CarLocal`, `CarToCloud`, `CloudLocal`, `CloudToCar`) declaring where a channel's values are produced and which tiers they are transmitted to. CarGateway forwards `CloudToCar` values to cars; the in-car `SignalRTransmitConsumer` skips `CarLocal` values when uplinking to the cloud. Replaces an earlier per-message `sendToCar` design.
+
+### Channel Scope
+A field on `ChannelDefinition` (`PerCar`, `PerTeam`) declaring what entity a channel's values are bound to. `PerCar` values are keyed `(TeamId, CarId, ChannelId)`; `PerTeam` values are keyed `(TeamId, ChannelId)` and apply to every car on the team — `RaceFlagState` is the canonical example. PerTeam reserved channels still live in each car's `channelDefinitions` list (so the in-car pipeline can route them locally), but the stream message and `ChannelLogs` row carry `CarId = null`.
+
+### Feature-Managed Channel
+A reserved channel whose `ChannelDefinition.ManagedByFeature` is set (e.g., `"fuel-analysis"`, `"throttle-consumption"`). Feature-managed channels are auto-injected into a car configuration when their owning feature is enabled, are hidden from the reserved-channel picker in the Edit Channel UI, render with a lock icon in the Channels list, and are removed when the feature is disabled.
 
 ---
 
@@ -46,7 +52,7 @@ Three Kubernetes deployments:
 ### CarGateway
 - Manages inbound SignalR connections from cars (OAuth 2.0 Client Credentials via Keycloak)
 - Receives telemetry from cars and publishes to the Redis `telemetry` stream
-- Consumes the `telemetry` stream and forwards messages with `sendToCar=true` to the appropriate car's SignalR connection
+- Consumes the `telemetry` stream and forwards messages whose `ChannelDefinition.Distribution = CloudToCar` to the appropriate car's SignalR connection (for `PerCar` channels, the originating car; for `PerTeam` channels, every connected car on the team). Routing is derived from a process-local channel-definition cache keyed by `(teamId, channelId)`, refreshed on `CarConfigChanged` events.
 - Requires K8s sticky sessions (session affinity) on the ingress so a reconnecting car lands on the same pod
 - SignalR transport is **WebSockets only** — long polling is disabled. If the pod holding a car's connection dies, the car reconnects, lands on a new pod, and re-initializes via the normal Config ID handshake
 
@@ -73,7 +79,8 @@ Three Kubernetes deployments:
 ## Telemetry Stream Design
 
 - **Single stream**: `telemetry` (Redis Streams)
-- **Message fields**: `carId`, `channelId`, `value`, `timestamp` (UTC), `source` (e.g., `"car"`, `"cloud:math"`, `"cloud:position"`), `sendToCar` (bool)
+- **Message fields**: `teamId`, `carId` (nullable for `PerTeam` channels), `channelId`, `value`, `timestamp` (UTC), `source` (e.g., `"car"`, `"cloud:math"`, `"cloud:position"`)
+- **Routing**: derived from each value's `ChannelDefinition.Distribution` looked up by consumers — there is no per-message routing flag (see [ADR-0007](docs/adr/0007-declarative-channel-routing.md))
 - **Consumer groups**: one per consuming service (`cargw`, `webapi`, `channelproc`)
 - **Retention**: `MAXLEN ~` 50 000 entries (approximate trim); covers several minutes of data at peak rate — sufficient for consumer lag recovery without unbounded memory growth
 - **Car events**: separate Redis pub/sub channel `car-events` carrying `CarConnected`, `CarDisconnected`, `CarConfigChanged`, and `CarConfigSynced` events
@@ -88,16 +95,18 @@ Table: `ChannelLogs`
 |---|---|---|
 | `Id` | bigint | surrogate PK |
 | `TeamId` | int | FK to Teams (tenant scope) |
-| `CarId` | int | FK to Cars |
+| `CarId` | int **nullable** | FK to Cars. Null for `Scope = PerTeam` channels (e.g., `RaceFlagState`); set for `PerCar` channels |
 | `ChannelId` | int | FK to channel definitions |
 | `Timestamp` | timestamptz | wall-clock time from stream message |
 | `Value` | double | base-unit value |
 
 - **No session FK on log rows.** Session correlation is done at query time via `WHERE Timestamp BETWEEN session.StartTime AND session.EndTime`.
 - **Write pattern**: ChannelLogger buffers values in memory and flushes as bulk INSERT, up to every 500 ms or 500 rows.
-- **Primary query index**: `(CarId, Timestamp)` covering index.
+- **Indexes**:
+  - `(CarId, Timestamp)` — primary index for per-car history queries (dashboards, single-car anomaly detection). Skipped for rows where `CarId IS NULL`; per-team history uses the second index.
+  - `(TeamId, ChannelId, Timestamp)` — supports per-team history queries (e.g., the team's full `RaceFlagState` timeline for a session) and any cross-car query within a team.
 - **Volume**: manageable with plain Postgres (no TimescaleDB); ~16 racing hours per month per car.
-- **Use cases**: live trend display in dashboards; historical data for anomaly detection model training.
+- **Use cases**: live trend display in dashboards; historical data for anomaly detection model training; `PerTeam` flag/state replay for session reconstruction.
 
 ---
 

@@ -22,11 +22,22 @@ const buildConfiguration = (): CarConfiguration => ({
     ],
   },
   channelDefinitions: [],
+  alarmDefinitions: [],
   counterDefinitions: [],
   mathDefinitions: [],
-  tableMappings: [],
+  tableDefinitions: [],
   timerDefinitions: [],
   userConditions: [],
+  loggingDefinitions: [],
+  enumDefinitions: [],
+  fuelConfig: {
+    isEnabled: false,
+    tankCapacityGallons: 0,
+    defaultConsumptionGalPerMin: 0,
+    defaultYellowConsumptionMultiplier: 1,
+    defaultCode35ConsumptionMultiplier: 1,
+    throttleConsumption: { isEnabled: false, maxRpm: 0 },
+  },
 });
 
 describe('UserConditionsList', () => {

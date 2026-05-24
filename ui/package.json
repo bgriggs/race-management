@@ -11,7 +11,9 @@
     "build:local": "ng build race-management-local",
     "build:all": "npm run build:cloud && npm run build:local",
     "test:cloud": "ng test race-management-cloud",
-    "test:local": "ng test race-management-local"
+    "test:local": "ng test race-management-local",
+    "test:shared-ui": "ng test shared-ui",
+    "test:all": "ng test shared-ui && ng test race-management-cloud && ng test race-management-local"
   },
   "prettier": {
     "printWidth": 100,

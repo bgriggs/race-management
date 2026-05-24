@@ -13,4 +13,12 @@ public class CarHubConnectionState
     public DateTime ConnectedTimestamp { get; set; }
     [Key(3)]
     public string CarKey { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Team identifier set once <see cref="CarKey"/> is known. Used at disconnect
+    /// time to remove the carKey from the per-team connected-cars set without
+    /// re-parsing it out of the carKey string.
+    /// </summary>
+    [Key(4)]
+    public int TeamId { get; set; }
 }

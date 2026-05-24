@@ -1,0 +1,332 @@
+using CarGateway.Forwarding;
+using Channels;
+using Cloud.Shared;
+using Cloud.Shared.Hubs;
+using Cloud.Shared.Streaming;
+using MessagePack;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
+using Moq;
+using StackExchange.Redis;
+
+namespace Cloud.Tests.CarGateway;
+
+[TestClass]
+public class TeamChannelForwardingServiceTests
+{
+    private Mock<IConnectionMultiplexer> _mux = null!;
+    private Mock<IDatabase> _db = null!;
+    private Mock<IHubContext<CarHub>> _hub = null!;
+    private Mock<IHubClients> _hubClients = null!;
+    private Mock<ISingleClientProxy> _clientProxy = null!;
+    private Mock<ICarChannelDefinitionResolver> _resolver = null!;
+    private TeamChannelForwardingService _service = null!;
+
+    private const int TeamId = 7;
+    private const string TeamField = "team-7";
+    private const string CarKeyA = "team-7-car-CarA";
+    private const string CarKeyB = "team-7-car-CarB";
+    private const string ConnIdA = "conn-A";
+    private const string ConnIdB = "conn-B";
+
+    [TestInitialize]
+    public void Setup()
+    {
+        _mux = new Mock<IConnectionMultiplexer>();
+        _db = new Mock<IDatabase>();
+        _hub = new Mock<IHubContext<CarHub>>();
+        _hubClients = new Mock<IHubClients>();
+        _clientProxy = new Mock<ISingleClientProxy>();
+        _resolver = new Mock<ICarChannelDefinitionResolver>();
+
+        _mux.Setup(m => m.GetDatabase(It.IsAny<int>(), It.IsAny<object?>())).Returns(_db.Object);
+
+        _db.Setup(d => d.StreamCreateConsumerGroupAsync(
+               It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<RedisValue?>(),
+               It.IsAny<bool>(), It.IsAny<CommandFlags>()))
+           .ReturnsAsync(true);
+
+        _db.Setup(d => d.StreamAcknowledgeAsync(
+               It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<RedisValue>(),
+               It.IsAny<CommandFlags>()))
+           .ReturnsAsync(1L);
+
+        _hub.Setup(h => h.Clients).Returns(_hubClients.Object);
+        _hubClients.Setup(c => c.Client(It.IsAny<string>())).Returns(_clientProxy.Object);
+
+        var logger = new Mock<ILogger<TeamChannelForwardingService>>();
+        _service = new TeamChannelForwardingService(_mux.Object, _hub.Object, _resolver.Object, logger.Object);
+    }
+
+    [TestCleanup]
+    public async Task Cleanup()
+    {
+        await _service.StopAsync(CancellationToken.None);
+        _service.Dispose();
+    }
+
+    private SemaphoreSlim SetupStreamReads(StreamEntry[] firstBatch)
+    {
+        var batchProcessed = new SemaphoreSlim(0, 1);
+        int callCount = 0;
+
+        _db.Setup(d => d.StreamReadGroupAsync(
+               It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<RedisValue>(),
+               It.IsAny<RedisValue?>(), It.IsAny<int?>(), It.IsAny<bool>(),
+               It.IsAny<TimeSpan?>(), It.IsAny<CommandFlags>()))
+           .ReturnsAsync(() =>
+           {
+               if (callCount++ == 0) return firstBatch;
+               batchProcessed.Release();
+               return [];
+           });
+
+        return batchProcessed;
+    }
+
+    private static StreamEntry BuildEntry(string teamField, TeamChannelValue[] values, string id = "1-0")
+    {
+        byte[] payload = MessagePackSerializer.Serialize(values);
+        return new StreamEntry(id, [new NameValueEntry(teamField, payload)]);
+    }
+
+    private void SetupTeamCars(int teamId, params string[] carKeys)
+    {
+        var key = string.Format(Consts.TEAM_CONNECTED_CARS, teamId);
+        var members = carKeys.Select(k => new RedisValue(k)).ToArray();
+        _db.Setup(d => d.SetMembersAsync(
+               It.Is<RedisKey>(k => k == key), It.IsAny<CommandFlags>()))
+           .ReturnsAsync(members);
+    }
+
+    private void SetupConnectionId(string carKey, string? connectionId)
+    {
+        var key = string.Format(Consts.CAR_CONNECTION_BY_CAR, carKey);
+        _db.Setup(d => d.StringGetAsync(
+               It.Is<RedisKey>(k => k == key), It.IsAny<CommandFlags>()))
+           .ReturnsAsync(connectionId is null ? RedisValue.Null : new RedisValue(connectionId));
+    }
+
+    private void SetupChannelIdMap(string carKey, IReadOnlyDictionary<Guid, ushort>? map)
+    {
+        _resolver.Setup(r => r.GetChannelIdMapAsync(carKey, It.IsAny<CancellationToken>()))
+                 .ReturnsAsync(map);
+    }
+
+    // -------------------------------------------------------------------------
+
+    [TestMethod]
+    public async Task Execute_TeamValue_FansOutToAllConnectedCars()
+    {
+        var channelId = Guid.NewGuid();
+        SetupTeamCars(TeamId, CarKeyA, CarKeyB);
+        SetupChannelIdMap(CarKeyA, new Dictionary<Guid, ushort> { [channelId] = 3 });
+        SetupChannelIdMap(CarKeyB, new Dictionary<Guid, ushort> { [channelId] = 11 });
+        SetupConnectionId(CarKeyA, ConnIdA);
+        SetupConnectionId(CarKeyB, ConnIdB);
+
+        TeamChannelValue[] values = [new() { ChannelId = channelId, Value = "Green", Timestamp = DateTime.UtcNow }];
+        var done = SetupStreamReads([BuildEntry(TeamField, values)]);
+
+        await _service.StartAsync(CancellationToken.None);
+        await done.WaitAsync(TimeSpan.FromSeconds(2));
+        await _service.StopAsync(CancellationToken.None);
+
+        _hubClients.Verify(c => c.Client(ConnIdA), Times.Once);
+        _hubClients.Verify(c => c.Client(ConnIdB), Times.Once);
+        _clientProxy.Verify(p => p.SendCoreAsync(
+            "ReceiveChannelValues",
+            It.Is<object?[]>(args => args.Length == 1
+                && ((ChannelValue[])args[0]!).Length == 1
+                && ((ChannelValue[])args[0]!)[0].SessionIndex == 3
+                && ((ChannelValue[])args[0]!)[0].Value == "Green"),
+            It.IsAny<CancellationToken>()), Times.Once);
+        _clientProxy.Verify(p => p.SendCoreAsync(
+            "ReceiveChannelValues",
+            It.Is<object?[]>(args => args.Length == 1
+                && ((ChannelValue[])args[0]!).Length == 1
+                && ((ChannelValue[])args[0]!)[0].SessionIndex == 11
+                && ((ChannelValue[])args[0]!)[0].Value == "Green"),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [TestMethod]
+    public async Task Execute_CarMissingChannelInConfig_OtherCarsStillForwarded()
+    {
+        var channelId = Guid.NewGuid();
+        SetupTeamCars(TeamId, CarKeyA, CarKeyB);
+        // CarA doesn't have the channel, CarB does
+        SetupChannelIdMap(CarKeyA, new Dictionary<Guid, ushort>());
+        SetupChannelIdMap(CarKeyB, new Dictionary<Guid, ushort> { [channelId] = 4 });
+        SetupConnectionId(CarKeyA, ConnIdA);
+        SetupConnectionId(CarKeyB, ConnIdB);
+
+        TeamChannelValue[] values = [new() { ChannelId = channelId, Value = "v", Timestamp = DateTime.UtcNow }];
+        var done = SetupStreamReads([BuildEntry(TeamField, values)]);
+
+        await _service.StartAsync(CancellationToken.None);
+        await done.WaitAsync(TimeSpan.FromSeconds(2));
+        await _service.StopAsync(CancellationToken.None);
+
+        _hubClients.Verify(c => c.Client(ConnIdA), Times.Never);
+        _hubClients.Verify(c => c.Client(ConnIdB), Times.Once);
+    }
+
+    [TestMethod]
+    public async Task Execute_CarHasNoActiveConfig_SkippedButOthersForwarded()
+    {
+        var channelId = Guid.NewGuid();
+        SetupTeamCars(TeamId, CarKeyA, CarKeyB);
+        SetupChannelIdMap(CarKeyA, null);  // no active config
+        SetupChannelIdMap(CarKeyB, new Dictionary<Guid, ushort> { [channelId] = 0 });
+        SetupConnectionId(CarKeyA, ConnIdA);
+        SetupConnectionId(CarKeyB, ConnIdB);
+
+        TeamChannelValue[] values = [new() { ChannelId = channelId, Value = "v", Timestamp = DateTime.UtcNow }];
+        var done = SetupStreamReads([BuildEntry(TeamField, values)]);
+
+        await _service.StartAsync(CancellationToken.None);
+        await done.WaitAsync(TimeSpan.FromSeconds(2));
+        await _service.StopAsync(CancellationToken.None);
+
+        _hubClients.Verify(c => c.Client(ConnIdA), Times.Never);
+        _hubClients.Verify(c => c.Client(ConnIdB), Times.Once);
+    }
+
+    [TestMethod]
+    public async Task Execute_CarInTeamSetButNoConnection_Skipped()
+    {
+        var channelId = Guid.NewGuid();
+        SetupTeamCars(TeamId, CarKeyA);
+        SetupChannelIdMap(CarKeyA, new Dictionary<Guid, ushort> { [channelId] = 0 });
+        SetupConnectionId(CarKeyA, connectionId: null);  // stale set member
+
+        TeamChannelValue[] values = [new() { ChannelId = channelId, Value = "v", Timestamp = DateTime.UtcNow }];
+        var done = SetupStreamReads([BuildEntry(TeamField, values)]);
+
+        await _service.StartAsync(CancellationToken.None);
+        await done.WaitAsync(TimeSpan.FromSeconds(2));
+        await _service.StopAsync(CancellationToken.None);
+
+        _clientProxy.Verify(p => p.SendCoreAsync(
+            It.IsAny<string>(), It.IsAny<object?[]>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [TestMethod]
+    public async Task Execute_TeamHasNoConnectedCars_NoForwarding()
+    {
+        SetupTeamCars(TeamId);  // empty set
+
+        TeamChannelValue[] values = [new() { ChannelId = Guid.NewGuid(), Value = "v", Timestamp = DateTime.UtcNow }];
+        var done = SetupStreamReads([BuildEntry(TeamField, values)]);
+
+        await _service.StartAsync(CancellationToken.None);
+        await done.WaitAsync(TimeSpan.FromSeconds(2));
+        await _service.StopAsync(CancellationToken.None);
+
+        _clientProxy.Verify(p => p.SendCoreAsync(
+            It.IsAny<string>(), It.IsAny<object?[]>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [TestMethod]
+    public async Task Execute_MultipleChannelsInValue_AllReIndexedPerCar()
+    {
+        var ch1 = Guid.NewGuid();
+        var ch2 = Guid.NewGuid();
+        SetupTeamCars(TeamId, CarKeyA);
+        SetupChannelIdMap(CarKeyA, new Dictionary<Guid, ushort> { [ch1] = 1, [ch2] = 9 });
+        SetupConnectionId(CarKeyA, ConnIdA);
+
+        TeamChannelValue[] values =
+        [
+            new() { ChannelId = ch1, Value = "Green", Timestamp = DateTime.UtcNow },
+            new() { ChannelId = ch2, Value = "3.0", Timestamp = DateTime.UtcNow },
+        ];
+        var done = SetupStreamReads([BuildEntry(TeamField, values)]);
+
+        await _service.StartAsync(CancellationToken.None);
+        await done.WaitAsync(TimeSpan.FromSeconds(2));
+        await _service.StopAsync(CancellationToken.None);
+
+        _clientProxy.Verify(p => p.SendCoreAsync(
+            "ReceiveChannelValues",
+            It.Is<object?[]>(args =>
+                args.Length == 1
+                && ((ChannelValue[])args[0]!).Length == 2
+                && ((ChannelValue[])args[0]!).Any(v => v.SessionIndex == 1 && v.Value == "Green")
+                && ((ChannelValue[])args[0]!).Any(v => v.SessionIndex == 9 && v.Value == "3.0")),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [TestMethod]
+    public async Task Execute_StreamEntry_IsAckedAfterProcessing()
+    {
+        var channelId = Guid.NewGuid();
+        SetupTeamCars(TeamId, CarKeyA);
+        SetupChannelIdMap(CarKeyA, new Dictionary<Guid, ushort> { [channelId] = 0 });
+        SetupConnectionId(CarKeyA, ConnIdA);
+
+        TeamChannelValue[] values = [new() { ChannelId = channelId, Value = "v", Timestamp = DateTime.UtcNow }];
+        var done = SetupStreamReads([BuildEntry(TeamField, values, "5-0")]);
+
+        await _service.StartAsync(CancellationToken.None);
+        await done.WaitAsync(TimeSpan.FromSeconds(2));
+        await _service.StopAsync(CancellationToken.None);
+
+        _db.Verify(d => d.StreamAcknowledgeAsync(
+            It.IsAny<RedisKey>(), It.IsAny<RedisValue>(),
+            It.Is<RedisValue>(id => id.ToString() == "5-0"),
+            It.IsAny<CommandFlags>()), Times.Once);
+    }
+
+    [TestMethod]
+    public async Task Execute_InvalidMessagePackPayload_StillAcksEntry()
+    {
+        byte[] garbage = [0xFF, 0xFE, 0x00, 0x01];
+        var entry = new StreamEntry("9-0", [new NameValueEntry(TeamField, garbage)]);
+        var done = SetupStreamReads([entry]);
+
+        await _service.StartAsync(CancellationToken.None);
+        await done.WaitAsync(TimeSpan.FromSeconds(2));
+        await _service.StopAsync(CancellationToken.None);
+
+        _db.Verify(d => d.StreamAcknowledgeAsync(
+            It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<RedisValue>(),
+            It.IsAny<CommandFlags>()), Times.Once);
+        _clientProxy.Verify(p => p.SendCoreAsync(
+            It.IsAny<string>(), It.IsAny<object?[]>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [TestMethod]
+    public async Task Execute_UnrecognizedFieldName_Skipped()
+    {
+        TeamChannelValue[] values = [new() { ChannelId = Guid.NewGuid(), Value = "v", Timestamp = DateTime.UtcNow }];
+        byte[] payload = MessagePackSerializer.Serialize(values);
+        var entry = new StreamEntry("11-0", [new NameValueEntry("not-a-team-field", payload)]);
+        var done = SetupStreamReads([entry]);
+
+        await _service.StartAsync(CancellationToken.None);
+        await done.WaitAsync(TimeSpan.FromSeconds(2));
+        await _service.StopAsync(CancellationToken.None);
+
+        _clientProxy.Verify(p => p.SendCoreAsync(
+            It.IsAny<string>(), It.IsAny<object?[]>(), It.IsAny<CancellationToken>()), Times.Never);
+        _db.Verify(d => d.StreamAcknowledgeAsync(
+            It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<RedisValue>(),
+            It.IsAny<CommandFlags>()), Times.Once);
+    }
+
+    [TestMethod]
+    public async Task Execute_ConsumerGroupAlreadyExists_StartupContinuesNormally()
+    {
+        _db.Setup(d => d.StreamCreateConsumerGroupAsync(
+               It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<RedisValue?>(),
+               It.IsAny<bool>(), It.IsAny<CommandFlags>()))
+           .ThrowsAsync(new RedisServerException("BUSYGROUP Consumer Group name already exists"));
+        var done = SetupStreamReads([]);
+
+        await _service.StartAsync(CancellationToken.None);
+        await done.WaitAsync(TimeSpan.FromSeconds(2));
+        await _service.StopAsync(CancellationToken.None);
+    }
+}

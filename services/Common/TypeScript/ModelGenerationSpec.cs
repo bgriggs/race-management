@@ -59,6 +59,8 @@ public class ModelGenerationSpec : GenerationSpec
         typeof(InterpolationType),
         typeof(LogicType),
         typeof(LoggingFrequency),
+        typeof(ChannelDistribution),
+        typeof(ChannelScope),
     ];
 
     public override void OnBeforeGeneration(OnBeforeGenerationArgs args)

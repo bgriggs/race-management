@@ -10,6 +10,9 @@ describe('EditChannel', () => {
 
   beforeEach(async () => {
     mockClient = {
+      listDiscoveredRacecarsAsync: vi.fn().mockResolvedValue([]),
+      getActiveRacecarAsync: vi.fn().mockResolvedValue(null),
+      selectRacecarAsync: vi.fn(),
       loadCarConfigurationSummariesAsync: vi.fn(),
       loadReservedChannelDefinitionsAsync: vi.fn().mockResolvedValue([]),
       loadAvailableUnitTypesAsync: vi.fn().mockResolvedValue([]),

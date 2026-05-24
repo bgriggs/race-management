@@ -58,6 +58,11 @@ public class CarHub(IConnectionMultiplexer cacheMux, ILogger<CarHub> logger, IDb
                 await cache.KeyDeleteAsync(connByCarKey);
                 var activeConfigKey = string.Format(Consts.CAR_ACTIVE_CONFIG_KEY, connState.CarKey);
                 await cache.KeyDeleteAsync(activeConfigKey);
+                if (connState.TeamId > 0)
+                {
+                    var teamSetKey = string.Format(Consts.TEAM_CONNECTED_CARS, connState.TeamId);
+                    await cache.SetRemoveAsync(teamSetKey, connState.CarKey);
+                }
             }
         }
         await cache.HashDeleteAsync(hashKey, fieldKey);
@@ -85,8 +90,12 @@ public class CarHub(IConnectionMultiplexer cacheMux, ILogger<CarHub> logger, IDb
             // Update stored connection state with the carKey so disconnect can clean it up
             var hashKey = new RedisKey(Consts.CAR_CONNECTIONS);
             var fieldKey = string.Format(Consts.CAR_CONNECTION, Context.ConnectionId);
-            var connEntry = new CarHubConnectionState { ClientId = clientId, ConnectionId = Context.ConnectionId, ConnectedTimestamp = DateTime.UtcNow, CarKey = carKey };
+            var connEntry = new CarHubConnectionState { ClientId = clientId, ConnectionId = Context.ConnectionId, ConnectedTimestamp = DateTime.UtcNow, CarKey = carKey, TeamId = teamId };
             await cache.HashSetAsync(hashKey, fieldKey, MessagePackSerializer.Serialize(connEntry));
+
+            var teamSetKey = string.Format(Consts.TEAM_CONNECTED_CARS, teamId);
+            await cache.SetAddAsync(teamSetKey, carKey);
+
             Context.Items[carKey] = true;
         }
     }

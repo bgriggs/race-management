@@ -10,10 +10,27 @@ public static class Consts
 
     // ChannelProcessor — latest channel value state
     public const string CHANNEL_PROC_CONSUMER_GROUP = "channelproc";
+
+    // CarGateway — forwards CloudToCar channel values back to the car via CarHub
+    public const string CARGW_CONSUMER_GROUP = "cargw";
     public const string CAR_CHANNEL_STATE_KEY = "car-channels:{0}";
     public const string CAR_CHANNEL_CHANGES_CHANNEL = "car-channel-changes:{0}";
 
     // Currently-active CarConfiguration ID for a connected car, keyed by carKey.
     // Written by CarHub on each SendChannelValuesAsync, deleted on disconnect.
     public const string CAR_ACTIVE_CONFIG_KEY = "car-active-config:{0}";
+
+    // PerTeam (Scope = PerTeam) channel routing — cloud-origin values delivered to all
+    // connected cars in a team. Stream payload is TeamChannelValue (Guid-keyed, not
+    // SessionIndex-keyed) and ChannelProcessor stores per-team state separately from
+    // the per-car hashes.
+    public const string TEAM_CHANNEL_VALUES_STREAM_KEY = "team-channel-values";
+    public const string TEAM_STREAM_FIELD = "team-{0}";
+    public const string TEAM_CHANNEL_STATE_KEY = "team-channels:{0}";
+    public const string TEAM_CHANNEL_CHANGES_CHANNEL = "team-channel-changes:{0}";
+
+    // Set of currently-connected carKeys for a team. SADD on first SendChannelValuesAsync
+    // per (connection, carKey), SREM on disconnect. Used by CarGateway to fan-out team
+    // values to every active car in the team without scanning the global CAR_CONNECTIONS hash.
+    public const string TEAM_CONNECTED_CARS = "team-connected-cars:{0}";
 }

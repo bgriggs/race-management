@@ -26,7 +26,7 @@ public sealed class ReservedChannels
         new() { Id = Guid.Parse("740ce2a6-dc88-4425-85dc-7f99f2a902f1"), Name = "FuelUsed", IsReserved = true, Abbreviation = "FLUSED", DataType = "Volume", BaseUnitType = "UsGallon", Category = "Fuel" },
         new() { Id = Guid.Parse("acd3d127-acaf-4f8a-b27a-8623cfda09f3"), Name = "TripFuel", IsReserved = true, Abbreviation = "FLTRIP", DataType = "Volume", BaseUnitType = "UsGallon", Category = "Fuel" },
         new() { Id = Guid.Parse("e6b74429-c087-41d5-b78e-406a602d1504"), Name = "TripDistance", IsReserved = true, Abbreviation = "FLDIST", DataType = "Length", BaseUnitType = "Mile", Category = "Fuel" },
-        new() { Id = Guid.Parse("fcb490e7-e5ef-4b91-99d1-685f81d91112"), Name = "FuelConsumption", IsReserved = true, Abbreviation = "FLCONS", DataType = "VolumeFlow", BaseUnitType = "UsGallonPerMinute", Category = "Fuel" },
+        new() { Id = Guid.Parse("fcb490e7-e5ef-4b91-99d1-685f81d91112"), Name = "FuelConsumption", IsReserved = true, Abbreviation = "FLCONS", DataType = "VolumeFlow", BaseUnitType = "UsGallonPerMinute", Category = "Fuel", Distribution = ChannelDistribution.CloudLocal, ManagedByFeature = "fuel-analysis" },
         new() { Id = Guid.Parse("c3b94831-95f6-4935-bf67-1aacfd611f75"), Name = "FuelFull", IsReserved = true, Abbreviation = "FLFULL", DataType = "Unitless", Category = "Fuel" },
         new() { Id = Guid.Parse("33a050a2-3aed-43cf-866e-0ab8ae7d3766"), Name = "FuelLow", IsReserved = true, Abbreviation = "FLLOW", DataType = "Unitless", Category = "Fuel" },
 
@@ -85,5 +85,28 @@ public sealed class ReservedChannels
         new() { Id = Guid.Parse("7d75b9ad-82e5-4449-b7b5-a1226dc5a824"), Name = "SmartyCamRecording", IsReserved = true, Abbreviation = "SCMREC", DataType = "Unitless" },
         new() { Id = Guid.Parse("a013b26a-537d-4b8f-8b39-1cc4f20e2e8a"), Name = "SmartyCamSpaceRemaining", IsReserved = true, Abbreviation = "SMRTSP", DataType = "Unitless" },
 
+        // Engine
+        new() { Id = Guid.Parse("c4a1f8e3-2b9d-4f6c-8a7e-1d3e5b9c2a01"), Name = "ThrottlePosition", IsReserved = true, Abbreviation = "THROT", DataType = "Ratio", BaseUnitType = "Percent", Category = "Engine", LowRange = 0, HighRange = 100, Distribution = ChannelDistribution.CarToCloud, ManagedByFeature = "throttle-consumption" },
+
+        // Race (team-scoped)
+        new() { Id = Guid.Parse("d5b2e9f4-3c1a-4e7d-9b8f-2e4f6c1d3b02"), Name = "RaceFlagState", IsReserved = true, Abbreviation = "FLAG", DataType = "String", Category = "Race", Distribution = ChannelDistribution.CloudToCar, Scope = ChannelScope.PerTeam, ManagedByFeature = "fuel-analysis" },
+
+        // Fuel Analysis — cloud-sourced inputs and reconciler outputs
+        new() { Id = Guid.Parse("e6c3f1a5-4d2b-4f8e-1c9a-3f5a7d2e4c03"), Name = "ManualFuelAddedGallons", IsReserved = true, Abbreviation = "MFADD", DataType = "Volume", BaseUnitType = "UsGallon", Category = "Fuel", LowRange = 0, HighRange = 50, Distribution = ChannelDistribution.CloudLocal, ManagedByFeature = "fuel-analysis" },
+        new() { Id = Guid.Parse("f7d4a2b6-5e3c-4a9f-2d1b-4a6b8e3f5d04"), Name = "FuelRangeMinutes", IsReserved = true, Abbreviation = "FLRMIN", DataType = "Duration", BaseUnitType = "Minute", Category = "Fuel", LowRange = 0, HighRange = 600, Distribution = ChannelDistribution.CloudLocal, ManagedByFeature = "fuel-analysis" },
+        new() { Id = Guid.Parse("18e5b3c7-6f4d-4b1a-3e2c-5b7c9f4a6e05"), Name = "FuelRangeGallons", IsReserved = true, Abbreviation = "FLRGAL", DataType = "Volume", BaseUnitType = "UsGallon", Category = "Fuel", LowRange = 0, HighRange = 50, Distribution = ChannelDistribution.CloudLocal, ManagedByFeature = "fuel-analysis" },
+        new() { Id = Guid.Parse("29f6c4d8-7a5e-4c2b-4f3d-6c8d1a5b7f06"), Name = "FuelRangeLaps", IsReserved = true, Abbreviation = "FLRLAP", DataType = "Unitless", Category = "Fuel", LowRange = 0, HighRange = 500, Distribution = ChannelDistribution.CloudLocal, ManagedByFeature = "fuel-analysis" },
+        new() { Id = Guid.Parse("3a07d5e9-8b6f-4d3c-5a4e-7d9e2b6c8a07"), Name = "FuelRangeMinutesHighConf", IsReserved = true, Abbreviation = "FLRMHC", DataType = "Duration", BaseUnitType = "Minute", Category = "Fuel", LowRange = 0, HighRange = 600, Distribution = ChannelDistribution.CloudLocal, ManagedByFeature = "fuel-analysis" },
+        new() { Id = Guid.Parse("4b18e6fa-9c7a-4e4d-6b5f-8e1f3c7d9b08"), Name = "FuelRangeGallonsHighConf", IsReserved = true, Abbreviation = "FLRGHC", DataType = "Volume", BaseUnitType = "UsGallon", Category = "Fuel", LowRange = 0, HighRange = 50, Distribution = ChannelDistribution.CloudLocal, ManagedByFeature = "fuel-analysis" },
+        new() { Id = Guid.Parse("5c29f70b-1d8b-4f5e-7c6a-9f2a4d8e1c09"), Name = "FuelRangeLapsHighConf", IsReserved = true, Abbreviation = "FLRLHC", DataType = "Unitless", Category = "Fuel", LowRange = 0, HighRange = 500, Distribution = ChannelDistribution.CloudLocal, ManagedByFeature = "fuel-analysis" },
+        new() { Id = Guid.Parse("6d3a181c-2e9c-4a6f-8d7b-1a3b5e9f2d0a"), Name = "FuelRangeConfidence", IsReserved = true, Abbreviation = "FLRCNF", DataType = "Ratio", BaseUnitType = "Percent", Category = "Fuel", LowRange = 0, HighRange = 100, Distribution = ChannelDistribution.CloudLocal, ManagedByFeature = "fuel-analysis" },
+        new() { Id = Guid.Parse("7e4b292d-3fad-4b7a-9e8c-2b4c6f1a3e0b"), Name = "FuelConsumptionGalPerLap", IsReserved = true, Abbreviation = "FLCPL", DataType = "Volume", BaseUnitType = "UsGallon", Category = "Fuel", LowRange = 0, HighRange = 10, Distribution = ChannelDistribution.CloudLocal, ManagedByFeature = "fuel-analysis" },
+        new() { Id = Guid.Parse("8f5c3a3e-4abe-4c8b-1f9d-3c5d7a2b4f0c"), Name = "FuelWindowElapsedMinutes", IsReserved = true, Abbreviation = "FLWELM", DataType = "Duration", BaseUnitType = "Minute", Category = "Fuel", LowRange = 0, HighRange = 600, Distribution = ChannelDistribution.CloudLocal, ManagedByFeature = "fuel-analysis" },
+
+        // Throttle Consumption — in-car throttle proxy module outputs
+        new() { Id = Guid.Parse("916d4b4f-5bcf-4d9c-2a1e-4d6e8b3c5a0d"), Name = "ThrottleProxyFuelUsed", IsReserved = true, Abbreviation = "TPFUSE", DataType = "Volume", BaseUnitType = "UsGallon", Category = "Fuel", LowRange = 0, HighRange = 100, Distribution = ChannelDistribution.CarToCloud, ManagedByFeature = "throttle-consumption" },
+        new() { Id = Guid.Parse("a27e5c50-6cd1-4eac-3b2f-5e7f9c4d6b0e"), Name = "ThrottleProxyRate", IsReserved = true, Abbreviation = "TPRATE", DataType = "VolumeFlow", BaseUnitType = "UsGallonPerMinute", Category = "Fuel", LowRange = 0, HighRange = 10, Distribution = ChannelDistribution.CarToCloud, ManagedByFeature = "throttle-consumption" },
+        new() { Id = Guid.Parse("b38f6d61-7de2-4fbd-4c3a-6f8a1d5e7c0f"), Name = "ThrottleProxyConfidence", IsReserved = true, Abbreviation = "TPCONF", DataType = "Ratio", BaseUnitType = "Percent", Category = "Fuel", LowRange = 0, HighRange = 100, Distribution = ChannelDistribution.CarToCloud, ManagedByFeature = "throttle-consumption" },
+        new() { Id = Guid.Parse("c49a7e72-8ef3-4ace-5d4b-7a9b2e6f8d10"), Name = "ThrottleProxyGridCoverage", IsReserved = true, Abbreviation = "TPGRID", DataType = "Ratio", BaseUnitType = "Percent", Category = "Fuel", LowRange = 0, HighRange = 100, Distribution = ChannelDistribution.CarToCloud, ManagedByFeature = "throttle-consumption" },
     ];
 }

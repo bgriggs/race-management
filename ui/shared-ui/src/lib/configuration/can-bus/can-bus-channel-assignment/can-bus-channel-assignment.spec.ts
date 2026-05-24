@@ -14,6 +14,8 @@ describe('CanBusChannelAssignment', () => {
 
     fixture = TestBed.createComponent(CanBusChannelAssignment);
     component = fixture.componentInstance;
+    fixture.componentRef.setInput('byteIndex', 0);
+    fixture.detectChanges();
     await fixture.whenStable();
   });
 

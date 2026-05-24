@@ -22,6 +22,9 @@ public class Program
         builder.Services.AddSingleton<ICarChannelStateRepository, CarChannelStateRepository>();
         builder.Services.AddHostedService<TelemetryStreamConsumer>();
 
+        builder.Services.AddSingleton<ITeamChannelStateRepository, TeamChannelStateRepository>();
+        builder.Services.AddHostedService<TeamChannelStreamConsumer>();
+
         builder.Services.AddControllers();
         // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
         builder.Services.AddOpenApi();

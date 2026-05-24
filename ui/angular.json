@@ -157,6 +157,7 @@
         "test": {
           "builder": "@angular/build:unit-test",
           "options": {
+            "buildTarget": "race-management-cloud:build:development",
             "tsConfig": "shared-ui/tsconfig.spec.json",
             "include": [
               "shared-ui/src/**/*.spec.ts"

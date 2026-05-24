@@ -14,6 +14,13 @@ describe('CanBusTable', () => {
 
     fixture = TestBed.createComponent(CanBusTable);
     component = fixture.componentInstance;
+    fixture.componentRef.setInput('config', {
+      interfaceName: 'can0',
+      bitRate: 500000,
+      silentOnCanBus: false,
+      messages: [],
+    });
+    fixture.detectChanges();
     await fixture.whenStable();
   });
 

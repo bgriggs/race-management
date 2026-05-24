@@ -188,6 +188,48 @@
 		</section>
 	</section>
 
+	<section class="field-grid">
+		<section class="field">
+			<label for="channel-distribution">Distribution</label>
+			@if (kind() === 'reserved') {
+				<select id="channel-distribution" formControlName="distribution">
+					<option [ngValue]="ChannelDistribution.CarLocal">Car Local</option>
+					<option [ngValue]="ChannelDistribution.CarToCloud">Car to Cloud</option>
+					<option [ngValue]="ChannelDistribution.CloudLocal">Cloud Local</option>
+					<option [ngValue]="ChannelDistribution.CloudToCar">Cloud to Car</option>
+				</select>
+			} @else {
+				<select id="channel-distribution" formControlName="distribution">
+					@for (option of distributionOptionsForCustom; track option.value) {
+						<option [ngValue]="option.value">{{ option.label }}</option>
+					}
+				</select>
+			}
+			<p class="field-description">
+				@if (kind() === 'reserved') {
+					Inherited from the reserved-channel definition.
+				} @else {
+					Custom channels are produced on the car. Choose whether to transmit to the cloud.
+				}
+			</p>
+		</section>
+
+		<section class="field">
+			<label for="channel-scope">Scope</label>
+			<select id="channel-scope" formControlName="scope">
+				<option [ngValue]="ChannelScope.PerCar">Per Car</option>
+				<option [ngValue]="ChannelScope.PerTeam">Per Team</option>
+			</select>
+			<p class="field-description">
+				@if (kind() === 'reserved') {
+					Inherited from the reserved-channel definition.
+				} @else {
+					Custom channels are always per-car in v1.
+				}
+			</p>
+		</section>
+	</section>
+
 	<section class="channel-form-actions">
 		<button type="button" class="secondary" (click)="dismiss()">Cancel</button>
 		<button type="submit" class="primary">Save Channel</button>

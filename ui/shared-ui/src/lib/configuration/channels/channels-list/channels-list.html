@@ -47,14 +47,34 @@
 		</thead>
 		<tbody>
 			@for (channel of channels(); track channel.id) {
-			<tr>
+			<tr [class.row-managed]="isManaged(channel)">
 				<td class="row-action-cell">
-					<button type="button" class="row-action-button" (click)="startEdit(channel.id)"
-						aria-label="Edit channel">
-						<mat-icon aria-hidden="true">edit</mat-icon>
-					</button>
+					@if (isManaged(channel)) {
+						<span class="row-locked-indicator"
+							[matTooltip]="getManagedTooltip(channel)"
+							aria-label="Locked: feature-managed channel">
+							<mat-icon aria-hidden="true">lock</mat-icon>
+						</span>
+					} @else {
+						<button type="button" class="row-action-button" (click)="startEdit(channel.id)"
+							aria-label="Edit channel">
+							<mat-icon aria-hidden="true">edit</mat-icon>
+						</button>
+					}
 				</td>
-				<td>{{ channel.name }}</td>
+				<td>
+					<span class="channel-name-cell">
+						<span>{{ channel.name }}</span>
+						@if (isManaged(channel)) {
+							<span class="feature-badge"
+								[matTooltip]="getManagedTooltip(channel)"
+								aria-label="Managed by feature">
+								<mat-icon class="feature-badge-icon" aria-hidden="true">lock</mat-icon>
+								<span class="feature-badge-text">{{ getFeatureLabel(channel.managedByFeature) }}</span>
+							</span>
+						}
+					</span>
+				</td>
 				<td class="used-cell"
 					[attr.aria-label]="duplicateUsages().has(channel.id) ? 'Assigned to multiple outputs' : usedChannelIdSet().has(channel.id) ? 'Used channel' : 'Unused channel'">
 					<span class="used-cell-content">
@@ -82,10 +102,12 @@
 				<td>{{ channel.category }}</td>
 				<td>{{ channel.groupTag }}</td>
 				<td class="row-action-cell">
-					<button type="button" class="row-action-button delete" (click)="deleteChannel(channel.id)"
-						aria-label="Delete channel">
-						<mat-icon aria-hidden="true">delete</mat-icon>
-					</button>
+					@if (!isManaged(channel)) {
+						<button type="button" class="row-action-button delete" (click)="deleteChannel(channel.id)"
+							aria-label="Delete channel">
+							<mat-icon aria-hidden="true">delete</mat-icon>
+						</button>
+					}
 				</td>
 			</tr>
 			}

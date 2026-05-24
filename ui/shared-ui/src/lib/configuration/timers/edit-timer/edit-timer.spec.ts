@@ -14,6 +14,8 @@ describe('EditTimer', () => {
 
     fixture = TestBed.createComponent(EditTimer);
     component = fixture.componentInstance;
+    fixture.componentRef.setInput('channels', []);
+    fixture.detectChanges();
     await fixture.whenStable();
   });
 

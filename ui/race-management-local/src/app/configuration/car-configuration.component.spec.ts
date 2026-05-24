@@ -30,7 +30,15 @@ function buildConfig(name: string): CarConfiguration {
     timerDefinitions: [],
     userConditions: [],
     loggingDefinitions: [],
-    enumDefinitions: []
+    enumDefinitions: [],
+    fuelConfig: {
+      isEnabled: false,
+      tankCapacityGallons: 0,
+      defaultConsumptionGalPerMin: 0,
+      defaultYellowConsumptionMultiplier: 0.5,
+      defaultCode35ConsumptionMultiplier: 0.3,
+      throttleConsumption: { isEnabled: false, maxRpm: 7000 }
+    }
   };
 }
 

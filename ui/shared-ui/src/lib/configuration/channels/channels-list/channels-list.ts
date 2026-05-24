@@ -60,11 +60,34 @@ export class ChannelsList {
 
   readonly isEditing = computed(() => this.editingChannelId() !== null);
 
+  private static readonly featureLabels: Readonly<Record<string, string>> = {
+    'fuel-analysis': 'Fuel Analysis',
+    'throttle-consumption': 'Throttle Consumption',
+  };
+
+  isManaged(channel: ChannelDefinition): boolean {
+    return channel.managedByFeature !== null && channel.managedByFeature !== '';
+  }
+
+  getFeatureLabel(managedByFeature: string | null): string {
+    if (!managedByFeature) return '';
+    return ChannelsList.featureLabels[managedByFeature]
+      ?? managedByFeature.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  }
+
+  getManagedTooltip(channel: ChannelDefinition): string {
+    return `Managed by ${this.getFeatureLabel(channel.managedByFeature)}. Disable the feature to remove this channel.`;
+  }
+
   startAdd(): void {
     this.editingChannelId.set('new');
   }
 
   startEdit(channelId: string): void {
+    const channel = this.channels().find((c) => c.id === channelId);
+    if (channel && this.isManaged(channel)) {
+      return;
+    }
     this.editingChannelId.set(channelId);
   }
 
@@ -73,9 +96,13 @@ export class ChannelsList {
   }
 
   deleteChannel(channelId: string): void {
+    const channel = this.channels().find(ch => ch.id === channelId);
+    if (channel && this.isManaged(channel)) {
+      return;
+    }
+
     const locations = this.channelUsageMap().get(channelId);
     if (locations?.length) {
-      const channel = this.channels().find(ch => ch.id === channelId);
       const name = channel?.name ?? 'This channel';
       this.deleteBlockedMessage.set(
         `"${name}" is still assigned as an output in the following locations. Unassign it before deleting:\n${locations.map(l => `\u2022 ${l}`).join('\n')}`

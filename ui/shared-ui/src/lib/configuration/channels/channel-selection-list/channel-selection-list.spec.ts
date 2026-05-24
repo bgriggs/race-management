@@ -14,6 +14,8 @@ describe('ChannelSelectionList', () => {
 
     fixture = TestBed.createComponent(ChannelSelectionList);
     component = fixture.componentInstance;
+    fixture.componentRef.setInput('channels', []);
+    fixture.detectChanges();
     await fixture.whenStable();
   });
 

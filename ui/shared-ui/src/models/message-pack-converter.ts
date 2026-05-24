@@ -25,6 +25,8 @@ import { EnumValueDefinition } from "./enum-value-definition";
 import { LoggingDefinition } from "./logging-definition";
 import { CarFuelConfig } from "./car-fuel-config";
 import { ThrottleConsumptionConfig } from "./throttle-consumption-config";
+import { ChannelDistribution } from "./channel-distribution";
+import { ChannelScope } from "./channel-scope";
 import { InterpolationType } from "./interpolation-type";
 import { LoggingFrequency } from "./logging-frequency";
 import { LogicType } from "./logic-type";
@@ -157,6 +159,9 @@ export function channelDefinitionFromMessagePack(obj: Record<string, unknown>): 
         groupTag: obj["GroupTag"] as string,
         enumConversion: obj["EnumConversion"] != null ? obj["EnumConversion"] as string : null,
         timeoutMs: obj["TimeoutMs"] as number,
+        distribution: obj["Distribution"] as ChannelDistribution,
+        scope: obj["Scope"] as ChannelScope,
+        managedByFeature: obj["ManagedByFeature"] != null ? obj["ManagedByFeature"] as string : null,
     };
 }
 

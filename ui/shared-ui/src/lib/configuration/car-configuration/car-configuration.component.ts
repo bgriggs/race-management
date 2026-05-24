@@ -86,6 +86,7 @@ export class CarConfigurationComponent implements OnInit {
   readonly duplicateAssignmentError = signal<Array<{ channelName: string; locations: string[] }> | null>(null);
   readonly activeConfiguration = signal<CarConfiguration | null>(null);
   readonly configurationSummaries = signal<CarConfigurationSummary[]>([]);
+  readonly reservedChannels = signal<ChannelDefinition[]>([]);
 
   readonly treeNodes = computed<NavigationTreeNode[]>(() => this.buildTreeNodes());
 
@@ -283,6 +284,13 @@ export class CarConfigurationComponent implements OnInit {
       this.summaryLoadError.set('Unable to load saved configurations.');
     } finally {
       this.loadingSummaries.set(false);
+    }
+
+    try {
+      this.reservedChannels.set(await this.managementDataClient.loadReservedChannelDefinitionsAsync());
+    } catch {
+      // Reserved-channel load failure is non-fatal: feature-toggle auto-injection
+      // will be a no-op until a successful reload happens.
     }
   }
 
@@ -601,14 +609,52 @@ export class CarConfigurationComponent implements OnInit {
       return;
     }
 
+    const previousFuelEnabled = current.fuelConfig?.isEnabled ?? false;
+    const previousThrottleEnabled = current.fuelConfig?.throttleConsumption?.isEnabled ?? false;
+
+    // Cascade: disabling fuel-analysis also disables throttle-consumption.
+    const cascadedConfig: CarFuelConfig = !fuelConfig.isEnabled && fuelConfig.throttleConsumption.isEnabled
+      ? { ...fuelConfig, throttleConsumption: { ...fuelConfig.throttleConsumption, isEnabled: false } }
+      : fuelConfig;
+
+    const newFuelEnabled = cascadedConfig.isEnabled;
+    const newThrottleEnabled = cascadedConfig.throttleConsumption.isEnabled;
+
+    let channelDefinitions = current.channelDefinitions;
+    if (!previousFuelEnabled && newFuelEnabled) {
+      channelDefinitions = this.addManagedChannels(channelDefinitions, 'fuel-analysis');
+    } else if (previousFuelEnabled && !newFuelEnabled) {
+      channelDefinitions = this.removeManagedChannels(channelDefinitions, 'fuel-analysis');
+    }
+    if (!previousThrottleEnabled && newThrottleEnabled) {
+      channelDefinitions = this.addManagedChannels(channelDefinitions, 'throttle-consumption');
+    } else if (previousThrottleEnabled && !newThrottleEnabled) {
+      channelDefinitions = this.removeManagedChannels(channelDefinitions, 'throttle-consumption');
+    }
+
     this.activeConfiguration.set({
       ...current,
-      fuelConfig
+      fuelConfig: cascadedConfig,
+      channelDefinitions
     });
 
-    if (!fuelConfig.throttleConsumption.isEnabled && this.selectedNodeId() === 'throttle-consumption') {
+    if (!newThrottleEnabled && this.selectedNodeId() === 'throttle-consumption') {
       this.selectedNodeId.set('fuel-analysis');
     }
+  }
+
+  private addManagedChannels(existing: ChannelDefinition[], featureName: string): ChannelDefinition[] {
+    const managed = this.reservedChannels().filter((channel) => channel.managedByFeature === featureName);
+    if (managed.length === 0) {
+      return existing;
+    }
+    const existingIds = new Set(existing.map((channel) => channel.id));
+    const toAdd = managed.filter((channel) => !existingIds.has(channel.id));
+    return toAdd.length === 0 ? existing : [...existing, ...toAdd];
+  }
+
+  private removeManagedChannels(existing: ChannelDefinition[], featureName: string): ChannelDefinition[] {
+    return existing.filter((channel) => channel.managedByFeature !== featureName);
   }
 
   onThrottleConsumptionChange(throttleConsumption: ThrottleConsumptionConfigModel): void {

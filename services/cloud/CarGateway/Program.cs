@@ -1,6 +1,8 @@
+using CarGateway.Forwarding;
 using Cloud.Shared;
 using Cloud.Shared.Extensions;
 using Cloud.Shared.Hubs;
+using Cloud.Shared.Streaming;
 using MessagePack;
 using MessagePack.Resolvers;
 using Microsoft.Extensions.Caching.Hybrid;
@@ -42,6 +44,10 @@ public class Program
             options.SerializerOptions = MessagePackSerializerOptions.Standard
                 .WithResolver(ContractlessStandardResolver.Instance);
         });
+
+        builder.Services.AddSingleton<ICarChannelDefinitionResolver, CarChannelDefinitionResolver>();
+        builder.Services.AddHostedService<CarGatewayForwardingService>();
+        builder.Services.AddHostedService<TeamChannelForwardingService>();
 
         builder.Services.AddControllers();
         // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi

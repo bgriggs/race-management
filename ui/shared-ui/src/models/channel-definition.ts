@@ -3,6 +3,9 @@
  * Any changes made to this file can be lost when this file is regenerated.
  */
 
+import { ChannelDistribution } from "./channel-distribution";
+import { ChannelScope } from "./channel-scope";
+
 /**
  * Channel metadata definition, which defines the properties of a channel, such as its name, data type, and units.
  */
@@ -44,4 +47,23 @@ export interface ChannelDefinition {
      * Amount of time in milliseconds between updates from the channel source before considering the value timed out and set to default.
      */
     timeoutMs: number;
+    /**
+     * Where the channel's values are produced and which tiers they are transmitted to.
+     * Defaults to @see {@link Channels.ChannelDistribution.CarToCloud}, matching today's behavior
+     * for car-side telemetry.
+     */
+    distribution: ChannelDistribution;
+    /**
+     * What entity the channel's values are bound to. Defaults to @see {@link Channels.ChannelScope.PerCar}.
+     */
+    scope: ChannelScope;
+    /**
+     * Identifier of the feature that owns this channel's lifecycle (e.g., "fuel-analysis",
+     * "throttle-consumption"). When non-null on a reserved-channel template, the channel
+     * is auto-injected into a car configuration when its feature is enabled, hidden from
+     * the user's reserved-channel picker, and removed when the feature is disabled. The
+     * value propagates to the per-car channel instance at injection time, where the UI
+     * uses it to lock editing and deletion.
+     */
+    managedByFeature: string | null;
 }
