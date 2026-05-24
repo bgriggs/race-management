@@ -30,7 +30,7 @@ public sealed class ThrottleProxyConsumer
     private static readonly Guid ThrottleProxyConfidenceGuid = Guid.Parse("b38f6d61-7de2-4fbd-4c3a-6f8a1d5e7c0f");
     private static readonly Guid ThrottleProxyGridCoverageGuid = Guid.Parse("c49a7e72-8ef3-4ace-5d4b-7a9b2e6f8d10");
 
-    private readonly IDerivedChannelInjector _injector;
+    private readonly Func<IDerivedChannelInjector> _injectorAccessor;
     private readonly Func<ActiveConfiguration> _configAccessor;
     private readonly IOptionsMonitor<CarConfiguration> _carConfig;
     private readonly FuelAnalysisOptions _options;
@@ -64,9 +64,11 @@ public sealed class ThrottleProxyConsumer
     private CancellationTokenSource? _cts;
     private Task? _emitLoop;
     private Task? _coverageLoop;
+    private IDisposable? _carConfigSubscription;
+    private bool _lastEnabledState;
 
     public ThrottleProxyConsumer(
-        IDerivedChannelInjector injector,
+        Func<IDerivedChannelInjector> injectorAccessor,
         Func<ActiveConfiguration> configAccessor,
         IOptionsMonitor<CarConfiguration> carConfig,
         IOptions<FuelAnalysisOptions> options,
@@ -75,7 +77,7 @@ public sealed class ThrottleProxyConsumer
         ILogger<ThrottleProxyConsumer> logger,
         ChannelConsumerOptions? consumerOptions = null)
     {
-        _injector = injector;
+        _injectorAccessor = injectorAccessor;
         _configAccessor = configAccessor;
         _carConfig = carConfig;
         _options = options.Value;
@@ -89,13 +91,25 @@ public sealed class ThrottleProxyConsumer
         _totalizer = new ThrottleIntegralTotalizer(_options);
         _grid = new AlphaNGrid(rpmMax, _calibration);
         _detector = new EcuResetDetector(_options);
+        _lastEnabledState = ComputeEnabled(carConfig.CurrentValue);
     }
+
+    /// <summary>True when both the fuel and throttle-consumption configs opt in to running this module.</summary>
+    public bool IsEnabled => ComputeEnabled(_carConfig.CurrentValue);
+
+    private static bool ComputeEnabled(CarConfiguration cfg) =>
+        cfg.FuelConfig.IsEnabled && cfg.FuelConfig.ThrottleConsumption.IsEnabled;
 
     public string Name { get; } = "throttle-proxy";
     public ChannelConsumerOptions Options { get; }
 
     public IReadOnlySet<int>? GetSubscriptions(ActiveConfiguration config)
     {
+        if (!IsEnabled)
+        {
+            Interlocked.Exchange(ref _inputs, null);
+            return new HashSet<int>();
+        }
         var inputs = InputChannelMap.Build(config);
         Interlocked.Exchange(ref _inputs, inputs);
         return inputs.AllIds;
@@ -103,6 +117,7 @@ public sealed class ThrottleProxyConsumer
 
     public ValueTask HandleAsync(ReadOnlyMemory<InternalChannelValue> values, CancellationToken ct)
     {
+        if (!IsEnabled) return ValueTask.CompletedTask;
         var inputs = Volatile.Read(ref _inputs);
         if (inputs is null) return ValueTask.CompletedTask;
 
@@ -150,6 +165,9 @@ public sealed class ThrottleProxyConsumer
         _cts = new CancellationTokenSource();
         _emitLoop = Task.Run(() => EmitLoopAsync(_cts.Token), cancellationToken);
         _coverageLoop = Task.Run(() => CoverageLoopAsync(_cts.Token), cancellationToken);
+        _carConfigSubscription = _carConfig.OnChange(OnCarConfigChanged);
+        _logger.LogInformation(
+            "Throttle proxy module started ({State}).", _lastEnabledState ? "enabled" : "disabled");
         return Task.CompletedTask;
     }
 
@@ -158,6 +176,8 @@ public sealed class ThrottleProxyConsumer
     public async ValueTask DisposeAsync()
     {
         if (_cts is null) return;
+        _carConfigSubscription?.Dispose();
+        _carConfigSubscription = null;
         _cts.Cancel();
         try
         {
@@ -180,6 +200,29 @@ public sealed class ThrottleProxyConsumer
     }
 
     // ----- Internal -----
+
+    private void OnCarConfigChanged(CarConfiguration cfg)
+    {
+        var nowEnabled = ComputeEnabled(cfg);
+        bool wasEnabled;
+        lock (_stateLock)
+        {
+            wasEnabled = _lastEnabledState;
+            if (wasEnabled == nowEnabled) return;
+            _lastEnabledState = nowEnabled;
+            // On enabled→disabled, drop transient accumulators so the next enable
+            // doesn't apply a stale TPS integral against fresh TripFuel deltas.
+            // Persisted k and grid in _calibration are preserved.
+            if (!nowEnabled)
+            {
+                _totalizer.Reset();
+                _window.Discard();
+                _grid.ResetWindowObservations();
+            }
+        }
+        _logger.LogInformation(
+            "Throttle proxy module {State}.", nowEnabled ? "enabled" : "disabled");
+    }
 
     private void SampleTotalizerAndGrid(long monotonicTicks)
     {
@@ -276,6 +319,7 @@ public sealed class ThrottleProxyConsumer
 
     private void EmitTick()
     {
+        if (!IsEnabled) return;
         var nowTicks = _time.GetTimestamp();
         var wall = _time.GetUtcNow().UtcDateTime;
 
@@ -316,6 +360,7 @@ public sealed class ThrottleProxyConsumer
 
     private void EmitCoverage()
     {
+        if (!IsEnabled) return;
         var nowTicks = _time.GetTimestamp();
         var wall = _time.GetUtcNow().UtcDateTime;
         double coverage;
@@ -380,7 +425,7 @@ public sealed class ThrottleProxyConsumer
     {
         var span = new InternalChannelValue[emissions.Count];
         for (var i = 0; i < emissions.Count; i++) span[i] = emissions[i];
-        _injector.InjectDerived(span);
+        _injectorAccessor().InjectDerived(span);
     }
 
     private ThrottleProxyCalibrationState LoadOrSeed(int rpmMax)

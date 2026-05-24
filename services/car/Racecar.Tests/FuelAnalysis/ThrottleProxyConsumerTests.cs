@@ -78,7 +78,7 @@ public sealed class ThrottleProxyConsumerTests
         };
     }
 
-    private static CarConfiguration BuildCarConfig(int rpmMax = 8000)
+    private static CarConfiguration BuildCarConfig(int rpmMax = 8000, bool enabled = true)
     {
         var cfg = new CarConfiguration
         {
@@ -86,6 +86,8 @@ public sealed class ThrottleProxyConsumerTests
             ClientId = "racecar",
             ClientSecret = "secret",
         };
+        cfg.FuelConfig.IsEnabled = enabled;
+        cfg.FuelConfig.ThrottleConsumption.IsEnabled = enabled;
         cfg.FuelConfig.ThrottleConsumption.MaxRpm = rpmMax;
         return cfg;
     }
@@ -115,16 +117,17 @@ public sealed class ThrottleProxyConsumerTests
         out CapturingInjector injector,
         out ThrottleProxyCalibrationStore store)
     {
-        injector = new CapturingInjector();
+        var capturedInjector = new CapturingInjector();
         store = new ThrottleProxyCalibrationStore(options.CalibrationFilePath);
         var consumer = new ThrottleProxyConsumer(
-            injector,
+            () => capturedInjector,
             () => config,
             new StaticOptionsMonitor<CarConfiguration>(carConfig),
             Options.Create(options),
             store,
             time,
             NullLogger<ThrottleProxyConsumer>.Instance);
+        injector = capturedInjector;
         return consumer;
     }
 

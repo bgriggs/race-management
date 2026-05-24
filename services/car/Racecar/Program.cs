@@ -45,6 +45,8 @@ public class Program
         builder.Services.AddSingleton<RacecarPipelineHost>();
         builder.Services.AddHostedService(sp => sp.GetRequiredService<RacecarPipelineHost>());
         builder.Services.AddSingleton<IDerivedChannelInjector>(sp => sp.GetRequiredService<RacecarPipelineHost>());
+        builder.Services.AddSingleton<Func<IDerivedChannelInjector>>(sp =>
+            () => sp.GetRequiredService<RacecarPipelineHost>());
         builder.Services.AddSingleton<Func<ActiveConfiguration>>(sp =>
             () => sp.GetRequiredService<RacecarPipelineHost>().ActiveConfiguration);
         builder.Services.AddHostedService<TestChannelValues>();

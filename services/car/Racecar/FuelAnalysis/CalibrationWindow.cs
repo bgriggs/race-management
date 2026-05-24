@@ -30,6 +30,15 @@ public sealed class CalibrationWindow
         IsOpen = true;
     }
 
+    /// <summary>Abandon an open window without producing an observation.</summary>
+    public void Discard()
+    {
+        IsOpen = false;
+        _openTripFuel = 0;
+        _openIntegral = 0;
+        _openMonotonicTicks = 0;
+    }
+
     /// <summary>
     /// Close the window. <paramref name="closeTripFuel"/> is the ECU trip fuel
     /// at <c>FuelFull</c>+in-pit time (i.e., the amount the ECU has counted
