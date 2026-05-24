@@ -7,11 +7,22 @@ using Racecar.Pipeline.Dispatch;
 namespace Racecar.Pipeline;
 
 /// <summary>
+/// Inbound surface for derived channel values produced by long-lived consumers
+/// (e.g., the throttle proxy module's 1 Hz emit loop). Implemented by
+/// <see cref="RacecarPipelineHost"/>; broken out as an interface so consumers
+/// don't take a hard reference to the host and create a DI cycle.
+/// </summary>
+public interface IDerivedChannelInjector
+{
+    void InjectDerived(ReadOnlySpan<InternalChannelValue> values);
+}
+
+/// <summary>
 /// Top-level pipeline host. Wires CAN bus readers, the pipeline worker,
 /// raw-frame and channel-value consumers, the watchdog, and the writer.
 /// Owns the active configuration snapshot and exposes hooks for atomic reload.
 /// </summary>
-public sealed class RacecarPipelineHost : BackgroundService
+public sealed class RacecarPipelineHost : BackgroundService, IDerivedChannelInjector
 {
     private static readonly TimeSpan ShutdownBudget = TimeSpan.FromSeconds(2);
 
@@ -52,6 +63,37 @@ public sealed class RacecarPipelineHost : BackgroundService
     }
 
     public ActiveConfiguration ActiveConfiguration => _active;
+
+    /// <summary>
+    /// Inject derived channel values produced outside the per-frame derive stage
+    /// (e.g., from a time-driven in-car analysis consumer such as the throttle
+    /// proxy module). Values pass through the same post-derive change filter the
+    /// pipeline worker uses, then dispatch to every channel consumer host.
+    /// </summary>
+    /// <remarks>
+    /// Safe to call from any thread once the pipeline has started. A no-op if
+    /// called before <see cref="ExecuteAsync"/> has built the consumer hosts.
+    /// </remarks>
+    public void InjectDerived(ReadOnlySpan<InternalChannelValue> values)
+    {
+        if (values.Length == 0 || _channelHosts.Count == 0) return;
+        var config = _active;
+        Span<InternalChannelValue> buffer = stackalloc InternalChannelValue[values.Length];
+        var kept = 0;
+        for (var i = 0; i < values.Length; i++)
+        {
+            if (_changeFilter.TryAccept(config, in values[i]))
+            {
+                buffer[kept++] = values[i];
+            }
+        }
+        if (kept == 0) return;
+        var span = buffer[..kept];
+        for (var c = 0; c < _channelHosts.Count; c++)
+        {
+            _channelHosts[c].Deliver(span);
+        }
+    }
 
     /// <summary>
     /// Atomic configuration reload. State for channels with byte-identical

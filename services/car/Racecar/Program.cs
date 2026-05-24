@@ -4,6 +4,7 @@ using NLog;
 using NLog.Web;
 using Racecar.CanBus;
 using Racecar.Clients;
+using Racecar.FuelAnalysis;
 using Racecar.Logging;
 using Racecar.Pipeline;
 using Racecar.Pipeline.Consumers;
@@ -43,6 +44,7 @@ public class Program
         builder.Services.AddSingleton<ActiveConfigurationFactory>();
         builder.Services.AddSingleton<RacecarPipelineHost>();
         builder.Services.AddHostedService(sp => sp.GetRequiredService<RacecarPipelineHost>());
+        builder.Services.AddSingleton<IDerivedChannelInjector>(sp => sp.GetRequiredService<RacecarPipelineHost>());
         builder.Services.AddSingleton<Func<ActiveConfiguration>>(sp =>
             () => sp.GetRequiredService<RacecarPipelineHost>().ActiveConfiguration);
         builder.Services.AddHostedService<TestChannelValues>();
@@ -57,6 +59,14 @@ public class Program
         builder.Services.AddSingleton<CloudTransmitConsumer>();
         builder.Services.AddSingleton<IChannelConsumer>(sp => sp.GetRequiredService<CloudTransmitConsumer>());
         builder.Services.AddHostedService(sp => sp.GetRequiredService<CloudTransmitConsumer>());
+
+        // Throttle proxy / fuel analysis module.
+        builder.Services.Configure<FuelAnalysisOptions>(builder.Configuration.GetSection("FuelAnalysis"));
+        builder.Services.AddSingleton(sp => new ThrottleProxyCalibrationStore(
+            sp.GetRequiredService<IOptions<FuelAnalysisOptions>>().Value.CalibrationFilePath));
+        builder.Services.AddSingleton<ThrottleProxyConsumer>();
+        builder.Services.AddSingleton<IChannelConsumer>(sp => sp.GetRequiredService<ThrottleProxyConsumer>());
+        builder.Services.AddHostedService(sp => sp.GetRequiredService<ThrottleProxyConsumer>());
 
         var app = builder.Build();
 

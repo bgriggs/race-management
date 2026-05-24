@@ -75,3 +75,5 @@ services/car/Racecar/config-versions/
 /services/cloud/ChannelProcessor/ChannelProcessor.csproj.user
 /services/cloud/WebApi/WebApi.csproj.user
 /ui/.angular/cache/21.2.11/race-management-local/vite/deps
+/ui/.angular/cache/21.2.11/race-management-cloud/vite/deps
+/ui/.angular/cache/21.2.11/race-management-cloud/.tsbuildinfo
