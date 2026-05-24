@@ -1,0 +1,152 @@
+:host {
+  display: grid;
+  grid-template-columns: 50px 1fr auto auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 4px 0;
+}
+
+.car-tag {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text-primary, #ddd);
+}
+
+.middle {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gantt {
+  display: block;
+  background: transparent;
+}
+
+.track {
+  fill: var(--surface-2, #222);
+  stroke: var(--border-subtle, #2a2a2a);
+  stroke-width: 1;
+}
+
+.now {
+  stroke: rgba(255, 255, 255, 0.85);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 2;
+  pointer-events: none;
+}
+
+.pending-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pending-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  background: rgba(234, 179, 8, 0.12);
+  border: 1px solid rgba(234, 179, 8, 0.4);
+  border-radius: 3px;
+  font-size: 12px;
+  color: var(--text-primary, #ddd);
+}
+
+.pending-text {
+  flex: 1;
+}
+
+.btn-mini {
+  padding: 2px 8px;
+  border-radius: 3px;
+  border: 1px solid var(--border, #333);
+  background: var(--surface-2, #2a2a2a);
+  color: var(--text-primary, #ddd);
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.btn-mini.primary {
+  background: rgb(34, 197, 94);
+  color: black;
+  border-color: rgb(34, 197, 94);
+  font-weight: 600;
+}
+
+.btn-mini:hover {
+  filter: brightness(1.1);
+}
+
+.readouts {
+  display: flex;
+  gap: 12px;
+  font-variant-numeric: tabular-nums;
+  background: none;
+  border: 1px solid transparent;
+  color: inherit;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 3px;
+  text-align: left;
+  font-family: inherit;
+}
+
+.readouts:hover {
+  border-color: var(--border, #333);
+  background: var(--surface-2, #2a2a2a);
+}
+
+.readout {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.readout .label {
+  color: var(--text-muted, #888);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 10px;
+}
+
+.readout .value {
+  color: var(--text-primary, #ddd);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.readout .sub {
+  color: var(--text-muted, #888);
+  font-size: 11px;
+}
+
+.readout .conf {
+  color: var(--text-muted, #888);
+  font-size: 11px;
+}
+
+.gas-can-btn {
+  background: var(--surface-2, #2a2a2a);
+  border: 1px solid var(--border, #333);
+  border-radius: 3px;
+  width: 32px;
+  height: 32px;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.gas-can-btn:hover {
+  background: var(--surface, #1f1f1f);
+  border-color: rgb(96, 165, 250);
+}

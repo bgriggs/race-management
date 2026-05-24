@@ -128,6 +128,32 @@ public class FuelController(
         return Accepted(new RefuelEventPublishResult(existing.DetectedAt, request.Gallons));
     }
 
+    [HttpPost]
+    [ProducesResponseType<RefuelEvent>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<RefuelEvent>> DismissRefuelEventAsync(int teamId, int refuelEventId, CancellationToken ct)
+    {
+        if (!await teamRoleContext.IsUserInTeamAsync(teamId, ct)) { return Forbid(); }
+
+        await using var db = await dbFactory.CreateDbContextAsync(ct);
+        var existing = await db.RefuelEvents
+            .FirstOrDefaultAsync(r => r.Id == refuelEventId && r.TeamId == teamId, ct);
+        if (existing is null) { return NotFound(); }
+
+        // Idempotent: if already acknowledged or confirmed, return the row as-is.
+        // PitFill loses calibration for this window — design.md §1010 says explicit data
+        // loss is acceptable; the system never invents a volume.
+        if (existing.Status == "Pending")
+        {
+            existing.Status = "Acknowledged-NoEntry";
+            await db.SaveChangesAsync(ct);
+        }
+
+        return existing;
+    }
+
     #endregion
 
     #region Calibration

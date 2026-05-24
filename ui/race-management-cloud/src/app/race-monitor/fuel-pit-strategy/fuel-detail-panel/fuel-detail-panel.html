@@ -1,0 +1,169 @@
+<div class="backdrop" role="presentation" (click)="close()"></div>
+
+<div class="dialog" role="dialog" aria-modal="true" aria-labelledby="fuel-detail-title">
+  <header class="dialog-header">
+    <h2 id="fuel-detail-title">Car #{{ car().number }} — Fuel Detail</h2>
+    <button type="button" class="close-btn" aria-label="Close" (click)="close()">&times;</button>
+  </header>
+
+  <div class="dialog-body">
+    @if (snapshot() === null) {
+      <div class="status">No snapshot available yet for this car.</div>
+    } @else {
+      <section class="range-row">
+        <div class="range-cell primary">
+          <span class="label">Primary range</span>
+          <span class="value">
+            @if (primary()?.rangeMinutes != null) {
+              {{ primary()!.rangeMinutes! | number:'1.0-0' }} min
+            } @else { — }
+          </span>
+          <span class="sub">
+            @if (primary()?.rangeGallons != null) { {{ primary()!.rangeGallons! | number:'1.1-1' }} gal }
+            @if (primary()?.rangeLaps != null) { · {{ primary()!.rangeLaps! | number:'1.0-0' }} laps }
+          </span>
+          @if (primary()?.confidence != null) {
+            <span class="conf">confidence {{ primary()!.confidence * 100 | number:'1.0-0' }}%</span>
+          }
+        </div>
+        <div class="range-cell high-conf">
+          <span class="label">High-confidence ({{ snapshot()!.highConfidenceThreshold * 100 | number:'1.0-0' }}%)</span>
+          <span class="value">
+            @if (highConfidence()?.rangeMinutes != null) {
+              {{ highConfidence()!.rangeMinutes! | number:'1.0-0' }} min
+            } @else { — }
+          </span>
+          <span class="sub">
+            @if (highConfidence()?.rangeGallons != null) { {{ highConfidence()!.rangeGallons! | number:'1.1-1' }} gal }
+            @if (highConfidence()?.rangeLaps != null) { · {{ highConfidence()!.rangeLaps! | number:'1.0-0' }} laps }
+          </span>
+          <span class="hint">conservative — use for pit calls</span>
+        </div>
+      </section>
+
+      <section class="estimators">
+        <h3>Estimators</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Estimator</th>
+              <th class="num">Range</th>
+              <th class="num">σ</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of estimatorRows(); track row.readout.name) {
+              <tr [class.unavailable]="!row.readout.available" [class.outlier]="row.readout.isOutlier">
+                <td>{{ row.displayName }}</td>
+                <td class="num">{{ row.rangeText }}</td>
+                <td class="num">{{ row.sigmaText }}</td>
+                <td>
+                  @if (!row.readout.available) {
+                    <span class="badge unavailable">unavailable</span>
+                    @if (row.readout.reason) { <span class="reason">— {{ row.readout.reason }}</span> }
+                  } @else if (row.outlierBadge) {
+                    <span class="badge outlier">{{ row.outlierBadge }}</span>
+                  } @else {
+                    <span class="badge ok">in agreement</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </section>
+
+      @if (rateBreakdown(); as rate) {
+        <section class="rate">
+          <h3>Current rate</h3>
+          <div class="rate-line">
+            <span class="rate-value">{{ rate.effective | number:'1.3-3' }} gal/min</span>
+            @if (rate.base != null) {
+              <span class="rate-formula">
+                = {{ rate.base | number:'1.3-3' }} (base)
+                × {{ rate.flag | number:'1.2-2' }} (flag)
+                × {{ rate.pace | number:'1.2-2' }} (pace)
+              </span>
+            }
+          </div>
+        </section>
+      }
+
+      @if (fuelWindowDetails(); as fw) {
+        <section class="window">
+          <h3>FuelWindow</h3>
+          <div class="window-line">
+            @if (fw.openedAtUtc) {
+              opened {{ fw.openedAtUtc | date:'shortTime' }}
+              ({{ fw.elapsedMinutes | number:'1.0-0' }} min ago)
+            } @else { no open window }
+            @if (fw.gallonsUsedInWindow != null || fw.enteredFuelGallons != null) {
+              ·
+              {{ fw.gallonsUsedInWindow != null ? (fw.gallonsUsedInWindow | number:'1.1-1') : '?' }}
+              gal used
+              @if (fw.enteredFuelGallons != null) {
+                of {{ fw.enteredFuelGallons | number:'1.1-1' }} entered
+              }
+            }
+          </div>
+        </section>
+      }
+
+      <section class="calibration">
+        <h3>FlowMeter calibration</h3>
+        <div class="calibration-line">
+          <span class="cal-value">{{ calibrationLabel() }}</span>
+          @if (!showOverrideInput()) {
+            <button type="button" class="btn-mini" (click)="startOverride()" [disabled]="busy()">Override</button>
+            <button type="button" class="btn-mini" (click)="resetCalibration()" [disabled]="busy()">Reset</button>
+            @if (isOverridden()) {
+              <button type="button" class="btn-mini primary" (click)="resumeLearning()" [disabled]="busy()">Resume learning</button>
+            }
+          }
+        </div>
+
+        @if (showOverrideInput()) {
+          <div class="override-form">
+            <label class="field">
+              <span class="field-label">New factor (0.1 – 10.0)</span>
+              <input
+                type="number"
+                step="0.001"
+                min="0.1"
+                max="10"
+                [value]="overrideInput()"
+                (input)="onOverrideInput($event)"
+              />
+            </label>
+            <button type="button" class="btn-mini primary" (click)="confirmOverride()" [disabled]="busy()">Save</button>
+            <button type="button" class="btn-mini" (click)="cancelOverride()" [disabled]="busy()">Cancel</button>
+          </div>
+        }
+
+        @if (errorMessage()) {
+          <div class="error">{{ errorMessage() }}</div>
+        }
+      </section>
+
+      @if (sparklinePoints().length > 0) {
+        <section class="sparkline">
+          <h3>Recent FuelWindow rates</h3>
+          <svg [attr.viewBox]="'0 0 ' + sparklineWidth + ' ' + sparklineHeight"
+               [attr.width]="sparklineWidth" [attr.height]="sparklineHeight"
+               class="spark">
+            @if (sparklinePoints().length > 1) {
+              <svg:polyline class="spark-line" [attr.points]="sparklinePath()" />
+            }
+            @for (p of sparklinePoints(); track $index) {
+              <svg:circle class="spark-dot" [attr.cx]="p.x" [attr.cy]="p.y" r="2">
+                <svg:title>{{ p.value | number:'1.3-3' }} gal/min</svg:title>
+              </svg:circle>
+            }
+          </svg>
+          <span class="spark-hint">last {{ sparklinePoints().length }} closed windows</span>
+        </section>
+      }
+    }
+  </div>
+</div>

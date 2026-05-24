@@ -1,0 +1,17 @@
+.bar {
+  stroke-width: 1;
+  stroke: rgba(0, 0, 0, 0.4);
+}
+
+.bar.tier-high    { fill: rgb(34, 197, 94); }
+.bar.tier-medium  { fill: rgb(234, 179, 8); }
+.bar.tier-low     { fill: rgb(249, 115, 22); }
+.bar.tier-manual  { fill: rgb(96, 165, 250); }
+.bar.tier-unknown { fill: rgb(107, 114, 128); }
+
+.icon {
+  font-size: 12px;
+  fill: rgba(0, 0, 0, 0.85);
+  pointer-events: none;
+  dominant-baseline: middle;
+}

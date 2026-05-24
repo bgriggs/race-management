@@ -1,1 +1,27 @@
-<p>fuel-pit-strategy works!</p>
+<section class="fuel-pit-strategy">
+  <header class="header">
+    <h2 class="title">Fuel &amp; Pit Strategy</h2>
+  </header>
+
+  @if (!hasActiveRace()) {
+    <div class="placeholder">No active race session.</div>
+  } @else if (loading()) {
+    <div class="placeholder">Loading cars…</div>
+  } @else if (error()) {
+    <div class="placeholder error">{{ error() }}</div>
+  } @else if (cars().length === 0) {
+    <div class="placeholder">No cars configured for this team.</div>
+  } @else {
+    <ul class="car-rows">
+      @for (car of cars(); track car.number) {
+        <li class="car-row-wrap">
+          <app-fuel-row
+            [teamId]="teamSelection.selectedTeamId()!"
+            [car]="car"
+            [race]="activeRace()!"
+          />
+        </li>
+      }
+    </ul>
+  }
+</section>

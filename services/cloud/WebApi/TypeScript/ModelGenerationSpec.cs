@@ -1,4 +1,6 @@
 using Cloud.Shared.Database.Models;
+using Cloud.Shared.Database.Models.FuelAnalysis;
+using Cloud.Shared.FuelAnalysis;
 using Cloud.Shared.Telemetry;
 using Common.TypeScript;
 using TypeGen.Core.SpecGeneration;
@@ -26,6 +28,31 @@ public class ModelGenerationSpec : GenerationSpec
         typeof(ChannelChangeNotification),
         typeof(Race),
         typeof(SiteSettings),
+        // Fuel Analysis — snapshot DTOs
+        typeof(FuelRangeSnapshot),
+        typeof(RangeReadout),
+        typeof(EstimatorReadout),
+        typeof(ReconcilerDetails),
+        typeof(FuelWindowDetails),
+        // Fuel Analysis — persisted entities (read by the Gantt + detail panel)
+        typeof(RefuelEvent),
+        typeof(FuelWindow),
+        typeof(Stint),
+        typeof(CalibrationFactor),
+        // Fuel Analysis — request / response records on FuelController
+        typeof(ManualRefuelRequest),
+        typeof(EnterVolumeRequest),
+        typeof(RefuelEventPublishResult),
+        typeof(CalibrationOverrideRequest),
+    ];
+
+    private static readonly Type[] EnumTypes =
+    [
+        typeof(RefuelConfidenceTier),
+        typeof(RefuelSource),
+        typeof(EcuResetState),
+        typeof(RefuelAnchor),
+        typeof(CalibrationFactorSource),
     ];
 
     private static readonly Type[] MessagePackTypes =
@@ -39,6 +66,9 @@ public class ModelGenerationSpec : GenerationSpec
     {
         foreach (var type in InterfaceTypes)
             AddInterface(type);
+
+        foreach (var type in EnumTypes)
+            AddEnum(type);
 
         AddInterface<Team>().Member(nameof(Team.IsDeleted)).Ignore();
         AddInterface<Car>().Member(nameof(Car.IsDeleted)).Ignore();
