@@ -33,4 +33,26 @@ public static class Consts
     // per (connection, carKey), SREM on disconnect. Used by CarGateway to fan-out team
     // values to every active car in the team without scanning the global CAR_CONNECTIONS hash.
     public const string TEAM_CONNECTED_CARS = "team-connected-cars:{0}";
+
+    // Alarm Processor — independent consumer group on car-channel-values so it sees every
+    // message regardless of what the latest-state cache consumer does.
+    public const string CHANNEL_PROC_ALARM_CONSUMER_GROUP = "channelproc-alarm";
+    // Per-(carKey, alarmId) AlarmState (MessagePack-serialized).
+    public const string ALARM_STATE_KEY = "alarm-state:{0}:{1}";
+    // Per-(carKey, statementId) bool? state.
+    public const string ALARM_STATEMENT_STATE_KEY = "alarm-statement-state:{0}:{1}";
+    // Per-(carKey, comparisonId) ForMs duration start time (ISO ticks).
+    public const string ALARM_COMPARISON_DURATION_KEY = "alarm-comparison-duration:{0}:{1}";
+    // Per-(carKey, channelId) previous channel value string (for Updated / ChangedBy logic).
+    public const string ALARM_PREVIOUS_VALUE_KEY = "alarm-prev-value:{0}:{1}";
+
+    // Per-team alarm state-change pub/sub. Published by ChannelProcessor on each
+    // edge transition (Activated/Deactivated) and by WebApi on Acknowledge. Fanned
+    // out to browsers by WebApi's ChannelPropagatorService.
+    public const string ALARM_CHANGES_CHANNEL = "alarm-changes:{0}";
+
+    // Per-team alarm-definition invalidation pub/sub. Published by WebApi after a
+    // definition save/delete; consumed by ChannelProcessor's AlarmDefinitionRepository
+    // to evict cached per-car alarm sets immediately rather than waiting on the TTL.
+    public const string ALARM_CONFIG_CHANGED_CHANNEL = "alarm-config-changed:{0}";
 }

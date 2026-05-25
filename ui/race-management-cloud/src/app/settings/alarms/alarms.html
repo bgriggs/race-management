@@ -1,0 +1,104 @@
+<section class="list-actions">
+  <button
+    type="button"
+    class="primary"
+    (click)="startAdd()"
+    [disabled]="teamSelection.selectedTeamId() === null"
+  >
+    Add Alarm
+  </button>
+
+  <label class="filter-control">
+    <span>Show:</span>
+    <select
+      [value]="currentFilterValue()"
+      (change)="onFilterChanged($any($event.target).value)"
+    >
+      <option value="all">All</option>
+      <option value="team">Team-level only</option>
+      @for (car of cars(); track car.number) {
+        <option [value]="'car:' + car.number">Car #{{ car.number }}</option>
+      }
+    </select>
+  </label>
+</section>
+
+@if (loading()) {
+  <p class="status-text">Loading…</p>
+} @else if (error(); as msg) {
+  <p class="field-error">{{ msg }}</p>
+} @else if (visibleAlarms().length === 0) {
+  <p class="list-empty">
+    @if (alarms().length === 0) {
+      No alarms configured.
+    } @else {
+      No alarms match the current filter.
+    }
+  </p>
+} @else {
+  <div class="list-table-wrap">
+    <table class="list-table">
+      <thead>
+        <tr>
+          <th scope="col" class="row-action-column"><span class="sr-only">Edit</span></th>
+          <th scope="col" class="row-action-column"><span class="sr-only">Delete</span></th>
+          <th scope="col">Name</th>
+          <th scope="col">Scope</th>
+          <th scope="col">Condition</th>
+          <th scope="col" class="color-column">Color</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (alarm of visibleAlarms(); track alarm.id) {
+          <tr>
+            <td class="row-action-cell">
+              <button
+                type="button"
+                class="row-action-button"
+                (click)="startEdit(alarm)"
+                aria-label="Edit alarm"
+              >
+                <span class="material-icons" aria-hidden="true">edit</span>
+              </button>
+            </td>
+            <td class="row-action-cell">
+              <button
+                type="button"
+                class="row-action-button delete"
+                (click)="deleteAlarm(alarm)"
+                aria-label="Delete alarm"
+              >
+                <span class="material-icons" aria-hidden="true">delete</span>
+              </button>
+            </td>
+            <td>{{ alarm.name || '(unnamed)' }}</td>
+            <td>{{ scopeLabel(alarm) }}</td>
+            <td class="statement-cell">{{ statementSummary(alarm) }}</td>
+            <td class="color-cell">
+              @if (hasColor(alarm)) {
+                <span class="color-swatch" [style.background-color]="colorSwatch(alarm)"
+                  [attr.aria-label]="alarm.displayChannelSourceColorHex"></span>
+              } @else {
+                <span class="color-empty" aria-label="No color">—</span>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+@if (isEditing() && draft(); as currentDraft) {
+  <app-edit-cloud-alarm
+    [title]="editorTitle()"
+    [alarm]="currentDraft"
+    [channels]="editorChannels()"
+    [cars]="cars()"
+    [saving]="saving()"
+    [saveError]="saveError()"
+    (alarmChange)="onDraftChanged($event)"
+    (cancel)="stopEdit()"
+    (save)="saveDraft()"
+  />
+}

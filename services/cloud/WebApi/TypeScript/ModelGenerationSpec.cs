@@ -1,4 +1,7 @@
+using Channels.Logic;
+using Cloud.Shared.Alarms;
 using Cloud.Shared.Database.Models;
+using Cloud.Shared.Database.Models.Alarms;
 using Cloud.Shared.Telemetry;
 using Common.TypeScript;
 using TypeGen.Core.SpecGeneration;
@@ -26,6 +29,17 @@ public class ModelGenerationSpec : GenerationSpec
         typeof(ChannelChangeNotification),
         typeof(Race),
         typeof(SiteSettings),
+        typeof(AlarmDefinitionDto),
+        typeof(ActiveAlarmDto),
+        typeof(AlarmChangeNotification),
+        typeof(StatementDefinition),
+        typeof(ComparisonDefinition),
+    ];
+
+    private static readonly Type[] EnumTypes =
+    [
+        typeof(AlarmEventType),
+        typeof(LogicType),
     ];
 
     private static readonly Type[] MessagePackTypes =
@@ -33,12 +47,16 @@ public class ModelGenerationSpec : GenerationSpec
         typeof(CarChannelSnapshot),
         typeof(ChannelValueSnapshot),
         typeof(ChannelChangeNotification),
+        typeof(AlarmChangeNotification),
     ];
 
     public override void OnBeforeGeneration(OnBeforeGenerationArgs args)
     {
         foreach (var type in InterfaceTypes)
             AddInterface(type);
+
+        foreach (var type in EnumTypes)
+            AddEnum(type);
 
         AddInterface<Team>().Member(nameof(Team.IsDeleted)).Ignore();
         AddInterface<Car>().Member(nameof(Car.IsDeleted)).Ignore();

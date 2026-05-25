@@ -2,6 +2,8 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { APP_CONFIG } from '../config/app-config';
+import { ActiveAlarmDto } from '../../../../shared-ui/src/cloud-api/active-alarm-dto';
+import { AlarmDefinitionDto } from '../../../../shared-ui/src/cloud-api/alarm-definition-dto';
 import { Car } from '../../../../shared-ui/src/cloud-api/car';
 import { CarRequest } from '../../../../shared-ui/src/cloud-api/car-request';
 import { CarUpdate } from '../../../../shared-ui/src/cloud-api/car-update';
@@ -205,6 +207,54 @@ export class ConfigurationClient {
     return firstValueFrom(
       this.http.post<void>(this.url('save-channel-status-table-configuration'), configuration, {
         params: { teamId, userId },
+      }),
+    );
+  }
+
+  loadAlarmDefinitions(teamId: number, carNumber?: string | null): Promise<AlarmDefinitionDto[]> {
+    const params: Record<string, string | number> = { teamId };
+    if (carNumber) params['carNumber'] = carNumber;
+    return firstValueFrom(
+      this.http.get<AlarmDefinitionDto[]>(this.url('load-alarm-definitions'), { params }),
+    );
+  }
+
+  loadAlarmDefinition(teamId: number, alarmId: string): Promise<AlarmDefinitionDto> {
+    return firstValueFrom(
+      this.http.get<AlarmDefinitionDto>(this.url('load-alarm-definition'), {
+        params: { teamId, alarmId },
+      }),
+    );
+  }
+
+  saveAlarmDefinition(teamId: number, definition: AlarmDefinitionDto): Promise<AlarmDefinitionDto> {
+    return firstValueFrom(
+      this.http.post<AlarmDefinitionDto>(this.url('save-alarm-definition'), definition, {
+        params: { teamId },
+      }),
+    );
+  }
+
+  deleteAlarmDefinition(teamId: number, alarmId: string): Promise<void> {
+    return firstValueFrom(
+      this.http.delete<void>(this.url('delete-alarm-definition'), {
+        params: { teamId, alarmId },
+      }),
+    );
+  }
+
+  loadActiveAlarms(teamId: number, includeAcknowledged = false): Promise<ActiveAlarmDto[]> {
+    return firstValueFrom(
+      this.http.get<ActiveAlarmDto[]>(this.url('load-active-alarms'), {
+        params: { teamId, includeAcknowledged },
+      }),
+    );
+  }
+
+  acknowledgeAlarm(teamId: number, carNumber: string, alarmId: string): Promise<ActiveAlarmDto> {
+    return firstValueFrom(
+      this.http.post<ActiveAlarmDto>(this.url('acknowledge-alarm'), null, {
+        params: { teamId, carNumber, alarmId },
       }),
     );
   }

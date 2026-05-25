@@ -1,4 +1,5 @@
 ﻿using Cloud.Shared.Database.Models;
+using Cloud.Shared.Database.Models.Alarms;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cloud.Shared.Database;
@@ -12,6 +13,10 @@ public class RaceManagementContext(DbContextOptions<RaceManagementContext> optio
     public DbSet<ChannelStatusTableConfiguration> ChannelStatusTableConfigurations { get; set; } = null!;
     public DbSet<Race> Races { get; set; } = null!;
     public DbSet<SiteSettings> SiteSettings { get; set; } = null!;
+
+    public DbSet<AlarmDefinitionRow> AlarmDefinitions { get; set; } = null!;
+    public DbSet<ActiveAlarmRow> ActiveAlarms { get; set; } = null!;
+    public DbSet<AlarmEventRow> AlarmEvents { get; set; } = null!;
 
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -78,5 +83,35 @@ public class RaceManagementContext(DbContextOptions<RaceManagementContext> optio
             .WithMany()
             .HasForeignKey(s => s.TeamId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        ConfigureAlarms(modelBuilder);
+    }
+
+    private static void ConfigureAlarms(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<AlarmDefinitionRow>(e =>
+        {
+            e.HasOne<Team>().WithMany().HasForeignKey(a => a.TeamId).OnDelete(DeleteBehavior.Cascade);
+            // Conditional FK to Car only when CarNumber is set (team-level rows skip the FK).
+            // EF Core cannot model a partial-nullable composite FK declaratively; the
+            // application enforces that CarNumber, when set, refers to an existing car.
+            e.Property(a => a.StatementJson).HasColumnType("jsonb");
+            e.HasIndex(a => new { a.TeamId, a.CarNumber });
+        });
+
+        modelBuilder.Entity<ActiveAlarmRow>(e =>
+        {
+            e.HasOne<Car>().WithMany().HasForeignKey(a => new { a.TeamId, a.CarNumber }).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<AlarmDefinitionRow>().WithMany().HasForeignKey(a => a.AlarmDefinitionId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(a => new { a.TeamId, a.IsActive });
+        });
+
+        modelBuilder.Entity<AlarmEventRow>(e =>
+        {
+            e.HasOne<Car>().WithMany().HasForeignKey(a => new { a.TeamId, a.CarNumber }).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<AlarmDefinitionRow>().WithMany().HasForeignKey(a => a.AlarmDefinitionId).OnDelete(DeleteBehavior.Cascade);
+            e.Property(a => a.EventType).HasConversion<string>().HasMaxLength(16);
+            e.HasIndex(a => new { a.TeamId, a.CarNumber, a.AlarmDefinitionId, a.Timestamp });
+        });
     }
 }

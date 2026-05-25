@@ -1,3 +1,4 @@
+using Cloud.Shared.Alarms;
 using Cloud.Shared.Telemetry;
 
 namespace Cloud.Shared.Hubs;
@@ -12,4 +13,10 @@ public interface IWebHubClient
 
     /// <summary>Full snapshot of all channels for every car on the team.</summary>
     Task ChannelSnapshot(CarChannelSnapshot[] cars);
+
+    /// <summary>A single alarm transitioned (Activated, Deactivated, or Acknowledged).</summary>
+    Task AlarmChanged(AlarmChangeNotification change);
+
+    /// <summary>Full snapshot of active alarms for the team — drives the Race Monitor §3 panel.</summary>
+    Task AlarmSnapshot(ActiveAlarmDto[] alarms);
 }

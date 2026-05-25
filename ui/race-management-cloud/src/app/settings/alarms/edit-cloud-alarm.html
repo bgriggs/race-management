@@ -1,0 +1,70 @@
+<div class="editor-backdrop" (click)="onCancel()"></div>
+<div class="editor-popup" role="dialog" aria-modal="true" [attr.aria-label]="title()">
+  <h3>{{ title() }}</h3>
+
+  <section class="editor-section scope-section">
+    <h4>Scope</h4>
+    <div class="scope-controls" role="radiogroup" aria-label="Alarm Scope">
+      <label>
+        <input
+          type="radio"
+          name="alarm-scope"
+          value="team"
+          [checked]="scope() === 'team'"
+          [disabled]="saving()"
+          (change)="onScopeChanged('team')"
+        />
+        All cars on team
+      </label>
+
+      <label>
+        <input
+          type="radio"
+          name="alarm-scope"
+          value="car"
+          [checked]="scope() === 'car'"
+          [disabled]="saving() || cars().length === 0"
+          (change)="onScopeChanged('car')"
+        />
+        Specific car
+      </label>
+
+      @if (scope() === 'car') {
+        <select
+          aria-label="Car number"
+          [disabled]="saving()"
+          [value]="carNumber() ?? ''"
+          (change)="onCarNumberChanged($any($event.target).value)"
+        >
+          @if (cars().length === 0) {
+            <option value="">No cars available</option>
+          } @else {
+            @for (car of cars(); track car.number) {
+              <option [value]="car.number">#{{ car.number }} — {{ car.make }} {{ car.model }}</option>
+            }
+          }
+        </select>
+      }
+    </div>
+    @if (!isScopeValid()) {
+      <p class="validation-message">Select a car for car-level alarms.</p>
+    }
+  </section>
+
+  <lib-edit-alarm
+    [channels]="channels()"
+    [alarm]="localAlarm()"
+    (alarmChange)="onLocalAlarmChanged($event)"
+  />
+
+  @if (saveError(); as msg) {
+    <p class="field-error">{{ msg }}</p>
+  }
+
+  <section class="editor-actions">
+    <button type="button" class="secondary" (click)="onCancel()" [disabled]="saving()">Cancel</button>
+    <button type="button" class="primary" (click)="onSave()" [disabled]="!canSave()">
+      {{ saving() ? 'Saving…' : 'Save' }}
+    </button>
+  </section>
+</div>

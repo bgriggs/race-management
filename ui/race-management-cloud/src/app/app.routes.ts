@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { RaceMonitor } from './race-monitor/race-monitor';
+import { Alarms } from './settings/alarms/alarms';
 import { Cars } from './settings/cars/cars';
 import { Races } from './settings/races/races';
 import { Settings } from './settings/settings';
@@ -22,6 +23,7 @@ export const routes: Routes = [
       { path: 'team-settings', component: TeamSettings },
       { path: 'cars', component: Cars },
       { path: 'races', component: Races },
+      { path: 'alarms', component: Alarms },
     ],
   },
   { path: '', redirectTo: 'race-monitor', pathMatch: 'full' },

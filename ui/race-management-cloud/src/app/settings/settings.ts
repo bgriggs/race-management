@@ -19,5 +19,6 @@ export class Settings {
     { path: 'team-settings', label: 'Team Settings' },
     { path: 'cars', label: 'Cars' },
     { path: 'races', label: 'Races' },
+    { path: 'alarms', label: 'Alarms' },
   ];
 }
