@@ -4,6 +4,7 @@ import { provideRouter } from '@angular/router';
 
 import { ConfigurationClient } from '../../clients/configuration-client';
 import { TeamSelectionService } from '../../teams/team-selection.service';
+import { RaceSelectionService } from '../race-selection.service';
 import { RaceHeader } from './race-header';
 
 describe('RaceHeader', () => {
@@ -27,12 +28,23 @@ describe('RaceHeader', () => {
       showsOverlay: signal(false),
     } as unknown as TeamSelectionService;
 
+    const raceSelectionStub = {
+      now: signal(new Date()),
+      races: signal([]),
+      selectedRaceId: signal<number | null>(null),
+      selectedRace: signal(null),
+      activeRace: signal(null),
+      selectRace: vi.fn(),
+      refresh: vi.fn().mockResolvedValue(undefined),
+    } as unknown as RaceSelectionService;
+
     await TestBed.configureTestingModule({
       imports: [RaceHeader],
       providers: [
         provideRouter([]),
         { provide: ConfigurationClient, useValue: configClientStub },
         { provide: TeamSelectionService, useValue: teamSelectionStub },
+        { provide: RaceSelectionService, useValue: raceSelectionStub },
       ],
     }).compileComponents();
 

@@ -74,11 +74,19 @@ public class RaceManagementContext(DbContextOptions<RaceManagementContext> optio
             .HasForeignKey(c => new { c.TeamId, c.UserId })
             .OnDelete(DeleteBehavior.Cascade);
 
-        modelBuilder.Entity<Race>()
-            .HasOne<Team>()
-            .WithMany()
-            .HasForeignKey(r => r.TeamId)
-            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<Race>(e =>
+        {
+            e.HasOne<Team>()
+                .WithMany()
+                .HasForeignKey(r => r.TeamId)
+                .OnDelete(DeleteBehavior.Cascade);
+            // Race.Start is a naive wall-clock — engineers enter and read it
+            // without any TZ adjustment. Stored as `timestamp without time zone`
+            // so Npgsql preserves DateTimeKind.Unspecified across the round-trip
+            // (Npgsql 6+ requires Kind.Utc for `timestamptz` and Kind.Unspecified
+            // for `timestamp`).
+            e.Property(r => r.Start).HasColumnType("timestamp without time zone");
+        });
 
         modelBuilder.Entity<SiteSettings>()
             .HasOne<Team>()

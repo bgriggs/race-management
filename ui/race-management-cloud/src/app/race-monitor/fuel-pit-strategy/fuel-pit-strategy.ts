@@ -23,6 +23,32 @@ export class FuelPitStrategy {
   protected readonly activeRace = this.raceSelection.activeRace;
   protected readonly hasActiveRace = computed(() => this.activeRace() !== null);
 
+  /**
+   * Diagnostic surfaced under the "No active race session" placeholder so the
+   * engineer can see why the clock-driven gate is failing — typically because
+   * the race's start is in the future or its end is in the past. Lines stay
+   * empty when no race is selected.
+   */
+  protected readonly noActiveRaceDiagnostic = computed(() => {
+    const selected = this.raceSelection.selectedRace();
+    const now = this.raceSelection.now();
+    if (!selected) return null;
+    const start = new Date(selected.start);
+    const end = new Date(start.getTime() + selected.duration * 60 * 60 * 1000);
+    const reason = now < start
+      ? 'Race has not started yet.'
+      : now >= end
+        ? 'Race has already ended.'
+        : 'Race brackets now — should be active. Refresh races?';
+    return {
+      name: selected.name,
+      start: start.toLocaleString(),
+      end: end.toLocaleString(),
+      now: now.toLocaleString(),
+      reason,
+    };
+  });
+
   constructor() {
     effect(() => {
       const teamId = this.teamSelection.selectedTeamId();

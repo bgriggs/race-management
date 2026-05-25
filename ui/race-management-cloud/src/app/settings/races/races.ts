@@ -98,16 +98,23 @@ export class Races {
     const teamId = this.teamSelection.selectedTeamId();
     if (!state || teamId === null || !this.isDraftValid() || this.saving()) return;
 
-    const race: Race = {
+    // Send the datetime-local input as a naive ISO string. JS Date's toJSON()
+    // always serializes as UTC with a `Z` suffix, which would shift the value
+    // by the local TZ offset on every save/load round-trip. By sending the
+    // wall-clock string directly, the backend (DateTimeKind.Unspecified +
+    // `timestamp without time zone`) preserves exactly what was typed.
+    const startRaw = this.draftStart();
+    const startNaive = startRaw.length === 16 ? `${startRaw}:00` : startRaw;
+    const race = {
       id: state.mode === 'edit' ? state.raceId : 0,
       teamId,
       name: this.draftName().trim(),
-      start: new Date(this.draftStart()),
+      start: startNaive,
       duration: Number(this.draftDuration()),
       notes: this.draftNotes(),
       redMistEventId: this.draftEventId() === '' ? null : Number(this.draftEventId()),
       redMistOrganizationId: this.draftOrgId() === '' ? null : Number(this.draftOrgId()),
-    };
+    } as unknown as Race;
 
     this.saving.set(true);
     this.saveError.set(null);

@@ -4,7 +4,20 @@
   </header>
 
   @if (!hasActiveRace()) {
-    <div class="placeholder">No active race session.</div>
+    <div class="placeholder">
+      <div>No active race session.</div>
+      @if (noActiveRaceDiagnostic(); as d) {
+        <dl class="diagnostic">
+          <dt>Selected race</dt><dd>{{ d.name }}</dd>
+          <dt>Start</dt><dd>{{ d.start }}</dd>
+          <dt>End</dt><dd>{{ d.end }}</dd>
+          <dt>Now</dt><dd>{{ d.now }}</dd>
+          <dt>Reason</dt><dd>{{ d.reason }}</dd>
+        </dl>
+      } @else {
+        <div class="diagnostic-hint">No race is selected in the header.</div>
+      }
+    </div>
   } @else if (loading()) {
     <div class="placeholder">Loading cars…</div>
   } @else if (error()) {
