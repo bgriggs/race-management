@@ -7,6 +7,8 @@ import { decode, encode } from "@msgpack/msgpack";
 import { CarChannelSnapshot } from "./car-channel-snapshot";
 import { ChannelValueSnapshot } from "./channel-value-snapshot";
 import { ChannelChangeNotification } from "./channel-change-notification";
+import { AlarmChangeNotification } from "./alarm-change-notification";
+import { AlarmEventType } from "./alarm-event-type";
 
 export function decodeMessagePack<T>(bytes: Uint8Array): T {
     return decode(bytes) as T;
@@ -63,5 +65,21 @@ export function channelChangeNotificationFromMessagePack(arr: unknown[]): Channe
 
 export function decodeChannelChangeNotificationMessagePack(bytes: Uint8Array): ChannelChangeNotification {
     return channelChangeNotificationFromMessagePack(decode(bytes) as unknown[]);
+}
+
+export function alarmChangeNotificationFromMessagePack(arr: unknown[]): AlarmChangeNotification {
+    return {
+        teamId: arr[0] as number,
+        carNumber: arr[1] as string,
+        alarmDefinitionId: arr[2] as string,
+        eventType: arr[3] as AlarmEventType,
+        isActive: arr[4] as boolean,
+        isAcknowledged: arr[5] as boolean,
+        timestamp: new Date(arr[6] as string | number | Date),
+    };
+}
+
+export function decodeAlarmChangeNotificationMessagePack(bytes: Uint8Array): AlarmChangeNotification {
+    return alarmChangeNotificationFromMessagePack(decode(bytes) as unknown[]);
 }
 

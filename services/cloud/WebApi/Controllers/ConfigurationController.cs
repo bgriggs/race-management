@@ -1,10 +1,18 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
+using Channels.Logic;
+using Cloud.Shared;
+using Cloud.Shared.Alarms;
 using Cloud.Shared.Auth;
 using Cloud.Shared.Database;
 using Cloud.Shared.Database.Models;
+using Cloud.Shared.Database.Models.Alarms;
 using Common;
+using MessagePack;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
+using StackExchange.Redis;
 
 namespace WebApi.Controllers;
 
@@ -12,9 +20,13 @@ namespace WebApi.Controllers;
 [Route("v{version:apiVersion}/[controller]/[action]")]
 [ApiVersion("1.0")]
 [Produces("application/json")]
-public class ConfigurationController(
+public partial class ConfigurationController(
     ITeamRoleContext teamRoleContext,
-    IDbContextFactory<RaceManagementContext> dbFactory) : Controller
+    IDbContextFactory<RaceManagementContext> dbFactory,
+    IConnectionMultiplexer redis,
+    IRedisAlarmStateGateway alarmStateGateway,
+    IActiveAlarmsReader activeAlarmsReader,
+    TimeProvider timeProvider) : Controller
 {
     #region Car Configurations
 
@@ -551,6 +563,292 @@ public class ConfigurationController(
         await db.SaveChangesAsync(ct);
         return existing;
     }
+
+    #endregion
+
+    #region Alarms
+
+    [HttpGet]
+    [ProducesResponseType<AlarmDefinitionDto[]>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<AlarmDefinitionDto[]>> LoadAlarmDefinitionsAsync(int teamId, string? carNumber, CancellationToken ct)
+    {
+        if (!await teamRoleContext.IsUserInTeamAsync(teamId, ct)) { return Forbid(); }
+
+        await using var db = await dbFactory.CreateDbContextAsync(ct);
+
+        // carNumber null → only team-level rows. carNumber set → team-level ∪ that car's rows.
+        var rows = await db.AlarmDefinitions
+            .AsNoTracking()
+            .Where(a => a.TeamId == teamId &&
+                (carNumber == null
+                    ? a.CarNumber == null
+                    : a.CarNumber == null || a.CarNumber == carNumber))
+            .OrderBy(a => a.CarNumber == null ? 0 : 1).ThenBy(a => a.Name)
+            .ToListAsync(ct);
+
+        return rows.Select(ToDto).ToArray();
+    }
+
+    [HttpGet]
+    [ProducesResponseType<AlarmDefinitionDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<AlarmDefinitionDto>> LoadAlarmDefinitionAsync(int teamId, Guid alarmId, CancellationToken ct)
+    {
+        if (!await teamRoleContext.IsUserInTeamAsync(teamId, ct)) { return Forbid(); }
+
+        await using var db = await dbFactory.CreateDbContextAsync(ct);
+        var row = await db.AlarmDefinitions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == alarmId && a.TeamId == teamId, ct);
+
+        return row is null ? NotFound() : ToDto(row);
+    }
+
+    [HttpPost]
+    [ProducesResponseType<AlarmDefinitionDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> SaveAlarmDefinitionAsync(int teamId, [FromBody] AlarmDefinitionDto definition, CancellationToken ct)
+    {
+        if (!await teamRoleContext.IsUserInTeamRoleAsync(teamId, "admin", ct)) { return Forbid(); }
+
+        if (!ValidateAlarmDefinition(definition, ModelState)) { return ValidationProblem(ModelState); }
+
+        await using var db = await dbFactory.CreateDbContextAsync(ct);
+        var existing = definition.Id == Guid.Empty
+            ? null
+            : await db.AlarmDefinitions.FirstOrDefaultAsync(a => a.Id == definition.Id && a.TeamId == teamId, ct);
+
+        var statementJson = JsonSerializer.Serialize(definition.Statement);
+
+        AlarmDefinitionRow row;
+        if (existing is null)
+        {
+            row = new AlarmDefinitionRow
+            {
+                Id = definition.Id == Guid.Empty ? Guid.NewGuid() : definition.Id,
+                TeamId = teamId,
+                CarNumber = definition.CarNumber,
+                Name = definition.Name,
+                Message = definition.Message,
+                DisplayChannelSourceColorHex = definition.DisplayChannelSourceColorHex,
+                TimeAfterAckToDisplaySecs = definition.TimeAfterAckToDisplaySecs,
+                AlarmStatusChannelId = definition.AlarmStatusChannelId,
+                StatementJson = statementJson,
+            };
+            db.AlarmDefinitions.Add(row);
+        }
+        else
+        {
+            // Reject scope changes on update — delete+create instead so history isn't confused.
+            if (existing.CarNumber != definition.CarNumber)
+            {
+                ModelState.AddModelError(nameof(definition.CarNumber),
+                    "Cannot change CarNumber on an existing alarm; delete and recreate to move scope.");
+                return ValidationProblem(ModelState);
+            }
+
+            existing.Name = definition.Name;
+            existing.Message = definition.Message;
+            existing.DisplayChannelSourceColorHex = definition.DisplayChannelSourceColorHex;
+            existing.TimeAfterAckToDisplaySecs = definition.TimeAfterAckToDisplaySecs;
+            existing.AlarmStatusChannelId = definition.AlarmStatusChannelId;
+            existing.StatementJson = statementJson;
+            row = existing;
+        }
+
+        await db.SaveChangesAsync(ct);
+        await PublishAlarmConfigChangedAsync(teamId);
+
+        return Ok(ToDto(row));
+    }
+
+    [HttpDelete]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteAlarmDefinitionAsync(int teamId, Guid alarmId, CancellationToken ct)
+    {
+        if (!await teamRoleContext.IsUserInTeamRoleAsync(teamId, "admin", ct)) { return Forbid(); }
+
+        await using var db = await dbFactory.CreateDbContextAsync(ct);
+        var rows = await db.AlarmDefinitions
+            .Where(a => a.Id == alarmId && a.TeamId == teamId)
+            .ExecuteDeleteAsync(ct);
+
+        if (rows == 0) return NotFound();
+
+        await PublishAlarmConfigChangedAsync(teamId);
+        return NoContent();
+    }
+
+    [HttpGet]
+    [ProducesResponseType<ActiveAlarmDto[]>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<ActiveAlarmDto[]>> LoadActiveAlarmsAsync(int teamId, bool includeAcknowledged, CancellationToken ct)
+    {
+        if (!await teamRoleContext.IsUserInTeamAsync(teamId, ct)) { return Forbid(); }
+        return await activeAlarmsReader.GetForTeamAsync(teamId, includeAcknowledged, ct);
+    }
+
+    [HttpPost]
+    [ProducesResponseType<ActiveAlarmDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ActiveAlarmDto>> AcknowledgeAlarmAsync(int teamId, string carNumber, Guid alarmId, CancellationToken ct)
+    {
+        // Race-day ack: any team member can ack; admin-only would create a bottleneck.
+        if (!await teamRoleContext.IsUserInTeamAsync(teamId, ct)) { return Forbid(); }
+
+        await using var db = await dbFactory.CreateDbContextAsync(ct);
+        var row = await db.ActiveAlarms.FirstOrDefaultAsync(
+            a => a.TeamId == teamId && a.CarNumber == carNumber && a.AlarmDefinitionId == alarmId, ct);
+        if (row is null) return NotFound();
+
+        // Idempotent: re-ack leaves the existing timestamp and skips the event row.
+        if (row.IsAcknowledged) { return await BuildActiveAlarmDtoAsync(db, row, ct); }
+
+        var now = timeProvider.GetUtcNow().UtcDateTime;
+        var carKey = string.Format(Consts.CAR_STREAM_FIELD, teamId, carNumber);
+
+        // ADR-0002 ordering — all writes complete before the response.
+        await alarmStateGateway.AcknowledgeAsync(carKey, alarmId, now, ct);
+
+        row.IsAcknowledged = true;
+        row.LastAcknowledgedTimestamp = now;
+
+        db.AlarmEvents.Add(new AlarmEventRow
+        {
+            TeamId = teamId,
+            CarNumber = carNumber,
+            AlarmDefinitionId = alarmId,
+            EventType = AlarmEventType.Acknowledged,
+            Timestamp = now,
+        });
+
+        await db.SaveChangesAsync(ct);
+
+        await PublishAlarmChangeAsync(new AlarmChangeNotification
+        {
+            TeamId = teamId,
+            CarNumber = carNumber,
+            AlarmDefinitionId = alarmId,
+            EventType = AlarmEventType.Acknowledged,
+            IsActive = row.IsActive,
+            IsAcknowledged = true,
+            Timestamp = now,
+        });
+
+        return await BuildActiveAlarmDtoAsync(db, row, ct);
+    }
+
+    private static AlarmDefinitionDto ToDto(AlarmDefinitionRow row)
+    {
+        StatementDefinition statement;
+        try
+        {
+            statement = string.IsNullOrWhiteSpace(row.StatementJson)
+                ? new StatementDefinition()
+                : JsonSerializer.Deserialize<StatementDefinition>(row.StatementJson) ?? new StatementDefinition();
+        }
+        catch (JsonException)
+        {
+            statement = new StatementDefinition();
+        }
+
+        return new AlarmDefinitionDto
+        {
+            Id = row.Id,
+            TeamId = row.TeamId,
+            CarNumber = row.CarNumber,
+            Name = row.Name,
+            Message = row.Message,
+            DisplayChannelSourceColorHex = row.DisplayChannelSourceColorHex,
+            TimeAfterAckToDisplaySecs = row.TimeAfterAckToDisplaySecs,
+            AlarmStatusChannelId = row.AlarmStatusChannelId,
+            Statement = statement,
+        };
+    }
+
+    private static async Task<ActiveAlarmDto> BuildActiveAlarmDtoAsync(RaceManagementContext db, ActiveAlarmRow row, CancellationToken ct)
+    {
+        var def = await db.AlarmDefinitions.AsNoTracking().FirstAsync(d => d.Id == row.AlarmDefinitionId, ct);
+        return new ActiveAlarmDto
+        {
+            TeamId = row.TeamId,
+            CarNumber = row.CarNumber,
+            AlarmDefinitionId = row.AlarmDefinitionId,
+            Name = def.Name,
+            Message = def.Message,
+            DisplayChannelSourceColorHex = def.DisplayChannelSourceColorHex,
+            TimeAfterAckToDisplaySecs = def.TimeAfterAckToDisplaySecs,
+            IsActive = row.IsActive,
+            IsAcknowledged = row.IsAcknowledged,
+            LastActivatedAt = row.LastActivatedAt,
+            LastAcknowledgedTimestamp = row.LastAcknowledgedTimestamp,
+        };
+    }
+
+    public static bool ValidateAlarmDefinition(AlarmDefinitionDto definition, ModelStateDictionary modelState)
+    {
+        if (string.IsNullOrWhiteSpace(definition.Name) || definition.Name.Length > 20)
+            modelState.AddModelError(nameof(definition.Name), "Name is required and must be 1-20 characters.");
+
+        if (!HexColorRegex().IsMatch(definition.DisplayChannelSourceColorHex))
+            modelState.AddModelError(nameof(definition.DisplayChannelSourceColorHex), "DisplayChannelSourceColorHex must be #RRGGBB.");
+
+        if (definition.TimeAfterAckToDisplaySecs < 0)
+            modelState.AddModelError(nameof(definition.TimeAfterAckToDisplaySecs), "TimeAfterAckToDisplaySecs cannot be negative.");
+
+        var statement = definition.Statement;
+        if (statement is null || statement.ActivateComparisons is null || statement.ActivateComparisons.Count == 0
+            || statement.ActivateComparisons.All(group => group is null || group.Count == 0))
+        {
+            modelState.AddModelError($"{nameof(definition.Statement)}.{nameof(StatementDefinition.ActivateComparisons)}",
+                "At least one ActivateComparison row with at least one comparison is required.");
+        }
+        else
+        {
+            foreach (var group in statement.ActivateComparisons)
+            {
+                if (group is null) continue;
+                foreach (var comparison in group)
+                {
+                    if (comparison.Id == Guid.Empty)
+                        modelState.AddModelError(nameof(ComparisonDefinition.Id), "Every comparison must have a non-empty Id.");
+                    if (comparison.ChannelId == Guid.Empty)
+                        modelState.AddModelError(nameof(ComparisonDefinition.ChannelId), "Every comparison must reference a ChannelId.");
+                }
+            }
+        }
+
+        return modelState.ErrorCount == 0;
+    }
+
+    private async Task PublishAlarmConfigChangedAsync(int teamId)
+    {
+        var sub = redis.GetSubscriber();
+        var channel = RedisChannel.Literal(string.Format(Consts.ALARM_CONFIG_CHANGED_CHANNEL, teamId));
+        await sub.PublishAsync(channel, RedisValue.EmptyString);
+    }
+
+    private async Task PublishAlarmChangeAsync(AlarmChangeNotification notification)
+    {
+        var sub = redis.GetSubscriber();
+        var channel = RedisChannel.Literal(string.Format(Consts.ALARM_CHANGES_CHANNEL, notification.TeamId));
+        await sub.PublishAsync(channel, MessagePackSerializer.Serialize(notification));
+    }
+
+    [GeneratedRegex(@"^#[0-9A-Fa-f]{6}$")]
+    private static partial Regex HexColorRegex();
 
     #endregion
 }

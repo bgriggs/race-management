@@ -35,7 +35,7 @@ public class AlarmEvaluationTests
     }
 
     private AlarmEvaluation CreateEvaluation() =>
-        new(alarmRepo, channelRepo, channelDefRepo, timeProvider);
+        new(alarmRepo, channelRepo, channelDefRepo, timeProvider: timeProvider);
 
     private static Guid StatementId(int id) => new($"00000000-0000-0000-0001-{id:000000000000}");
     private static Guid ComparisonId(int id) => new($"00000000-0000-0000-0000-{id:000000000000}");

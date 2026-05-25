@@ -1,3 +1,4 @@
+using Cloud.Shared.Alarms;
 using Cloud.Shared.Auth;
 using Cloud.Shared.Extensions;
 using Cloud.Shared.FuelAnalysis;
@@ -65,6 +66,9 @@ public class Program
 
         builder.Services.AddSingleton<IConnectedTeamsTracker, ConnectedTeamsTracker>();
         builder.Services.AddSingleton<ITeamChannelSnapshotService, TeamChannelSnapshotService>();
+        builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
+        builder.Services.AddSingleton<IRedisAlarmStateGateway, RedisAlarmStateGateway>();
+        builder.Services.AddSingleton<IActiveAlarmsReader, ActiveAlarmsReader>();
         builder.Services.AddHostedService<ChannelPropagatorService>();
 
         // Fuel Analysis — needed by FuelController to read snapshots from Redis and publish

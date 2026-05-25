@@ -13,19 +13,32 @@ public class AlarmEvaluation
     private readonly LogicEvaluation logicEvaluation;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="AlarmEvaluation"/> class.
+    /// Initializes a new instance of the <see cref="AlarmEvaluation"/> class. Optional
+    /// state repositories are forwarded to the underlying <see cref="LogicEvaluation"/>;
+    /// when omitted, in-memory defaults are used (suitable for tests and in-car single-
+    /// process evaluation). Cloud callers must pass shared (Redis-backed) repositories
+    /// so any replica can resume any car's evaluator state.
     /// </summary>
     public AlarmEvaluation(
         IAlarmRepository alarmRepository,
         IChannelRepository channelRepository,
         IChannelDefinitionRepository channelDefinitionRepository,
+        IStatementStateRepository? statementStateRepository = null,
+        IComparisonDurationRepository? comparisonDurationRepository = null,
+        IPreviousChannelValueRepository? previousChannelValueRepository = null,
         TimeProvider? timeProvider = null)
     {
         this.alarmRepository = alarmRepository;
         this.channelRepository = channelRepository;
         this.timeProvider = timeProvider ?? TimeProvider.System;
 
-        logicEvaluation = new LogicEvaluation(channelRepository, channelDefinitionRepository, timeProvider: this.timeProvider);
+        logicEvaluation = new LogicEvaluation(
+            channelRepository,
+            channelDefinitionRepository,
+            statementStateRepository,
+            comparisonDurationRepository,
+            previousChannelValueRepository,
+            this.timeProvider);
     }
 
     /// <summary>

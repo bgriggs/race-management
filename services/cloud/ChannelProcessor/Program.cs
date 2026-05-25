@@ -1,3 +1,6 @@
+using ChannelProcessor.Alarms;
+using ChannelProcessor.Alarms.Config;
+using ChannelProcessor.Alarms.Persistence;
 using ChannelProcessor.FuelAnalysis;
 using ChannelProcessor.FuelAnalysis.Calibration;
 using ChannelProcessor.FuelAnalysis.Config;
@@ -10,9 +13,11 @@ using ChannelProcessor.FuelAnalysis.Snapshot;
 using ChannelProcessor.FuelAnalysis.State;
 using ChannelProcessor.FuelAnalysis.Windows;
 using ChannelProcessor.Telemetry;
+using Cloud.Shared.Alarms;
 using Cloud.Shared.Extensions;
 using Cloud.Shared.FuelAnalysis;
 using Cloud.Shared.Streaming;
+using Microsoft.Extensions.Caching.Hybrid;
 using NLog.Extensions.Logging;
 
 namespace ChannelProcessor;
@@ -32,6 +37,16 @@ public class Program
 
         builder.Services.AddPostgres(builder.Configuration);
 
+        builder.Services.AddSingleton(TimeProvider.System);
+#pragma warning disable EXTEXP0018 // HybridCache is still tagged experimental in 10.0
+        builder.Services.AddHybridCache(o => o.DefaultEntryOptions = new HybridCacheEntryOptions { Expiration = TimeSpan.FromMinutes(5), LocalCacheExpiration = TimeSpan.FromMinutes(5) });
+#pragma warning restore EXTEXP0018
+
+        // Shared streaming primitives used by both Fuel Analysis and Alarm Processor.
+        builder.Services.AddSingleton<ICarChannelDefinitionResolver, CarChannelDefinitionResolver>();
+        builder.Services.AddSingleton<ICarChannelPublisher, CarChannelPublisher>();
+        builder.Services.AddSingleton<ITeamChannelPublisher, TeamChannelPublisher>();
+
         builder.Services.AddSingleton<ICarChannelStateRepository, CarChannelStateRepository>();
         builder.Services.AddHostedService<TelemetryStreamConsumer>();
 
@@ -40,10 +55,6 @@ public class Program
 
         // Fuel Analysis — the reconciler joins the existing two consumers as a fourth
         // hosted worker, using its own consumer group on the car stream.
-        builder.Services.AddSingleton(TimeProvider.System);
-        builder.Services.AddHybridCache();
-        builder.Services.AddSingleton<ICarChannelDefinitionResolver, CarChannelDefinitionResolver>();
-        builder.Services.AddSingleton<ICarChannelPublisher, CarChannelPublisher>();
         builder.Services.AddSingleton<IRaceSessionGate, RaceSessionGate>();
         builder.Services.AddSingleton<ICarFuelStateRepository, CarFuelStateRepository>();
         builder.Services.AddSingleton<ICarFuelConfigReader, CarFuelConfigReader>();
@@ -72,6 +83,13 @@ public class Program
         builder.Services.AddSingleton<FuelSnapshotPublisher>();
         builder.Services.AddSingleton<SnapshotEmitter>();
         builder.Services.AddHostedService<FuelReconcilerWorker>();
+
+        // Alarm Processor — see plan.md "Alarm Processor (ChannelProcessor / Alarms)".
+        builder.Services.AddSingleton<IRedisAlarmStateGateway, RedisAlarmStateGateway>();
+        builder.Services.AddSingleton<IAlarmDefinitionRepository, AlarmDefinitionRepository>();
+        builder.Services.AddSingleton<ActiveAlarmStore>();
+        builder.Services.AddHostedService<AlarmProcessorWorker>();
+        builder.Services.AddHostedService<AlarmConfigChangeListener>();
 
         builder.Services.AddControllers();
         // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi

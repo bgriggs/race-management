@@ -1,4 +1,7 @@
+using Channels.Logic;
+using Cloud.Shared.Alarms;
 using Cloud.Shared.Database.Models;
+using Cloud.Shared.Database.Models.Alarms;
 using Cloud.Shared.Database.Models.FuelAnalysis;
 using Cloud.Shared.FuelAnalysis;
 using Cloud.Shared.Telemetry;
@@ -44,6 +47,12 @@ public class ModelGenerationSpec : GenerationSpec
         typeof(EnterVolumeRequest),
         typeof(RefuelEventPublishResult),
         typeof(CalibrationOverrideRequest),
+        // Alarm Processor
+        typeof(AlarmDefinitionDto),
+        typeof(ActiveAlarmDto),
+        typeof(AlarmChangeNotification),
+        typeof(StatementDefinition),
+        typeof(ComparisonDefinition),
     ];
 
     private static readonly Type[] EnumTypes =
@@ -53,6 +62,8 @@ public class ModelGenerationSpec : GenerationSpec
         typeof(EcuResetState),
         typeof(RefuelAnchor),
         typeof(CalibrationFactorSource),
+        typeof(AlarmEventType),
+        typeof(LogicType),
     ];
 
     private static readonly Type[] MessagePackTypes =
@@ -60,6 +71,7 @@ public class ModelGenerationSpec : GenerationSpec
         typeof(CarChannelSnapshot),
         typeof(ChannelValueSnapshot),
         typeof(ChannelChangeNotification),
+        typeof(AlarmChangeNotification),
     ];
 
     public override void OnBeforeGeneration(OnBeforeGenerationArgs args)

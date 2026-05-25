@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Cloud.Shared.Alarms;
 using Cloud.Shared.Auth;
 using Cloud.Shared.Telemetry;
 using Microsoft.AspNetCore.Authorization;
@@ -12,7 +13,8 @@ public class WebHub(
     ILogger<WebHub> logger,
     ITeamRoleContext teamRoleContext,
     IConnectedTeamsTracker teamsTracker,
-    ITeamChannelSnapshotService snapshotService) : Hub<IWebHubClient>
+    ITeamChannelSnapshotService snapshotService,
+    IActiveAlarmsReader activeAlarmsReader) : Hub<IWebHubClient>
 {
     public const string TeamGroupPrefix = "team-";
     private const string TeamIdItemKey = "teamId";
@@ -83,6 +85,9 @@ public class WebHub(
         {
             var snapshot = await snapshotService.GetTeamSnapshotAsync(teamId, Context.ConnectionAborted);
             await Clients.Caller.ChannelSnapshot(snapshot);
+
+            var alarms = await activeAlarmsReader.GetForTeamAsync(teamId, includeAcknowledged: false, Context.ConnectionAborted);
+            await Clients.Caller.AlarmSnapshot(alarms);
         }
         catch (OperationCanceledException) { /* client disconnected before we could send */ }
         catch (Exception ex)
