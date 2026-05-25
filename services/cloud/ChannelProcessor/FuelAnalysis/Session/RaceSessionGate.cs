@@ -9,9 +9,6 @@ public sealed class RaceSessionGate(
     IDbContextFactory<RaceManagementContext> dbFactory,
     TimeProvider timeProvider) : IRaceSessionGate
 {
-    // Race.Duration is in hours (see ui/race-management-cloud/src/app/settings/races).
-    private const double HoursToTicks = TimeSpan.TicksPerHour;
-
     // Short TTL: races change start/end on human time-scales but the active-race set
     // can flip exactly at the second boundary, so 5 s keeps the lookup off the hot path
     // without lagging real transitions noticeably.
@@ -30,17 +27,19 @@ public sealed class RaceSessionGate(
             {
                 var now = state.time.GetUtcNow().UtcDateTime;
                 await using var db = await state.factory.CreateDbContextAsync(innerCt);
-                // Single round-trip; we expect 0 or 1 active race per team but tolerate >1
-                // by taking the most recently started.
-                var active = await db.Races
+                // EF Core can't translate DateTime arithmetic (AddTicks/AddHours) to SQL,
+                // so fetch the most-recently-started race that has begun and check the end
+                // boundary in memory. At most one row crosses the wire.
+                var candidate = await db.Races
                     .AsNoTracking()
-                    .Where(r => r.TeamId == state.teamId
-                                && r.Start <= now
-                                && now < r.Start.AddTicks((long)(r.Duration * HoursToTicks)))
+                    .Where(r => r.TeamId == state.teamId && r.Start <= now)
                     .OrderByDescending(r => r.Start)
-                    .Select(r => (int?)r.Id)
+                    .Select(r => new { r.Id, r.Start, r.Duration })
                     .FirstOrDefaultAsync(innerCt);
-                return active;
+
+                if (candidate is null) return (int?)null;
+                var end = candidate.Start.AddHours(candidate.Duration);
+                return now < end ? candidate.Id : null;
             },
             CacheOptions,
             cancellationToken: ct);

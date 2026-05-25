@@ -76,12 +76,15 @@ public class FuelController(
         var atUtc = (request.AtUtc ?? DateTime.UtcNow).ToUniversalTime();
 
         // Validate there's a race covering this timestamp so the publish isn't dropped silently.
+        // EF Core can't translate DateTime arithmetic to SQL, so fetch the most-recently-started
+        // race that started at-or-before atUtc and check the end boundary in memory.
         await using var db = await dbFactory.CreateDbContextAsync(ct);
-        var raceExists = await db.Races.AsNoTracking().AnyAsync(
-            r => r.TeamId == teamId
-                 && r.Start <= atUtc
-                 && atUtc < r.Start.AddTicks((long)(r.Duration * TimeSpan.TicksPerHour)),
-            ct);
+        var candidate = await db.Races.AsNoTracking()
+            .Where(r => r.TeamId == teamId && r.Start <= atUtc)
+            .OrderByDescending(r => r.Start)
+            .Select(r => new { r.Start, r.Duration })
+            .FirstOrDefaultAsync(ct);
+        var raceExists = candidate is not null && atUtc < candidate.Start.AddHours(candidate.Duration);
         if (!raceExists)
         {
             ModelState.AddModelError(nameof(request.AtUtc), "No active race for the team covers this timestamp.");
