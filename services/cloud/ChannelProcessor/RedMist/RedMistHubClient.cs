@@ -2,7 +2,6 @@ using Cloud.Shared.RedMist;
 using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.Http.Connections.Client;
 using Microsoft.AspNetCore.SignalR.Client;
-using Microsoft.Extensions.Logging;
 using RedMist.TimingCommon.Models;
 
 namespace ChannelProcessor.RedMist;
@@ -10,7 +9,7 @@ namespace ChannelProcessor.RedMist;
 /// <summary>
 /// Holds a SignalR connection to RedMist's <c>StatusHub</c> for one (team, event) and
 /// surfaces inbound messages as events. Mirrors the protocol the sample
-/// <c>StatusSubscriptionClient</c> uses but is parameterised per-team so multiple teams
+/// <c>StatusSubscriptionClient</c> uses but is parametrized per-team so multiple teams
 /// can share one process. Mirrors the sample's transport choices: WebSockets only with
 /// <c>SkipNegotiation = true</c> so a reconnecting client doesn't get caught by a
 /// negotiate/upgrade landing on different replicas of RedMist's hub.
@@ -115,7 +114,7 @@ public sealed class RedMistHubClient : IAsyncDisposable
 
         await hub.StartAsync(ct);
         StateChanged?.Invoke(HubConnectionState.Connected, null);
-        await hub.InvokeAsync("SubscribeToEventV2", eventId, (string?)null, ct);
+        await hub.InvokeAsync("SubscribeToEventV2", eventId, null, ct);
         logger.LogInformation("Subscribed to RedMist event {EventId} for team {TeamId}", eventId, teamId);
     }
 

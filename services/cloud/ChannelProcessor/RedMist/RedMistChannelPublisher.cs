@@ -1,8 +1,7 @@
-using System.Globalization;
 using Channels;
 using Cloud.Shared.Streaming;
-using Microsoft.Extensions.Logging;
 using RedMist.TimingCommon.Models;
+using System.Globalization;
 
 namespace ChannelProcessor.RedMist;
 
