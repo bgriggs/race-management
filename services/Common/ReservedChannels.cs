@@ -63,9 +63,9 @@ public sealed class ReservedChannels
         new() { Id = Guid.Parse("c354b4ae-64d9-47ee-9f02-ba9c44cf6b74"), Name = "LastLapTime", IsReserved = true, Abbreviation = "LLT", DataType = "String", Category = "Lap" },
         new() { Id = Guid.Parse("42c9312d-8e13-4422-af9e-bbc34a12bade"), Name = "BestLapTime", IsReserved = true, Abbreviation = "BLT", DataType = "String", Category = "Lap" },
         new() { Id = Guid.Parse("6559b6e7-d289-4d46-b4ff-70ddeb930318"), Name = "SessionTime", IsReserved = true, Abbreviation = "ST", DataType = "String", Category = "Lap" },
-        new() { Id = Guid.Parse("4e70c2d0-d89c-4896-af7c-a286ceda9565"), Name = "Position", IsReserved = true, Abbreviation = "POS", DataType = "Unitless", Category = "Lap" },
-        new() { Id = Guid.Parse("7e8153fd-7280-4bcf-a11b-2227b70daddb"), Name = "ClassPosition", IsReserved = true, Abbreviation = "CPOS", DataType = "Unitless", Category = "Lap" },
-        new() { Id = Guid.Parse("da12563a-1167-4899-9956-700b0b693005"), Name = "InPit", IsReserved = true, Abbreviation = "INPIT", DataType = "Unitless", Category = "Lap" },
+        new() { Id = Guid.Parse("4e70c2d0-d89c-4896-af7c-a286ceda9565"), Name = "Position", IsReserved = true, Abbreviation = "POS", DataType = "Unitless", Category = "Lap", Distribution = ChannelDistribution.CloudLocal, ManagedByFeature = "fuel-analysis" },
+        new() { Id = Guid.Parse("7e8153fd-7280-4bcf-a11b-2227b70daddb"), Name = "ClassPosition", IsReserved = true, Abbreviation = "CPOS", DataType = "Unitless", Category = "Lap", Distribution = ChannelDistribution.CloudLocal, ManagedByFeature = "fuel-analysis" },
+        new() { Id = Guid.Parse("da12563a-1167-4899-9956-700b0b693005"), Name = "InPit", IsReserved = true, Abbreviation = "INPIT", DataType = "Unitless", Category = "Lap", Distribution = ChannelDistribution.CloudLocal, ManagedByFeature = "fuel-analysis" },
         new() { Id = Guid.Parse("9c5cd301-749e-4bc9-830b-e32baaef2cb0"), Name = "Latitude", IsReserved = true, Abbreviation = "LAT", DataType = "Unitless", Category = "Lap" },
         new() { Id = Guid.Parse("90e054c7-6782-4423-a6eb-7b1ccb9c22a5"), Name = "Longitude", IsReserved = true, Abbreviation = "LON", DataType = "Unitless", Category = "Lap" },
 
@@ -102,6 +102,13 @@ public sealed class ReservedChannels
         new() { Id = Guid.Parse("6d3a181c-2e9c-4a6f-8d7b-1a3b5e9f2d0a"), Name = "FuelRangeConfidence", IsReserved = true, Abbreviation = "FLRCNF", DataType = "Ratio", BaseUnitType = "Percent", OutputUnitType = "Percent", OutputDecimalPlaces = 1, Category = "Fuel", LowRange = 0, HighRange = 100, Distribution = ChannelDistribution.CloudLocal, ManagedByFeature = "fuel-analysis", ProducedByFeature = "fuel-analysis" },
         new() { Id = Guid.Parse("7e4b292d-3fad-4b7a-9e8c-2b4c6f1a3e0b"), Name = "FuelConsumptionGalPerLap", IsReserved = true, Abbreviation = "FLCPL", DataType = "Volume", BaseUnitType = "UsGallon", OutputUnitType = "UsGallon", OutputDecimalPlaces = 3, Category = "Fuel", LowRange = 0, HighRange = 10, Distribution = ChannelDistribution.CloudLocal, ManagedByFeature = "fuel-analysis", ProducedByFeature = "fuel-analysis" },
         new() { Id = Guid.Parse("8f5c3a3e-4abe-4c8b-1f9d-3c5d7a2b4f0c"), Name = "FuelWindowElapsedMinutes", IsReserved = true, Abbreviation = "FLWELM", DataType = "Duration", BaseUnitType = "Minute", OutputUnitType = "Minute", OutputDecimalPlaces = 1, Category = "Fuel", LowRange = 0, HighRange = 600, Distribution = ChannelDistribution.CloudLocal, ManagedByFeature = "fuel-analysis", ProducedByFeature = "fuel-analysis" },
+
+        // Stint state — derived by the StintTracker hosted worker from InPit channel transitions.
+        // Decoupled from RedMist: StintTracker watches the InPit channel like any downstream consumer
+        // and does not call RedMist directly. See ADR-0008.
+        // Emitted every 60s and on every InPit edge; CurrentStintMinutes emits 0 while in pit.
+        new() { Id = Guid.Parse("9a6b8f83-5fc4-4bde-6e5c-8b1c3d5f7e11"), Name = "CurrentStintMinutes", IsReserved = true, Abbreviation = "STMIN", DataType = "Duration", BaseUnitType = "Minute", OutputUnitType = "Minute", OutputDecimalPlaces = 1, Category = "Race", LowRange = 0, HighRange = 600, Distribution = ChannelDistribution.CloudLocal, ManagedByFeature = "fuel-analysis", ProducedByFeature = "fuel-analysis" },
+        new() { Id = Guid.Parse("ab7c9094-60d5-4cef-7f6d-9c2d4e6a8f12"), Name = "StintCount", IsReserved = true, Abbreviation = "STCNT", DataType = "Unitless", Category = "Race", LowRange = 0, HighRange = 100, Distribution = ChannelDistribution.CloudLocal, ManagedByFeature = "fuel-analysis", ProducedByFeature = "fuel-analysis" },
 
         // Throttle Consumption — in-car throttle proxy module outputs.
         // Distribution is locked: the cloud-side ThrottleProxyIntegralEstimator and ThrottleProxyGridEstimator

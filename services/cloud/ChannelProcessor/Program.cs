@@ -12,10 +12,13 @@ using ChannelProcessor.FuelAnalysis.Session;
 using ChannelProcessor.FuelAnalysis.Snapshot;
 using ChannelProcessor.FuelAnalysis.State;
 using ChannelProcessor.FuelAnalysis.Windows;
+using ChannelProcessor.RedMist;
+using ChannelProcessor.StintTracker;
 using ChannelProcessor.Telemetry;
 using Cloud.Shared.Alarms;
 using Cloud.Shared.Extensions;
 using Cloud.Shared.FuelAnalysis;
+using Cloud.Shared.RedMist;
 using Cloud.Shared.Streaming;
 using Microsoft.Extensions.Caching.Hybrid;
 using NLog.Extensions.Logging;
@@ -90,6 +93,19 @@ public class Program
         builder.Services.AddSingleton<ActiveAlarmStore>();
         builder.Services.AddHostedService<AlarmProcessorWorker>();
         builder.Services.AddHostedService<AlarmConfigChangeListener>();
+
+        // RedMist integration — fourth hosted worker (ADR-0008). Per-team SETNX lease
+        // coordinates the single hub subscription per team; initial sync via REST.
+        builder.Services.AddRedMistClient(builder.Configuration);
+        builder.Services.AddSingleton<RedMistLeaseManager>();
+        builder.Services.AddSingleton<RedMistActivationEvaluator>();
+        builder.Services.AddSingleton<RedMistStatusWriter>();
+        builder.Services.AddSingleton<RedMistChannelPublisher>();
+        builder.Services.AddHostedService<RedMistConsumerWorker>();
+
+        // StintTracker — derives CurrentStintMinutes / StintCount from InPit transitions.
+        // Decoupled from RedMist by design: it only consumes the channel pipeline (ADR-0008).
+        builder.Services.AddHostedService<StintTrackerWorker>();
 
         builder.Services.AddControllers();
         // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi

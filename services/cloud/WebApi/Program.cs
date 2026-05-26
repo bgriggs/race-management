@@ -3,6 +3,7 @@ using Cloud.Shared.Auth;
 using Cloud.Shared.Extensions;
 using Cloud.Shared.FuelAnalysis;
 using Cloud.Shared.Hubs;
+using Cloud.Shared.RedMist;
 using Cloud.Shared.Streaming;
 using Cloud.Shared.Telemetry;
 using MessagePack;
@@ -76,6 +77,9 @@ public class Program
         builder.Services.AddSingleton<IFuelSnapshotStore, FuelSnapshotStore>();
         builder.Services.AddSingleton<ICarChannelDefinitionResolver, CarChannelDefinitionResolver>();
         builder.Services.AddSingleton<ICarChannelPublisher, CarChannelPublisher>();
+
+        // RedMist integration — REST proxy + connection-status read endpoint (ADR-0008).
+        builder.Services.AddRedMistClient(builder.Configuration);
 
         builder.Services.AddApiVersioning(options =>
         {

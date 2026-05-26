@@ -131,6 +131,11 @@ public sealed class ReservedChannelsTests
         var expected = new[]
         {
             ("RaceFlagState",                  ChannelDistribution.CloudToCar,  ChannelScope.PerTeam),
+            ("Position",                       ChannelDistribution.CloudLocal,  ChannelScope.PerCar),
+            ("ClassPosition",                  ChannelDistribution.CloudLocal,  ChannelScope.PerCar),
+            ("InPit",                          ChannelDistribution.CloudLocal,  ChannelScope.PerCar),
+            ("CurrentStintMinutes",            ChannelDistribution.CloudLocal,  ChannelScope.PerCar),
+            ("StintCount",                     ChannelDistribution.CloudLocal,  ChannelScope.PerCar),
             ("ManualFuelAddedGallons",         ChannelDistribution.CloudLocal,  ChannelScope.PerCar),
             ("FuelConsumption",                ChannelDistribution.CloudLocal,  ChannelScope.PerCar),
             ("FuelRangeMinutes",               ChannelDistribution.CloudLocal,  ChannelScope.PerCar),
@@ -224,6 +229,9 @@ public sealed class ReservedChannelsTests
             { "FuelRangeConfidence",        "fuel-analysis" },
             { "FuelConsumptionGalPerLap",   "fuel-analysis" },
             { "FuelWindowElapsedMinutes",   "fuel-analysis" },
+            // StintTracker outputs (decoupled from RedMist — derived from the InPit channel).
+            { "CurrentStintMinutes",        "fuel-analysis" },
+            { "StintCount",                 "fuel-analysis" },
 
             // throttle-consumption — in-car ThrottleProxyConsumer outputs.
             { "ThrottleProxyFuelUsed",      "throttle-consumption" },
