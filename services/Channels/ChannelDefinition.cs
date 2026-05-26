@@ -68,6 +68,14 @@ public class ChannelDefinition
     public ChannelDistribution Distribution { get; set; } = ChannelDistribution.CarToCloud;
 
     /// <summary>
+    /// When true, <see cref="Distribution"/> is pinned to the template value and cannot be
+    /// changed in the Edit Channel UI or via the configuration save endpoint. Used for
+    /// reserved channels whose owning feature genuinely requires a specific routing
+    /// (e.g., the ThrottleProxy* outputs that the cloud reconciler estimators depend on).
+    /// </summary>
+    public bool IsDistributionLocked { get; set; }
+
+    /// <summary>
     /// What entity the channel's values are bound to. Defaults to <see cref="ChannelScope.PerCar"/>.
     /// </summary>
     public ChannelScope Scope { get; set; } = ChannelScope.PerCar;

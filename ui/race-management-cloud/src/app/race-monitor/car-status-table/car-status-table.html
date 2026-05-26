@@ -79,10 +79,22 @@
     [style.top.px]="menu.y"
     role="menu"
   >
+    <button type="button" role="menuitem" class="context-menu-item" (click)="openRenameDialog(menu.column)">
+      Rename column…
+    </button>
     <button type="button" role="menuitem" class="context-menu-item" (click)="removeColumn(menu.column)">
       Remove column
     </button>
   </div>
+}
+
+@if (renameTarget(); as target) {
+  <app-rename-column-dialog
+    [defaultName]="defaultColumnName(target)"
+    [initialValue]="target.nameOverride"
+    (confirmed)="confirmRename($event)"
+    (closed)="closeRenameDialog()"
+  />
 }
 
 @if (columnConfigOpen() && teamSelection.selectedTeamId() !== null) {

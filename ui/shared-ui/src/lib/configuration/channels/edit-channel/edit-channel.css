@@ -25,6 +25,21 @@
 	gap: 0.4rem;
 }
 
+.origin-radio-group {
+	display: flex;
+	gap: 0.9rem;
+	margin-bottom: 0.3rem;
+}
+
+.origin-radio {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	font-weight: 400;
+	font-size: 0.85rem;
+	color: #2f3d2c;
+}
+
 .field-grid {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -54,7 +69,7 @@
 
 
 #channel-abbreviation {
-	width: 65px;
+	width: 80px;
 }
 
 #channel-base-decimals,

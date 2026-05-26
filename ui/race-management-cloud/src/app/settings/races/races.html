@@ -17,6 +17,7 @@
           <th scope="col" class="row-action-column"><span class="sr-only">Delete</span></th>
           <th scope="col">Name</th>
           <th scope="col">Start</th>
+          <th scope="col">Time Zone</th>
           <th scope="col">Duration (h)</th>
           <th scope="col">RedMist Event</th>
           <th scope="col">RedMist Org</th>
@@ -47,6 +48,7 @@
             </td>
             <td>{{ race.name }}</td>
             <td>{{ formatStart(race.start) }}</td>
+            <td>{{ race.timeZone }}</td>
             <td>{{ race.duration }}</td>
             <td>{{ race.redMistEventId ?? '—' }}</td>
             <td>{{ race.redMistOrganizationId ?? '—' }}</td>
@@ -91,6 +93,23 @@
           (input)="onStartInput($any($event.target).value)"
           [disabled]="saving()"
         />
+      </div>
+
+      <div class="field">
+        <label for="race-time-zone" class="field-label">
+          Time Zone <span class="required-mark">*</span>
+        </label>
+        <select
+          id="race-time-zone"
+          class="field-input"
+          [value]="draftTimeZone()"
+          (change)="onTimeZoneInput($any($event.target).value)"
+          [disabled]="saving()"
+        >
+          @for (tz of timeZoneOptions; track tz.id) {
+            <option [value]="tz.id">{{ tz.label }}</option>
+          }
+        </select>
       </div>
 
       <div class="field">

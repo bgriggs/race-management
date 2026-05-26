@@ -8,6 +8,7 @@ import { ConfigurationClient } from '../../clients/configuration-client';
 import { TeamSelectionService } from '../../teams/team-selection.service';
 import { TelemetryStore } from '../../telemetry/telemetry-store';
 import { ColumnConfigDialog } from './column-config-dialog';
+import { RenameColumnDialog } from './rename-column-dialog';
 
 interface ConfigEntry {
   definitions: ChannelDefinition[];
@@ -16,7 +17,7 @@ interface ConfigEntry {
 
 @Component({
   selector: 'app-car-status-table',
-  imports: [ColumnConfigDialog],
+  imports: [ColumnConfigDialog, RenameColumnDialog],
   templateUrl: './car-status-table.html',
   styleUrl: './car-status-table.css',
 })
@@ -40,6 +41,7 @@ export class CarStatusTable {
     x: number;
     y: number;
   } | null>(null);
+  protected readonly renameTarget = signal<ChannelStatusTableColumnConfiguration | null>(null);
 
   private readonly configCache = signal<ReadonlyMap<string, ConfigEntry>>(new Map());
   private readonly extraChannelDefs = signal<ReadonlyMap<string, ChannelDefinition>>(new Map());
@@ -201,6 +203,32 @@ export class CarStatusTable {
     void this.persistColumns();
   }
 
+  protected openRenameDialog(col: ChannelStatusTableColumnConfiguration): void {
+    this.contextMenu.set(null);
+    this.renameTarget.set(col);
+  }
+
+  protected closeRenameDialog(): void {
+    this.renameTarget.set(null);
+  }
+
+  protected confirmRename(nameOverride: string | null): void {
+    const target = this.renameTarget();
+    this.renameTarget.set(null);
+    if (!target) return;
+    this.columns.update(cols =>
+      cols.map(c =>
+        c.channelDefinitionId === target.channelDefinitionId ? { ...c, nameOverride } : c,
+      ),
+    );
+    void this.persistColumns();
+  }
+
+  protected defaultColumnName(column: ChannelStatusTableColumnConfiguration): string {
+    const def = this.findChannelDefinition(column.channelDefinitionId);
+    return def?.name ?? column.channelDefinitionId.slice(0, 8);
+  }
+
   private clearDragState(): void {
     this.draggingColumnId.set(null);
     this.dropTargetId.set(null);
@@ -241,7 +269,14 @@ export class CarStatusTable {
     const sessionIndex = entry.indexByDefinitionId.get(column.channelDefinitionId);
     if (sessionIndex === undefined) return '—'; // channel not in this car's config
     const value = this.channelsAsRecord(snapshot.channels)[sessionIndex];
-    return value?.value ?? '—';
+    if (value?.value == null) return '—';
+    const def = entry.definitions[sessionIndex] ?? this.findChannelDefinition(column.channelDefinitionId);
+    const decimals = def?.outputDecimalPlaces;
+    if (decimals != null && decimals >= 0) {
+      const num = Number(value.value);
+      if (Number.isFinite(num)) return num.toFixed(decimals);
+    }
+    return value.value;
   }
 
   private async load(teamId: number, userId: string): Promise<void> {

@@ -49,18 +49,10 @@
 			@for (channel of channels(); track channel.id) {
 			<tr [class.row-managed]="isManaged(channel)">
 				<td class="row-action-cell">
-					@if (isManaged(channel)) {
-						<span class="row-locked-indicator"
-							[matTooltip]="getManagedTooltip(channel)"
-							aria-label="Locked: feature-managed channel">
-							<mat-icon aria-hidden="true">lock</mat-icon>
-						</span>
-					} @else {
-						<button type="button" class="row-action-button" (click)="startEdit(channel.id)"
-							aria-label="Edit channel">
-							<mat-icon aria-hidden="true">edit</mat-icon>
-						</button>
-					}
+					<button type="button" class="row-action-button" (click)="startEdit(channel.id)"
+						aria-label="Edit channel">
+						<mat-icon aria-hidden="true">edit</mat-icon>
+					</button>
 				</td>
 				<td>
 					<span class="channel-name-cell">

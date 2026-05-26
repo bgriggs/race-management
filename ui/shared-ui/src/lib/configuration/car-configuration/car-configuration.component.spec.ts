@@ -93,6 +93,7 @@ function buildReservedChannel(
     enumConversion: null,
     timeoutMs: 3000,
     distribution,
+    isDistributionLocked: false,
     scope: ChannelScope.PerCar,
     managedByFeature
   };

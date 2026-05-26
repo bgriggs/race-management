@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Channels;
 using Channels.Logic;
 using Cloud.Shared;
 using Cloud.Shared.Alarms;
@@ -87,9 +88,22 @@ public partial class ConfigurationController(
 
         var id = configuration.ConfigurationId;
         var now = DateTime.UtcNow;
-        var json = JsonSerializer.Serialize(configuration);
 
         var existing = await db.CarConfigurations.FirstOrDefaultAsync(c => c.Id == id && c.TeamId == teamId, ct);
+        var prior = existing is null ? null : Deserialize(existing);
+
+        var routingErrors = ValidateChannelRouting(configuration, prior);
+        if (routingErrors.Count > 0)
+        {
+            foreach (var err in routingErrors)
+            {
+                ModelState.AddModelError(nameof(configuration.ChannelDefinitions), err);
+            }
+            return ValidationProblem(ModelState);
+        }
+
+        var json = JsonSerializer.Serialize(configuration);
+
         if (existing is null)
         {
             db.CarConfigurations.Add(new CarConfigurationTable
@@ -371,6 +385,44 @@ public partial class ConfigurationController(
         config.ConfigurationId = row.Id;
         return config;
     }
+
+    /// <summary>
+    /// Enforces channel routing invariants on save (ADR-0007 amendment 2026-05-25):
+    ///   1. Reserved channels whose template has IsDistributionLocked=true must keep the template's Distribution.
+    ///   2. A channel's Distribution origin family (Car* vs Cloud*) is fixed at creation and cannot change on edit.
+    /// The UI also enforces both, but a non-UI client (or a buggy one) could otherwise write invalid state.
+    /// </summary>
+    public static List<string> ValidateChannelRouting(CarConfiguration incoming, CarConfiguration? prior)
+    {
+        var errors = new List<string>();
+        var priorById = prior?.ChannelDefinitions.ToDictionary(c => c.Id) ?? [];
+        var reservedTemplatesById = ReservedChannels.Channels.ToDictionary(c => c.Id);
+
+        foreach (var ch in incoming.ChannelDefinitions)
+        {
+            if (reservedTemplatesById.TryGetValue(ch.Id, out var template)
+                && template.IsDistributionLocked
+                && ch.Distribution != template.Distribution)
+            {
+                errors.Add(
+                    $"Channel '{ch.Name}' ({ch.Id}): Distribution is locked to {template.Distribution} " +
+                    $"by feature '{template.ManagedByFeature}'; cannot be saved as {ch.Distribution}.");
+            }
+
+            if (priorById.TryGetValue(ch.Id, out var prev)
+                && OriginOf(ch.Distribution) != OriginOf(prev.Distribution))
+            {
+                errors.Add(
+                    $"Channel '{ch.Name}' ({ch.Id}): Origin is fixed at creation; cannot change from " +
+                    $"{prev.Distribution} ({OriginOf(prev.Distribution)}-origin) to {ch.Distribution} ({OriginOf(ch.Distribution)}-origin).");
+            }
+        }
+
+        return errors;
+    }
+
+    private static string OriginOf(ChannelDistribution d) =>
+        d == ChannelDistribution.CarLocal || d == ChannelDistribution.CarToCloud ? "Car" : "Cloud";
 
     #endregion
 

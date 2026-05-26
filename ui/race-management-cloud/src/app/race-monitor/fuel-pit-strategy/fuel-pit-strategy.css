@@ -8,6 +8,7 @@
   padding: 8px 12px;
   gap: 8px;
   overflow: hidden;
+  color: var(--text-primary, #e5e7eb);
 }
 
 .header {

@@ -1,3 +1,11 @@
+:host {
+  position: sticky;
+  top: var(--top-nav-height);
+  z-index: 5;
+  display: block;
+  margin: 0 -8px;
+}
+
 .race-header {
   display: flex;
   align-items: center;
@@ -6,7 +14,6 @@
   padding: 0.5rem 0.75rem;
   background: #0f1f33;
   color: #f8fbff;
-  border-radius: 6px;
   box-shadow: 0 1px 4px rgb(9 18 31 / 25%);
 }
 

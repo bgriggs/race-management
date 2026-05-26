@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, effect, inject, input, output, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { MANAGEMENT_DATA_CLIENT } from '../../../data/management-data-client';
@@ -10,6 +10,7 @@ import { createGuid } from '../../../utils/guid';
 import { EnumDefinition } from '../../../../models/enum-definition';
 
 type ChannelKind = 'reserved' | 'custom';
+type ChannelOrigin = 'Car' | 'Cloud';
 type ChannelDataType =
   'Unitless'
   | 'String'
@@ -44,7 +45,7 @@ export class EditChannel implements OnInit {
   readonly save = output<ChannelDefinition>();
   readonly cancel = output<void>();
 
-  readonly kind = signal<ChannelKind>('custom');
+  readonly kind = signal<ChannelKind>('reserved');
   readonly reservedChannels = signal<ChannelDefinition[]>([]);
   readonly loadingReserved = signal(false);
   readonly reservedLoadError = signal<string | null>(null);
@@ -105,10 +106,50 @@ export class EditChannel implements OnInit {
   protected readonly ChannelDistribution = ChannelDistribution;
   protected readonly ChannelScope = ChannelScope;
 
-  readonly distributionOptionsForCustom: Array<{ value: ChannelDistribution; label: string }> = [
-    { value: ChannelDistribution.CarToCloud, label: 'Car to Cloud' },
-    { value: ChannelDistribution.CarLocal, label: 'Car Local' }
-  ];
+  // Origin selector for new custom channels. Hidden when editing an existing channel
+  // (origin is fixed at creation per ADR-0007 amendment 2026-05-25).
+  readonly originForCreate = signal<ChannelOrigin>('Car');
+
+  // Tracks the form's current distribution value so dependent computed signals react.
+  // valueChanges with { emitEvent: false } does not fire, so this is updated manually
+  // wherever we patchValue silently (the channel-input reset effect).
+  private readonly currentDistribution = signal<ChannelDistribution>(ChannelDistribution.CarToCloud);
+
+  // Origin is derived from the current distribution for existing channels, and from the
+  // Origin radio for new custom channels (where there is no prior distribution to read).
+  readonly origin = computed<ChannelOrigin>(() => {
+    if (this.kind() === 'custom' && !this.channel()) {
+      return this.originForCreate();
+    }
+    return EditChannel.originFor(this.currentDistribution());
+  });
+
+  // The 2 distribution options matching the channel's origin. The dropdown never offers
+  // an origin-crossing option — origin is fixed post-create.
+  readonly distributionOptions = computed<Array<{ value: ChannelDistribution; label: string }>>(() =>
+    this.origin() === 'Car'
+      ? [
+          { value: ChannelDistribution.CarToCloud, label: 'Car to Cloud' },
+          { value: ChannelDistribution.CarLocal, label: 'Car Local (no cloud)' }
+        ]
+      : [
+          { value: ChannelDistribution.CloudToCar, label: 'Cloud to Car' },
+          { value: ChannelDistribution.CloudLocal, label: 'Cloud Local (no car)' }
+        ]
+  );
+
+  // Origin radio is only meaningful when creating a new custom channel.
+  readonly canChooseOrigin = computed(() => this.kind() === 'custom' && !this.channel());
+
+  // True when the current channel's distribution is pinned by the reserved template
+  // (e.g., ThrottleProxy* outputs whose feature genuinely requires CarToCloud).
+  readonly isDistributionLocked = computed(() => this.channel()?.isDistributionLocked === true);
+
+  private static originFor(distribution: ChannelDistribution): ChannelOrigin {
+    return distribution === ChannelDistribution.CarLocal || distribution === ChannelDistribution.CarToCloud
+      ? 'Car'
+      : 'Cloud';
+  }
 
   static defaultValueInRangeValidator(group: AbstractControl): ValidationErrors | null {
     const low = Number((group as FormGroup).controls['lowRange'].value);
@@ -162,52 +203,67 @@ export class EditChannel implements OnInit {
         .map((channel) => channel.id)
     );
 
-    return this.reservedChannels().filter(
-      (channel) => !reservedIdsInUse.has(channel.id) && !channel.managedByFeature
-    );
+    return this.reservedChannels()
+      .filter((channel) => !reservedIdsInUse.has(channel.id) && !channel.managedByFeature)
+      .sort((a, b) => a.name.localeCompare(b.name));
   });
 
+  private lastResetChannelId: string | null | undefined = undefined;
   constructor() {
     effect(() => {
       const incomingChannel = this.channel();
-      const channelKind: ChannelKind = incomingChannel?.isReserved ? 'reserved' : 'custom';
+      const incomingChannelId = incomingChannel?.id ?? null;
 
-      this.kind.set(channelKind);
-      this.form.patchValue(
-        {
-          reservedChannelId: incomingChannel?.isReserved ? incomingChannel.id : '',
-          name: incomingChannel?.name ?? '',
-          abbreviation: incomingChannel?.abbreviation ?? '',
-          dataType: this.normalizeDataType(incomingChannel?.dataType),
-          baseUnitType: incomingChannel?.baseUnitType ?? '',
-          // baseDecimalPlaces removed
-          outputUnitType: incomingChannel?.outputUnitType ?? '',
-          outputDecimalPlaces: incomingChannel?.outputDecimalPlaces ?? 1,
-          category: incomingChannel?.category ?? '',
-          groupTag: incomingChannel?.groupTag ?? '',
-          enumConversion: incomingChannel?.enumConversion ?? '',
-          lowRange: incomingChannel?.lowRange ?? 0,
-          highRange: incomingChannel?.highRange ?? 100,
-          defaultValue: incomingChannel?.defaultValue ?? 0,
-          timeoutMs: incomingChannel?.timeoutMs ?? 0,
-          distribution: incomingChannel?.distribution ?? ChannelDistribution.CarToCloud,
-          scope: incomingChannel?.scope ?? ChannelScope.PerCar
-        },
-        { emitEvent: false }
-      );
-
-      if (channelKind === 'reserved') {
-        this.ensureReservedChannelsLoaded();
+      if (this.lastResetChannelId === incomingChannelId) {
+        return;
       }
+      this.lastResetChannelId = incomingChannelId;
 
-      this.syncDisabledState();
-      this.loadAvailableUnitTypes();
+      untracked(() => {
+        const channelKind: ChannelKind = !incomingChannel || incomingChannel.isReserved ? 'reserved' : 'custom';
+
+        this.kind.set(channelKind);
+        this.form.patchValue(
+          {
+            reservedChannelId: incomingChannel?.isReserved ? incomingChannel.id : '',
+            name: incomingChannel?.name ?? '',
+            abbreviation: incomingChannel?.abbreviation ?? '',
+            dataType: this.normalizeDataType(incomingChannel?.dataType),
+            baseUnitType: incomingChannel?.baseUnitType ?? '',
+            outputUnitType: incomingChannel?.outputUnitType ?? '',
+            outputDecimalPlaces: incomingChannel?.outputDecimalPlaces ?? 1,
+            category: incomingChannel?.category ?? '',
+            groupTag: incomingChannel?.groupTag ?? '',
+            enumConversion: incomingChannel?.enumConversion ?? '',
+            lowRange: incomingChannel?.lowRange ?? 0,
+            highRange: incomingChannel?.highRange ?? 100,
+            defaultValue: incomingChannel?.defaultValue ?? 0,
+            timeoutMs: incomingChannel?.timeoutMs ?? 0,
+            distribution: incomingChannel?.distribution ?? ChannelDistribution.CarToCloud,
+            scope: incomingChannel?.scope ?? ChannelScope.PerCar
+          },
+          { emitEvent: false }
+        );
+        // patchValue with { emitEvent: false } skips valueChanges, so mirror the new
+        // distribution into the signal that drives origin/distributionOptions/isDistributionLocked.
+        this.currentDistribution.set(incomingChannel?.distribution ?? ChannelDistribution.CarToCloud);
+
+        if (channelKind === 'reserved') {
+          this.ensureReservedChannelsLoaded();
+        }
+
+        this.syncDisabledState();
+        this.loadAvailableUnitTypes();
+      });
     });
 
     this.form.controls.dataType.valueChanges.subscribe(() => {
       this.loadAvailableUnitTypes();
     });
 
+    this.form.controls.distribution.valueChanges.subscribe((value) => {
+      this.currentDistribution.set(value);
+    });
   }
 
   async ngOnInit(): Promise<void> {
@@ -237,9 +293,20 @@ export class EditChannel implements OnInit {
     }
 
     this.form.controls.reservedChannelId.setValue('');
-    // Reset distribution to the custom-allowed default; scope is locked to PerCar.
-    this.form.controls.distribution.setValue(ChannelDistribution.CarToCloud);
+    // Reset distribution to the default for the currently-selected Origin radio; scope is locked to PerCar.
+    this.form.controls.distribution.setValue(EditChannel.defaultDistributionFor(this.originForCreate()));
     this.form.controls.scope.setValue(ChannelScope.PerCar);
+  }
+
+  onOriginChange(origin: ChannelOrigin): void {
+    this.originForCreate.set(origin);
+    // Reset distribution to the chosen origin's default (transmit-by-default for Car;
+    // local-only for Cloud, since most new cloud channels start without a need to push to the car).
+    this.form.controls.distribution.setValue(EditChannel.defaultDistributionFor(origin));
+  }
+
+  private static defaultDistributionFor(origin: ChannelOrigin): ChannelDistribution {
+    return origin === 'Car' ? ChannelDistribution.CarToCloud : ChannelDistribution.CloudLocal;
   }
 
   onReservedChannelChange(reservedChannelId: string): void {
@@ -285,6 +352,7 @@ export class EditChannel implements OnInit {
       enumConversion: this.form.controls.enumConversion.value || null,
       timeoutMs: Number(this.form.controls.timeoutMs.value),
       distribution: this.form.controls.distribution.value,
+      isDistributionLocked: false,
       scope: this.form.controls.scope.value,
       managedByFeature: null
     };
@@ -294,21 +362,15 @@ export class EditChannel implements OnInit {
       channel.abbreviation = selectedReservedChannel.abbreviation;
       channel.category = selectedReservedChannel.category;
       channel.dataType = this.normalizeDataType(selectedReservedChannel.dataType);
-      channel.baseUnitType = selectedReservedChannel.baseUnitType;
-      // channel.baseDecimalPlaces removed
-      channel.outputUnitType = selectedReservedChannel.outputUnitType;
-      channel.outputDecimalPlaces = selectedReservedChannel.outputDecimalPlaces;
-      channel.lowRange = selectedReservedChannel.lowRange;
-      channel.highRange = selectedReservedChannel.highRange;
-      channel.defaultValue = selectedReservedChannel.defaultValue;
-      channel.timeoutMs = selectedReservedChannel.timeoutMs;
-
       channel.groupTag = selectedReservedChannel.groupTag;
       channel.enumConversion = selectedReservedChannel.enumConversion;
-      channel.timeoutMs = selectedReservedChannel.timeoutMs;
-      channel.distribution = selectedReservedChannel.distribution;
       channel.scope = selectedReservedChannel.scope;
       channel.managedByFeature = selectedReservedChannel.managedByFeature;
+      // Propagate the template's lock state; if true the server rejects any distribution change.
+      channel.isDistributionLocked = selectedReservedChannel.isDistributionLocked;
+    } else if (existingChannel?.isReserved) {
+      // Editing an existing reserved channel — preserve the lock from the persisted record.
+      channel.isDistributionLocked = existingChannel.isDistributionLocked;
     }
 
     this.save.emit(channel);
@@ -327,17 +389,23 @@ export class EditChannel implements OnInit {
     const opts = { emitEvent: false };
     if (this.kind() === 'reserved') {
       this.form.controls.dataType.disable(opts);
-      this.form.controls.baseUnitType.disable(opts);
-      this.form.controls.outputUnitType.disable(opts);
-      this.form.controls.distribution.disable(opts);
+      this.form.controls.baseUnitType.enable(opts);
+      this.form.controls.outputUnitType.enable(opts);
       this.form.controls.scope.disable(opts);
     } else {
       this.form.controls.dataType.enable(opts);
       this.form.controls.baseUnitType.enable(opts);
       this.form.controls.outputUnitType.enable(opts);
-      this.form.controls.distribution.enable(opts);
       // Custom channels are locked to PerCar scope in v1 (ADR-0007).
       this.form.controls.scope.disable(opts);
+    }
+
+    // Distribution editability is uniform: locked iff the channel template pins it
+    // (currently only the ThrottleProxy* outputs).
+    if (this.channel()?.isDistributionLocked === true) {
+      this.form.controls.distribution.disable(opts);
+    } else {
+      this.form.controls.distribution.enable(opts);
     }
   }
 

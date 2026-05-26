@@ -1,0 +1,130 @@
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(17, 32, 51, 0.55);
+}
+
+.dialog {
+  position: relative;
+  background: #ffffff;
+  color: #112033;
+  border-radius: 8px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  width: min(420px, 92vw);
+  display: flex;
+  flex-direction: column;
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem 0.75rem;
+  border-bottom: 1px solid #eef1f6;
+}
+
+.dialog-header h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: #4a5b73;
+  cursor: pointer;
+  padding: 0 0.25rem;
+}
+
+.close-btn:hover,
+.close-btn:focus-visible {
+  color: #112033;
+  outline: none;
+}
+
+.dialog-body {
+  padding: 1rem 1.25rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.field-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #112033;
+}
+
+.name-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.95rem;
+  border: 1px solid #d6dde7;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #112033;
+}
+
+.name-input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.field-hint {
+  font-size: 0.8rem;
+  color: #4a5b73;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem 1rem;
+  border-top: 1px solid #eef1f6;
+}
+
+.btn {
+  padding: 0.45rem 1rem;
+  font-size: 0.9rem;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.btn-secondary {
+  background: #ffffff;
+  color: #112033;
+  border-color: #d6dde7;
+}
+
+.btn-secondary:hover,
+.btn-secondary:focus-visible {
+  background: #f6f8fb;
+  outline: none;
+}
+
+.btn-primary {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.btn-primary:hover,
+.btn-primary:focus-visible {
+  background: #1d4ed8;
+  outline: none;
+}

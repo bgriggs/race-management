@@ -7,6 +7,8 @@
   align-items: center;
   gap: 1rem;
   padding: 0.75rem 1.25rem;
+  min-height: var(--top-nav-height);
+  box-sizing: border-box;
   background: #0f1f33;
   color: #f8fbff;
   box-shadow: 0 2px 10px rgb(9 18 31 / 20%);

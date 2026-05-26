@@ -5,6 +5,22 @@ import { TeamSelectionService } from '../../teams/team-selection.service';
 
 type EditingState = { mode: 'new' } | { mode: 'edit'; raceId: number } | null;
 
+// US-only IANA zones. The race wall-clock is stored without offset (see
+// `saveDraft`), so the server needs the zone explicitly to decide "is the race
+// active right now". We restrict to the US to keep the dropdown short — extend
+// here when expanding to teams outside the US.
+export const US_TIME_ZONES: readonly { id: string; label: string }[] = [
+  { id: 'America/New_York', label: 'Eastern (New York)' },
+  { id: 'America/Chicago', label: 'Central (Chicago)' },
+  { id: 'America/Denver', label: 'Mountain (Denver)' },
+  { id: 'America/Phoenix', label: 'Mountain – Arizona (no DST)' },
+  { id: 'America/Los_Angeles', label: 'Pacific (Los Angeles)' },
+  { id: 'America/Anchorage', label: 'Alaska (Anchorage)' },
+  { id: 'Pacific/Honolulu', label: 'Hawaii (Honolulu)' },
+];
+
+const DEFAULT_TIME_ZONE = 'America/Chicago';
+
 @Component({
   selector: 'app-races',
   imports: [],
@@ -23,7 +39,9 @@ export class Races {
   protected readonly draftName = signal('');
   protected readonly draftStart = signal('');
   protected readonly draftDuration = signal('');
+  protected readonly draftTimeZone = signal(DEFAULT_TIME_ZONE);
   protected readonly draftNotes = signal('');
+  protected readonly timeZoneOptions = US_TIME_ZONES;
   protected readonly draftEventId = signal('');
   protected readonly draftOrgId = signal('');
   protected readonly saving = signal(false);
@@ -56,6 +74,7 @@ export class Races {
     this.draftName.set('');
     this.draftStart.set('');
     this.draftDuration.set('');
+    this.draftTimeZone.set(DEFAULT_TIME_ZONE);
     this.draftNotes.set('');
     this.draftEventId.set('');
     this.draftOrgId.set('');
@@ -67,6 +86,10 @@ export class Races {
     this.draftName.set(race.name);
     this.draftStart.set(toDatetimeLocalValue(race.start));
     this.draftDuration.set(String(race.duration));
+    // Fall back to the default if a row pre-dates the column or somehow has an
+    // unknown zone — keeps the dropdown valid and never blank.
+    const known = US_TIME_ZONES.some(z => z.id === race.timeZone);
+    this.draftTimeZone.set(known ? race.timeZone : DEFAULT_TIME_ZONE);
     this.draftNotes.set(race.notes);
     this.draftEventId.set(race.redMistEventId === null ? '' : String(race.redMistEventId));
     this.draftOrgId.set(race.redMistOrganizationId === null ? '' : String(race.redMistOrganizationId));
@@ -83,6 +106,7 @@ export class Races {
   protected onNameInput(value: string): void { this.draftName.set(value); }
   protected onStartInput(value: string): void { this.draftStart.set(value); }
   protected onDurationInput(value: string): void { this.draftDuration.set(value); }
+  protected onTimeZoneInput(value: string): void { this.draftTimeZone.set(value); }
   protected onNotesInput(value: string): void { this.draftNotes.set(value); }
   protected onEventIdInput(value: string): void { this.draftEventId.set(value); }
   protected onOrgIdInput(value: string): void { this.draftOrgId.set(value); }
@@ -111,6 +135,7 @@ export class Races {
       name: this.draftName().trim(),
       start: startNaive,
       duration: Number(this.draftDuration()),
+      timeZone: this.draftTimeZone(),
       notes: this.draftNotes(),
       redMistEventId: this.draftEventId() === '' ? null : Number(this.draftEventId()),
       redMistOrganizationId: this.draftOrgId() === '' ? null : Number(this.draftOrgId()),

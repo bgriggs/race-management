@@ -85,6 +85,35 @@ The body of this ADR was accepted on 2026-05-23 and captures the decision to mak
 **In-car receive surface:**
 - `ICloudClient.ChannelValuesReceived` event on the car raises when the cloud invokes `ReceiveChannelValues` on the hub. Exception isolation around subscribers is built in so a faulty handler can't break the receive path. No in-car subscriber yet — wiring a received value into the in-car channel pipeline is deferred until a feature needs it (e.g., the throttle-calibration override path in ADR-0006).
 
+## Amendment (2026-05-25): Partial distribution editability and cloud-origin custom channels
+
+After a few weeks of using the original model, two of the **Consequences** above turned out to over-restrict the UX without a corresponding correctness benefit. The original decision body still records the 2026-05-23 reasoning; this amendment records what changed and why.
+
+**What changed:**
+
+1. **`Distribution` is now user-editable by default on all channels** (reserved and custom), within the channel's origin family. The original ADR locked distribution in two places:
+   - The Consequence that said *"Custom channels are locked to `Distribution ∈ {CarLocal, CarToCloud}` and `Scope = PerCar`"*. The custom-channel lock to car-side distributions is **superseded** — origin is still chosen once at channel creation, but a custom channel created with cloud origin can pick either `CloudLocal` or `CloudToCar`. `Scope = PerCar` remains locked for custom channels.
+   - The Consequence that said *"The Channels list renders rows with `ManagedByFeature != null` in a locked/read-only state ... Edit and delete actions are disabled for those rows"*. Edit is now **enabled** so the user can adjust `Distribution`; delete remains disabled (feature toggle still owns lifecycle).
+
+2. **A new `bool IsDistributionLocked` field on `ChannelDefinition`** (default `false`) carries the lock signal for the small set of reserved channels whose distribution the feature genuinely requires:
+
+   | Channel | Distribution | Why locked |
+   | --- | --- | --- |
+   | `ThrottleProxyFuelUsed` | `CarToCloud` | Cloud-side `ThrottleProxyIntegralEstimator` short-circuits without it; the in-car proxy exists to feed cloud reconciliation. |
+   | `ThrottleProxyRate` | `CarToCloud` | Cloud maintains a running `∫ ThrottleProxyRate dt` totalizer; both `ThrottleProxyIntegralEstimator` and `ThrottleProxyGridEstimator` short-circuit without it. |
+   | `ThrottleProxyConfidence` | `CarToCloud` | Threshold gate for both throttle-proxy estimators. |
+   | `ThrottleProxyGridCoverage` | `CarToCloud` | Threshold gate for `ThrottleProxyGridEstimator`. |
+
+   No other reserved channel is locked. Notably, `RaceFlagState` (originally `CloudToCar` with the intent that the car's dash could display it) is **not** locked — no in-car consumer exists today, and the cloud-side fuel reconciler reads `RaceFlagState` from the `team-channels:{teamId}` hash regardless of forwarding. A team that doesn't want the cloud→car uplink can flip it to `CloudLocal` with no functional impact.
+
+3. **Custom channels can be created as cloud-origin.** At creation, the Edit Channel UI offers an Origin radio (`Car` / `Cloud`). The Distribution dropdown shows the two origin-matching options. Origin is fixed after creation. The producer for a cloud-origin custom channel reaches the runtime stream through the existing `ICarChannelPublisher` / `ITeamChannelPublisher` abstractions used by Alarms, the same path future cloud-side modules (math, counters, timers, tables, user conditions, custom modules) will use.
+
+**Server-side enforcement.** `ConfigurationController.SaveCarConfiguration` validates each incoming `ChannelDefinition` against the prior persisted version and the reserved template:
+- Rejects edits to a reserved channel whose template has `IsDistributionLocked = true` if the incoming `Distribution` differs from the template's value.
+- Rejects edits where the incoming `Distribution`'s origin family (`{CarLocal, CarToCloud}` vs `{CloudLocal, CloudToCar}`) differs from the prior persisted value. This is the "origin is fixed post-create" guard for both custom and reserved channels.
+
+**Migration.** None required. `IsDistributionLocked` is a new bool on the JSON-serialized `ChannelDefinition`; existing rows in `CarConfigurationTable.ConfigurationJson` deserialize with `false` (the editable default), and the four `ThrottleProxy*` reserved templates carry `true` at startup.
+
 ## References
 
 Internal:

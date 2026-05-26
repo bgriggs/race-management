@@ -23,7 +23,9 @@ export class ChannelsList {
   readonly editingChannelId = signal<string | null>(null);
   readonly deleteBlockedMessage = signal<string | null>(null);
 
-  readonly channels = computed<ChannelDefinition[]>(() => this.configuration()?.channelDefinitions ?? []);
+  readonly channels = computed<ChannelDefinition[]>(() =>
+    [...(this.configuration()?.channelDefinitions ?? [])].sort((a, b) => a.name.localeCompare(b.name))
+  );
   readonly enumDefinitions = computed<EnumDefinition[]>(() => this.configuration()?.enumDefinitions ?? []);
 
   readonly hasChannels = computed(() => this.channels().length > 0);
@@ -76,7 +78,7 @@ export class ChannelsList {
   }
 
   getManagedTooltip(channel: ChannelDefinition): string {
-    return `Managed by ${this.getFeatureLabel(channel.managedByFeature)}. Disable the feature to remove this channel.`;
+    return `Managed by ${this.getFeatureLabel(channel.managedByFeature)}. Distribution can be edited; disable the feature to remove this channel.`;
   }
 
   startAdd(): void {
@@ -84,10 +86,6 @@ export class ChannelsList {
   }
 
   startEdit(channelId: string): void {
-    const channel = this.channels().find((c) => c.id === channelId);
-    if (channel && this.isManaged(channel)) {
-      return;
-    }
     this.editingChannelId.set(channelId);
   }
 

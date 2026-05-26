@@ -160,6 +160,7 @@ export function channelDefinitionFromMessagePack(obj: Record<string, unknown>): 
         enumConversion: obj["EnumConversion"] != null ? obj["EnumConversion"] as string : null,
         timeoutMs: obj["TimeoutMs"] as number,
         distribution: obj["Distribution"] as ChannelDistribution,
+        isDistributionLocked: obj["IsDistributionLocked"] as boolean,
         scope: obj["Scope"] as ChannelScope,
         managedByFeature: obj["ManagedByFeature"] != null ? obj["ManagedByFeature"] as string : null,
     };

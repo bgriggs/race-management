@@ -20,6 +20,7 @@ describe.skip('FuelDetailPanel', () => {
     name: 'Test Race',
     start: new Date('2026-05-24T13:00:00Z'),
     duration: 4,
+    timeZone: 'America/Chicago',
     notes: '',
     redMistEventId: null,
     redMistOrganizationId: null,

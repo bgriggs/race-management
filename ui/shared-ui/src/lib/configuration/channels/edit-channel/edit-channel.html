@@ -17,32 +17,28 @@
 		</label>
 	</section>
 
-	@if (kind() === 'reserved') {
-	<section class="field">
-		<label for="reserved-channel-id">Reserved Channel</label>
-		@if (loadingReserved()) {
-		<p class="field-note">Loading reserved channels...</p>
-		} @else if (reservedLoadError()) {
-		<p class="field-error">{{ reservedLoadError() }}</p>
-		} @else if (availableReservedChannels().length === 0) {
-		<p class="field-note">All reserved channels are already configured.</p>
-		} @else {
-		<select id="reserved-channel-id" formControlName="reservedChannelId"
-			(change)="onReservedChannelChange($any($event.target).value)">
-			<option value="">Select a reserved channel</option>
-			@for (reservedChannel of availableReservedChannels(); track reservedChannel.id) {
-			<option [value]="reservedChannel.id">{{ reservedChannel.name }}</option>
-			}
-		</select>
-		}
-	</section>
-	}
-
 	<section class="field-grid">
 		<section class="field">
 			<label for="channel-name">Name</label>
-			<input id="channel-name" type="text" formControlName="name" minlength="1" maxlength="25"
-				[readonly]="kind() === 'reserved'" />
+			@if (kind() === 'reserved') {
+				@if (loadingReserved()) {
+				<p class="field-note">Loading reserved channels...</p>
+				} @else if (reservedLoadError()) {
+				<p class="field-error">{{ reservedLoadError() }}</p>
+				} @else if (availableReservedChannels().length === 0) {
+				<p class="field-note">All reserved channels are already configured.</p>
+				} @else {
+				<select id="channel-name" formControlName="reservedChannelId"
+					(change)="onReservedChannelChange($any($event.target).value)">
+					<option value="">Select a reserved channel</option>
+					@for (reservedChannel of availableReservedChannels(); track reservedChannel.id) {
+					<option [value]="reservedChannel.id">{{ reservedChannel.name }}</option>
+					}
+				</select>
+				}
+			} @else {
+				<input id="channel-name" type="text" formControlName="name" minlength="1" maxlength="25" />
+			}
 		</section>
 
 		<section class="field">
@@ -124,8 +120,7 @@
 		<section class="field">
 			<label for="channel-output-decimals">Output Decimal Places</label>
 			<div class="field-row">
-				<input id="channel-output-decimals" type="number" step="1" formControlName="outputDecimalPlaces"
-					[readonly]="kind() === 'reserved'" />
+				<input id="channel-output-decimals" type="number" step="1" formControlName="outputDecimalPlaces" />
 				<button type="button" class="icon-btn" title="Copy unit type and decimal places from Base" (click)="copyBaseToOutput()">&#x2193;</button>
 			</div>
 		</section>
@@ -136,19 +131,17 @@
 		@if (!isString()) {
 		<section class="field">
 			<label for="channel-low-range">Low Range</label>
-			<input id="channel-low-range" type="number" formControlName="lowRange" [readonly]="kind() === 'reserved'" />
+			<input id="channel-low-range" type="number" formControlName="lowRange" />
 		</section>
 
 		<section class="field">
 			<label for="channel-high-range">High Range</label>
-			<input id="channel-high-range" type="number" formControlName="highRange"
-				[readonly]="kind() === 'reserved'" />
+			<input id="channel-high-range" type="number" formControlName="highRange" />
 		</section>
 
 		<section class="field">
 			<label for="channel-default-value">Default Value</label>
-			<input id="channel-default-value" type="number" formControlName="defaultValue"
-				[readonly]="kind() === 'reserved'" />
+			<input id="channel-default-value" type="number" formControlName="defaultValue" />
 			@if (form.hasError('defaultValueOutOfRange') && form.controls.defaultValue.dirty) {
 			<p class="field-error">Must be between Low and High range.</p>
 			}
@@ -157,8 +150,7 @@
 
 		<section class="field">
 			<label for="channel-timeout-ms">Timeout (ms)</label>
-			<input id="channel-timeout-ms" type="number" step="1" formControlName="timeoutMs"
-				[readonly]="kind() === 'reserved'" />
+			<input id="channel-timeout-ms" type="number" step="1" formControlName="timeoutMs" />
 		</section>
 	</section>
 
@@ -191,25 +183,36 @@
 	<section class="field-grid">
 		<section class="field">
 			<label for="channel-distribution">Distribution</label>
-			@if (kind() === 'reserved') {
-				<select id="channel-distribution" formControlName="distribution">
-					<option [ngValue]="ChannelDistribution.CarLocal">Car Local</option>
-					<option [ngValue]="ChannelDistribution.CarToCloud">Car to Cloud</option>
-					<option [ngValue]="ChannelDistribution.CloudLocal">Cloud Local</option>
-					<option [ngValue]="ChannelDistribution.CloudToCar">Cloud to Car</option>
-				</select>
-			} @else {
-				<select id="channel-distribution" formControlName="distribution">
-					@for (option of distributionOptionsForCustom; track option.value) {
-						<option [ngValue]="option.value">{{ option.label }}</option>
-					}
-				</select>
+			@if (canChooseOrigin()) {
+				<div class="origin-radio-group" role="radiogroup" aria-label="Channel origin">
+					<label class="origin-radio">
+						<input type="radio" name="channel-origin" value="Car"
+							[checked]="origin() === 'Car'"
+							(change)="onOriginChange('Car')" />
+						Produced on car
+					</label>
+					<label class="origin-radio">
+						<input type="radio" name="channel-origin" value="Cloud"
+							[checked]="origin() === 'Cloud'"
+							(change)="onOriginChange('Cloud')" />
+						Produced in cloud
+					</label>
+				</div>
 			}
+			<select id="channel-distribution" formControlName="distribution">
+				@for (option of distributionOptions(); track option.value) {
+					<option [ngValue]="option.value">{{ option.label }}</option>
+				}
+			</select>
 			<p class="field-description">
-				@if (kind() === 'reserved') {
-					Inherited from the reserved-channel definition.
+				@if (isDistributionLocked()) {
+					Locked by the owning feature — this channel must use this routing.
+				} @else if (kind() === 'reserved') {
+					Inherited from the reserved-channel definition; override if needed.
+				} @else if (origin() === 'Car') {
+					Custom channel produced on the car. Choose whether to transmit to the cloud.
 				} @else {
-					Custom channels are produced on the car. Choose whether to transmit to the cloud.
+					Custom channel produced in the cloud. Choose whether to transmit to the car.
 				}
 			</p>
 		</section>

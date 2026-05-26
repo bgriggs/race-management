@@ -53,6 +53,7 @@ function buildConfigurationWithChannels(channelCount: number): CarConfiguration 
       enumConversion: null,
       timeoutMs: 3000,
       distribution: ChannelDistribution.CarToCloud,
+      isDistributionLocked: false,
       scope: ChannelScope.PerCar,
       managedByFeature: null,
     })),

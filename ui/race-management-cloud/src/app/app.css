@@ -4,6 +4,7 @@
 	background: #f6f8fb;
 	color: #112033;
 	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+	--top-nav-height: 56px;
 }
 
 .app-content {

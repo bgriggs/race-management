@@ -1,0 +1,35 @@
+<div class="backdrop" role="presentation" (click)="close()"></div>
+
+<div
+  class="dialog"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="rename-column-title"
+  (keydown)="onKeydown($event)"
+>
+  <header class="dialog-header">
+    <h2 id="rename-column-title">Rename column</h2>
+    <button type="button" class="close-btn" aria-label="Close" (click)="close()">&times;</button>
+  </header>
+
+  <div class="dialog-body">
+    <label class="field">
+      <span class="field-label">Display name</span>
+      <input
+        #nameInput
+        type="text"
+        class="name-input"
+        [value]="value()"
+        (input)="onInput($event)"
+        [attr.placeholder]="defaultName()"
+        aria-label="Column display name"
+      />
+      <span class="field-hint">Leave empty to use the default ({{ defaultName() }}).</span>
+    </label>
+  </div>
+
+  <footer class="dialog-footer">
+    <button type="button" class="btn btn-secondary" (click)="close()">Cancel</button>
+    <button type="button" class="btn btn-primary" (click)="confirm()">OK</button>
+  </footer>
+</div>

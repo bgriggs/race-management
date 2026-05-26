@@ -171,17 +171,20 @@ public sealed class ReservedChannelsTests
     {
         var expected = new[]
         {
-            ("ThrottlePosition",             ChannelDistribution.CarToCloud, ChannelScope.PerCar),
-            ("ThrottleProxyFuelUsed",   ChannelDistribution.CarToCloud, ChannelScope.PerCar),
-            ("ThrottleProxyRate",   ChannelDistribution.CarToCloud, ChannelScope.PerCar),
-            ("ThrottleProxyConfidence",      ChannelDistribution.CarToCloud, ChannelScope.PerCar),
-            ("ThrottleProxyGridCoverage",    ChannelDistribution.CarToCloud, ChannelScope.PerCar),
+            // ThrottlePosition is the in-car input; only the in-car ThrottleProxyConsumer reads it.
+            // Editable so teams can pick CarLocal to save bandwidth when cloud throttle traces aren't needed.
+            ("ThrottlePosition",             ChannelDistribution.CarToCloud, ChannelScope.PerCar, /*locked*/ false),
+            // ThrottleProxy* outputs are the cloud reconciler's estimator inputs; locking enforces correctness.
+            ("ThrottleProxyFuelUsed",        ChannelDistribution.CarToCloud, ChannelScope.PerCar, /*locked*/ true),
+            ("ThrottleProxyRate",            ChannelDistribution.CarToCloud, ChannelScope.PerCar, /*locked*/ true),
+            ("ThrottleProxyConfidence",      ChannelDistribution.CarToCloud, ChannelScope.PerCar, /*locked*/ true),
+            ("ThrottleProxyGridCoverage",    ChannelDistribution.CarToCloud, ChannelScope.PerCar, /*locked*/ true),
         };
 
         var byName = ReservedChannels.Channels.ToDictionary(c => c.Name, c => c, StringComparer.OrdinalIgnoreCase);
         var failures = new List<string>();
 
-        foreach (var (name, distribution, scope) in expected)
+        foreach (var (name, distribution, scope, locked) in expected)
         {
             if (!byName.TryGetValue(name, out var channel))
             {
@@ -194,10 +197,34 @@ public sealed class ReservedChannelsTests
                 failures.Add($"{name}: Distribution={channel.Distribution} (expected {distribution})");
             if (channel.Scope != scope)
                 failures.Add($"{name}: Scope={channel.Scope} (expected {scope})");
+            if (channel.IsDistributionLocked != locked)
+                failures.Add($"{name}: IsDistributionLocked={channel.IsDistributionLocked} (expected {locked})");
         }
 
         Assert.IsEmpty(failures,
             $"Throttle Consumption channel routing mismatches:{Environment.NewLine}{string.Join(Environment.NewLine, failures)}");
+    }
+
+    [TestMethod]
+    public void OnlyThrottleProxyOutputs_HaveDistributionLocked()
+    {
+        // The set of distribution-locked reserved channels is a contract. Adding to it requires a deliberate
+        // decision (and an ADR-0007 amendment update) — bouncing the test forces that conversation.
+        var expectedLocked = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "ThrottleProxyFuelUsed",
+            "ThrottleProxyRate",
+            "ThrottleProxyConfidence",
+            "ThrottleProxyGridCoverage",
+        };
+
+        var actualLocked = ReservedChannels.Channels
+            .Where(c => c.IsDistributionLocked)
+            .Select(c => c.Name)
+            .ToList();
+
+        CollectionAssert.AreEquivalent(expectedLocked.ToList(), actualLocked,
+            "Set of reserved channels with IsDistributionLocked changed — update ADR-0007 amendment if intentional.");
     }
 
     [TestMethod]

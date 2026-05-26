@@ -54,6 +54,13 @@ export interface ChannelDefinition {
      */
     distribution: ChannelDistribution;
     /**
+     * When true, @see {@link Channels.ChannelDefinition.Distribution} is pinned to the template value and cannot be
+     * changed in the Edit Channel UI or via the configuration save endpoint. Used for
+     * reserved channels whose owning feature genuinely requires a specific routing
+     * (e.g., the ThrottleProxy* outputs that the cloud reconciler estimators depend on).
+     */
+    isDistributionLocked: boolean;
+    /**
      * What entity the channel's values are bound to. Defaults to @see {@link Channels.ChannelScope.PerCar}.
      */
     scope: ChannelScope;

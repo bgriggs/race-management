@@ -19,6 +19,7 @@
   display: flex;
   flex-direction: column;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  color: var(--text-primary, #e5e7eb);
 }
 
 .dialog-header {
@@ -34,6 +35,7 @@
   margin: 0;
   font-size: 15px;
   font-weight: 600;
+  color: var(--text-primary, #f3f4f6);
 }
 
 .close-btn {
@@ -104,6 +106,7 @@ h3 {
   font-size: 22px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+  color: var(--text-primary, #f3f4f6);
 }
 
 .range-cell .sub {
@@ -130,6 +133,10 @@ h3 {
   text-align: left;
   padding: 4px 8px;
   border-bottom: 1px solid var(--border-subtle, #2a2a2a);
+}
+
+.estimators td {
+  color: var(--text-primary, #e5e7eb);
 }
 
 .estimators th {
@@ -183,6 +190,7 @@ h3 {
 .rate-value {
   font-size: 16px;
   font-weight: 600;
+  color: var(--text-primary, #f3f4f6);
 }
 
 .rate-formula {
@@ -207,6 +215,7 @@ h3 {
   font-size: 13px;
   font-variant-numeric: tabular-nums;
   margin-right: 8px;
+  color: var(--text-primary, #e5e7eb);
 }
 
 .override-form {

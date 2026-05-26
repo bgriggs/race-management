@@ -9,6 +9,7 @@ export interface Race {
     name: string;
     start: Date;
     duration: number;
+    timeZone: string;
     notes: string;
     redMistEventId: number | null;
     redMistOrganizationId: number | null;
