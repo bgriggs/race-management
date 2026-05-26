@@ -12,6 +12,10 @@ export interface CarFuelConfig {
     defaultYellowConsumptionMultiplier: number;
     defaultCode35ConsumptionMultiplier: number;
     /**
+     * Source channel for tank fuel level (default: FuelLevel reserved channel). Used by the FuelReconciler's tank-level estimator.
+     */
+    fuelLevelChannelId: string;
+    /**
      * Source channel for trip fuel (default: TripFuel reserved channel).
      */
     tripFuelChannelId: string;
@@ -24,7 +28,7 @@ export interface CarFuelConfig {
      */
     fuelFullChannelId: string;
     /**
-     * Optional source channel for the pit-lane indicator (default: InPit reserved channel; null disables pit gating).
+     * Optional source channel for the pit-lane indicator (default: InPit reserved channel; null disables pit gating in the throttle proxy).
      */
     inPitChannelId: string | null;
     throttleConsumption: ThrottleConsumptionConfig;

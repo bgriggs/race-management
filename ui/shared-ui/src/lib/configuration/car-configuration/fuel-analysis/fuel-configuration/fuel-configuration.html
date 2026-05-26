@@ -99,42 +99,43 @@
 				</small>
 
 				<div class="field">
-					<label class="field-label">Trip Fuel <span class="required-mark">*</span></label>
+					<label class="field-label">Fuel Level (tank) <span class="optional-mark">(optional)</span></label>
+					<lib-channel-selector
+						[channels]="channels()"
+						[usedChannelIds]="usedChannelIds()"
+						[channelId]="form.controls.fuelLevelChannelId.value"
+						(channelIdChange)="onChannelChange('fuelLevelChannelId', $event)"
+					/>
+				</div>
+
+				<div class="field">
+					<label class="field-label">Trip Fuel <span class="optional-mark">(optional)</span></label>
 					<lib-channel-selector
 						[channels]="channels()"
 						[usedChannelIds]="usedChannelIds()"
 						[channelId]="form.controls.tripFuelChannelId.value"
 						(channelIdChange)="onChannelChange('tripFuelChannelId', $event)"
 					/>
-					@if (form.controls.tripFuelChannelId.touched && form.controls.tripFuelChannelId.invalid) {
-						<p class="field-error">Trip Fuel channel is required.</p>
-					}
 				</div>
 
 				<div class="field">
-					<label class="field-label">Fuel Used (cumulative) <span class="required-mark">*</span></label>
+					<label class="field-label">Fuel Used (cumulative) <span class="optional-mark">(optional)</span></label>
 					<lib-channel-selector
 						[channels]="channels()"
 						[usedChannelIds]="usedChannelIds()"
 						[channelId]="form.controls.fuelUsedChannelId.value"
 						(channelIdChange)="onChannelChange('fuelUsedChannelId', $event)"
 					/>
-					@if (form.controls.fuelUsedChannelId.touched && form.controls.fuelUsedChannelId.invalid) {
-						<p class="field-error">Fuel Used channel is required.</p>
-					}
 				</div>
 
 				<div class="field">
-					<label class="field-label">Fuel Full Reset <span class="required-mark">*</span></label>
+					<label class="field-label">Fuel Full Reset <span class="optional-mark">(optional)</span></label>
 					<lib-channel-selector
 						[channels]="channels()"
 						[usedChannelIds]="usedChannelIds()"
 						[channelId]="form.controls.fuelFullChannelId.value"
 						(channelIdChange)="onChannelChange('fuelFullChannelId', $event)"
 					/>
-					@if (form.controls.fuelFullChannelId.touched && form.controls.fuelFullChannelId.invalid) {
-						<p class="field-error">Fuel Full Reset channel is required.</p>
-					}
 				</div>
 
 				<div class="field">

@@ -8,6 +8,7 @@ import { ChannelDefinition } from '../../../../../models/channel-definition';
 import { ChannelSelector } from '../../../channels/channel-selector/channel-selector';
 
 // Reserved-channel GUID defaults — must stay in sync with CarFuelConfig.cs and ThrottleConsumptionConfig.cs.
+const FUEL_LEVEL_DEFAULT = 'a2529acf-a7c6-449f-8a85-c7d76b35dbcb';
 const TRIP_FUEL_DEFAULT = 'acd3d127-acaf-4f8a-b27a-8623cfda09f3';
 const FUEL_USED_DEFAULT = '740ce2a6-dc88-4425-85dc-7f99f2a902f1';
 const FUEL_FULL_DEFAULT = 'c3b94831-95f6-4935-bf67-1aacfd611f75';
@@ -53,18 +54,14 @@ export class FuelConfiguration {
       validators: [Validators.required, Validators.min(0), Validators.max(1)],
       nonNullable: true,
     }),
-    tripFuelChannelId: new FormControl(TRIP_FUEL_DEFAULT, {
-      validators: [Validators.required],
-      nonNullable: true,
-    }),
-    fuelUsedChannelId: new FormControl(FUEL_USED_DEFAULT, {
-      validators: [Validators.required],
-      nonNullable: true,
-    }),
-    fuelFullChannelId: new FormControl(FUEL_FULL_DEFAULT, {
-      validators: [Validators.required],
-      nonNullable: true,
-    }),
+    // Fuel-signal bindings are optional at the form level — the reconciler picks whichever
+    // estimators have their inputs ready (tank-level, cumulative, ECU-reset-aware, etc.) so
+    // any subset can be configured. Defaults point at the reserved channels so doing nothing
+    // still yields working baseline behavior.
+    fuelLevelChannelId: new FormControl(FUEL_LEVEL_DEFAULT, { nonNullable: true }),
+    tripFuelChannelId: new FormControl(TRIP_FUEL_DEFAULT, { nonNullable: true }),
+    fuelUsedChannelId: new FormControl(FUEL_USED_DEFAULT, { nonNullable: true }),
+    fuelFullChannelId: new FormControl(FUEL_FULL_DEFAULT, { nonNullable: true }),
     inPitChannelId: new FormControl<string | null>(IN_PIT_DEFAULT),
     throttleConsumptionEnabled: new FormControl(false, { nonNullable: true }),
   });
@@ -79,6 +76,7 @@ export class FuelConfiguration {
           defaultConsumptionGalPerMin: config?.defaultConsumptionGalPerMin ?? 0,
           defaultYellowConsumptionMultiplier: config?.defaultYellowConsumptionMultiplier ?? 0.5,
           defaultCode35ConsumptionMultiplier: config?.defaultCode35ConsumptionMultiplier ?? 0.3,
+          fuelLevelChannelId: config?.fuelLevelChannelId ?? FUEL_LEVEL_DEFAULT,
           tripFuelChannelId: config?.tripFuelChannelId ?? TRIP_FUEL_DEFAULT,
           fuelUsedChannelId: config?.fuelUsedChannelId ?? FUEL_USED_DEFAULT,
           fuelFullChannelId: config?.fuelFullChannelId ?? FUEL_FULL_DEFAULT,
@@ -97,6 +95,7 @@ export class FuelConfiguration {
         defaultConsumptionGalPerMin: this.form.controls.defaultConsumptionGalPerMin.value,
         defaultYellowConsumptionMultiplier: this.form.controls.defaultYellowConsumptionMultiplier.value,
         defaultCode35ConsumptionMultiplier: this.form.controls.defaultCode35ConsumptionMultiplier.value,
+        fuelLevelChannelId: this.form.controls.fuelLevelChannelId.value,
         tripFuelChannelId: this.form.controls.tripFuelChannelId.value,
         fuelUsedChannelId: this.form.controls.fuelUsedChannelId.value,
         fuelFullChannelId: this.form.controls.fuelFullChannelId.value,
@@ -111,7 +110,7 @@ export class FuelConfiguration {
     });
   }
 
-  onChannelChange(controlName: 'tripFuelChannelId' | 'fuelUsedChannelId' | 'fuelFullChannelId', channelId: string | null): void {
+  onChannelChange(controlName: 'fuelLevelChannelId' | 'tripFuelChannelId' | 'fuelUsedChannelId' | 'fuelFullChannelId', channelId: string | null): void {
     this.form.controls[controlName].setValue(channelId ?? '');
   }
 

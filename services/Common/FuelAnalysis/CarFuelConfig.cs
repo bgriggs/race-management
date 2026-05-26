@@ -19,6 +19,9 @@ public class CarFuelConfig
     // ThrottleProxyConsumer. Defaults point at the matching reserved channels; the user
     // can re-target any of these in the Fuel Analysis config UI.
 
+    /// <summary>Source channel for tank fuel level (default: FuelLevel reserved channel). Used by the FuelReconciler's tank-level estimator.</summary>
+    public Guid FuelLevelChannelId { get; set; } = Guid.Parse("a2529acf-a7c6-449f-8a85-c7d76b35dbcb");
+
     /// <summary>Source channel for trip fuel (default: TripFuel reserved channel).</summary>
     public Guid TripFuelChannelId { get; set; } = Guid.Parse("acd3d127-acaf-4f8a-b27a-8623cfda09f3");
 
@@ -28,7 +31,7 @@ public class CarFuelConfig
     /// <summary>Source channel for the fuel-full reset signal (default: FuelFull reserved channel).</summary>
     public Guid FuelFullChannelId { get; set; } = Guid.Parse("c3b94831-95f6-4935-bf67-1aacfd611f75");
 
-    /// <summary>Optional source channel for the pit-lane indicator (default: InPit reserved channel; null disables pit gating).</summary>
+    /// <summary>Optional source channel for the pit-lane indicator (default: InPit reserved channel; null disables pit gating in the throttle proxy).</summary>
     public Guid? InPitChannelId { get; set; } = Guid.Parse("da12563a-1167-4899-9956-700b0b693005");
 
     public ThrottleConsumptionConfig ThrottleConsumption { get; set; } = new();

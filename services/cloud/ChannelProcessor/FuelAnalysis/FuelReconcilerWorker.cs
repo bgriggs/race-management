@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using ChannelProcessor.FuelAnalysis.ChannelInput;
+using ChannelProcessor.FuelAnalysis.Config;
 using ChannelProcessor.FuelAnalysis.Estimators;
 using ChannelProcessor.FuelAnalysis.Pace;
 using ChannelProcessor.FuelAnalysis.Refuel;
@@ -32,6 +33,7 @@ public sealed partial class FuelReconcilerWorker(
     IConnectionMultiplexer redis,
     IDbContextFactory<RaceManagementContext> dbFactory,
     ICarChannelDefinitionResolver channelResolver,
+    ICarFuelConfigReader fuelConfigReader,
     IRaceSessionGate sessionGate,
     ICarFuelStateRepository stateRepository,
     SessionLifecycleHandler sessionLifecycle,
@@ -129,7 +131,12 @@ public sealed partial class FuelReconcilerWorker(
             var sessionMap = await channelResolver.GetSessionIndexMapAsync(carKey, ct);
             if (sessionMap is null) continue; // no active config — can't map channels
 
-            var inputs = FuelChannelExtractor.Extract(channelValues, sessionMap);
+            // Per-car fuel config drives input channel-binding overrides. A null result here means
+            // the car has no fuel config loaded (or schema parse failure) — in that case the extractor
+            // falls back to the reserved-channel defaults to preserve baseline behavior.
+            var fuelConfig = await fuelConfigReader.GetAsync(carKey, ct);
+
+            var inputs = FuelChannelExtractor.Extract(channelValues, sessionMap, fuelConfig);
             if (inputs.IsEmpty)
             {
                 // No fuel-relevant channels in this message, but ECU reset classifier may still

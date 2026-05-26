@@ -373,6 +373,7 @@ export function carFuelConfigFromMessagePack(obj: Record<string, unknown>): CarF
         defaultConsumptionGalPerMin: obj["DefaultConsumptionGalPerMin"] as number,
         defaultYellowConsumptionMultiplier: obj["DefaultYellowConsumptionMultiplier"] as number,
         defaultCode35ConsumptionMultiplier: obj["DefaultCode35ConsumptionMultiplier"] as number,
+        fuelLevelChannelId: obj["FuelLevelChannelId"] as string,
         tripFuelChannelId: obj["TripFuelChannelId"] as string,
         fuelUsedChannelId: obj["FuelUsedChannelId"] as string,
         fuelFullChannelId: obj["FuelFullChannelId"] as string,

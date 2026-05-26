@@ -37,6 +37,7 @@ function buildConfig(name: string): CarConfiguration {
       defaultConsumptionGalPerMin: 0,
       defaultYellowConsumptionMultiplier: 0.5,
       defaultCode35ConsumptionMultiplier: 0.3,
+      fuelLevelChannelId: 'a2529acf-a7c6-449f-8a85-c7d76b35dbcb',
       tripFuelChannelId: 'acd3d127-acaf-4f8a-b27a-8623cfda09f3',
       fuelUsedChannelId: '740ce2a6-dc88-4425-85dc-7f99f2a902f1',
       fuelFullChannelId: 'c3b94831-95f6-4935-bf67-1aacfd611f75',

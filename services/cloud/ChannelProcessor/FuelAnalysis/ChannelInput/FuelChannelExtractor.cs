@@ -1,4 +1,5 @@
 using Channels;
+using Common.FuelAnalysis;
 
 namespace ChannelProcessor.FuelAnalysis.ChannelInput;
 
@@ -13,8 +14,17 @@ public static class FuelChannelExtractor
 {
     public static FuelInputs Extract(
         ReadOnlySpan<ChannelValue> values,
-        IReadOnlyDictionary<ushort, ChannelDefinition> sessionIndexMap)
+        IReadOnlyDictionary<ushort, ChannelDefinition> sessionIndexMap,
+        CarFuelConfig? fuelConfig)
     {
+        // User-configurable input bindings (per-car). Fall back to reserved defaults so
+        // calls from contexts that don't have the config loaded preserve current behavior.
+        var fuelLevelId = fuelConfig?.FuelLevelChannelId ?? ReservedChannelGuids.FuelLevel;
+        var fuelUsedId  = fuelConfig?.FuelUsedChannelId  ?? ReservedChannelGuids.FuelUsed;
+        var tripFuelId  = fuelConfig?.TripFuelChannelId  ?? ReservedChannelGuids.TripFuel;
+        var fuelFullId  = fuelConfig?.FuelFullChannelId  ?? ReservedChannelGuids.FuelFull;
+        var inPitId     = fuelConfig?.InPitChannelId     ?? ReservedChannelGuids.InPit;
+
         TimestampedDouble? fuelLevel = null;
         TimestampedDouble? fuelUsed = null;
         TimestampedDouble? tripFuel = null;
@@ -34,15 +44,15 @@ public static class FuelChannelExtractor
             if (!sessionIndexMap.TryGetValue(cv.SessionIndex, out var def)) continue;
             var id = def.Id;
 
-            if (id == ReservedChannelGuids.FuelLevel)
+            if (id == fuelLevelId)
                 fuelLevel = TakeLatest(fuelLevel, new TimestampedDouble(cv.GetValueDouble(), cv.Timestamp));
-            else if (id == ReservedChannelGuids.FuelUsed)
+            else if (id == fuelUsedId)
                 fuelUsed = TakeLatest(fuelUsed, new TimestampedDouble(cv.GetValueDouble(), cv.Timestamp));
-            else if (id == ReservedChannelGuids.TripFuel)
+            else if (id == tripFuelId)
                 tripFuel = TakeLatest(tripFuel, new TimestampedDouble(cv.GetValueDouble(), cv.Timestamp));
-            else if (id == ReservedChannelGuids.FuelFull)
+            else if (id == fuelFullId)
                 fuelFull = TakeLatest(fuelFull, new TimestampedBool(cv.GetValueDouble() > 0.5, cv.Timestamp));
-            else if (id == ReservedChannelGuids.InPit)
+            else if (id == inPitId)
                 inPit = TakeLatest(inPit, new TimestampedBool(cv.GetValueDouble() > 0.5, cv.Timestamp));
             else if (id == ReservedChannelGuids.GpsSpeed)
                 gpsSpeed = TakeLatest(gpsSpeed, new TimestampedDouble(cv.GetValueDouble(), cv.Timestamp));
