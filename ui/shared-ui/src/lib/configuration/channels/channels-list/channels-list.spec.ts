@@ -175,4 +175,34 @@ describe('ChannelsList', () => {
     const text = fixture.nativeElement.textContent as string;
     expect(text).toContain('Edit Channel');
   });
+
+  it('allows editing a managed (ManagedByFeature) channel — the previous block on managed editing was removed in the distribution refactor', () => {
+    // Regression for the channel-routing refactor: startEdit() used to early-return for any
+    // ManagedByFeature channel. Now managed channels are partially editable (distribution),
+    // so the block was lifted. The delete action stays blocked separately.
+    const config = buildConfigurationWithChannels(1);
+    config.channelDefinitions[0].managedByFeature = 'fuel-analysis';
+    fixture.componentRef.setInput('configuration', config);
+    fixture.detectChanges();
+
+    expect(component.isManaged(config.channelDefinitions[0])).toBe(true);
+
+    component.startEdit(config.channelDefinitions[0].id);
+    fixture.detectChanges();
+
+    expect(component.isEditing()).toBe(true);
+    expect(component.editingChannel()?.managedByFeature).toBe('fuel-analysis');
+  });
+
+  it('still blocks delete on managed channels', () => {
+    const config = buildConfigurationWithChannels(1);
+    config.channelDefinitions[0].managedByFeature = 'fuel-analysis';
+    fixture.componentRef.setInput('configuration', config);
+    const emitSpy = vi.spyOn(component.channelDefinitionsChange, 'emit');
+    fixture.detectChanges();
+
+    component.deleteChannel(config.channelDefinitions[0].id);
+
+    expect(emitSpy).not.toHaveBeenCalled();
+  });
 });

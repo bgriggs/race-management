@@ -450,4 +450,127 @@ describe('ChannelUsageService - per-type output methods', () => {
     service.updateFromConfiguration(null);
     expect(service.usedChannelIds()).toEqual([]);
   });
+
+  it('flags channelDefinitions with producedByFeature as used with "Output: <feature>" labels', () => {
+    // Regression for Piece 1 of the feature-input refactor — feature-output channels
+    // (FuelRange*, ThrottleProxy* outputs etc.) should appear in the usedChannelIds set so
+    // the channel-selection-list filters/marks them as already-used.
+    service.updateFromConfiguration({
+      configurationId: 'cfg-2',
+      configurationSchemaVersion: 1,
+      name: 'Test',
+      notes: '',
+      lastUpdated: new Date(),
+      lastUpdatedOnCarTimestamp: null,
+      car: '77',
+      isCloudConnectionEnabled: false,
+      clientId: '',
+      clientSecret: '',
+      canConfig: { canBusEnabled: [], interfaces: [] },
+      channelDefinitions: [
+        {
+          id: 'ch-fuel-range',
+          isReserved: true,
+          category: 'Fuel',
+          name: 'FuelRangeMinutes',
+          abbreviation: 'FLRMIN',
+          dataType: 'Duration',
+          baseUnitType: 'Minute',
+          outputUnitType: 'Minute',
+          outputDecimalPlaces: 1,
+          lowRange: 0,
+          highRange: 600,
+          defaultValue: 0,
+          groupTag: '',
+          enumConversion: null,
+          timeoutMs: 0,
+          distribution: 2 /* CloudLocal */,
+          isDistributionLocked: false,
+          scope: 0 /* PerCar */,
+          managedByFeature: 'fuel-analysis',
+          producedByFeature: 'fuel-analysis',
+        },
+        {
+          id: 'ch-tp-rate',
+          isReserved: true,
+          category: 'Fuel',
+          name: 'ThrottleProxyRate',
+          abbreviation: 'TPRATE',
+          dataType: 'VolumeFlow',
+          baseUnitType: 'UsGallonPerMinute',
+          outputUnitType: 'UsGallonPerMinute',
+          outputDecimalPlaces: 3,
+          lowRange: 0,
+          highRange: 10,
+          defaultValue: 0,
+          groupTag: '',
+          enumConversion: null,
+          timeoutMs: 0,
+          distribution: 1 /* CarToCloud */,
+          isDistributionLocked: true,
+          scope: 0 /* PerCar */,
+          managedByFeature: 'throttle-consumption',
+          producedByFeature: 'throttle-consumption',
+        },
+        {
+          // No producedByFeature — should NOT appear in the used set from this scan.
+          id: 'ch-plain',
+          isReserved: true,
+          category: 'Car Temps',
+          name: 'CoolantTemp',
+          abbreviation: 'COOLNT',
+          dataType: 'Temperature',
+          baseUnitType: 'DegreeFahrenheit',
+          outputUnitType: 'DegreeFahrenheit',
+          outputDecimalPlaces: 1,
+          lowRange: 0,
+          highRange: 300,
+          defaultValue: 0,
+          groupTag: '',
+          enumConversion: null,
+          timeoutMs: 0,
+          distribution: 1 /* CarToCloud */,
+          isDistributionLocked: false,
+          scope: 0 /* PerCar */,
+          managedByFeature: null,
+          producedByFeature: null,
+        },
+      ],
+      alarmDefinitions: [],
+      counterDefinitions: [],
+      mathDefinitions: [],
+      tableDefinitions: [],
+      timerDefinitions: [],
+      userConditions: [],
+      loggingDefinitions: [],
+      enumDefinitions: [],
+      fuelConfig: {
+        isEnabled: false,
+        tankCapacityGallons: 0,
+        defaultConsumptionGalPerMin: 0,
+        defaultYellowConsumptionMultiplier: 1,
+        defaultCode35ConsumptionMultiplier: 1,
+        fuelLevelChannelId: 'a2529acf-a7c6-449f-8a85-c7d76b35dbcb',
+        tripFuelChannelId: 'acd3d127-acaf-4f8a-b27a-8623cfda09f3',
+        fuelUsedChannelId: '740ce2a6-dc88-4425-85dc-7f99f2a902f1',
+        fuelFullChannelId: 'c3b94831-95f6-4935-bf67-1aacfd611f75',
+        inPitChannelId: 'da12563a-1167-4899-9956-700b0b693005',
+        throttleConsumption: {
+          isEnabled: false,
+          maxRpm: 0,
+          throttlePositionChannelId: 'c4a1f8e3-2b9d-4f6c-8a7e-1d3e5b9c2a01',
+          engineRpmChannelId: '74c57a58-d78d-499a-977b-11cee221926a',
+        },
+      },
+    });
+
+    const usedIds = service.usedChannelIds();
+    expect(usedIds).toContain('ch-fuel-range');
+    expect(usedIds).toContain('ch-tp-rate');
+    expect(usedIds).not.toContain('ch-plain');
+
+    const usageMap = service.channelUsageMap();
+    expect(usageMap.get('ch-fuel-range')).toEqual(['Output: Fuel Analysis']);
+    expect(usageMap.get('ch-tp-rate')).toEqual(['Output: Throttle Consumption']);
+  });
 });

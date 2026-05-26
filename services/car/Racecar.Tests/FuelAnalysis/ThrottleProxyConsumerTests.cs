@@ -150,6 +150,82 @@ public sealed class ThrottleProxyConsumerTests
     }
 
     [TestMethod]
+    public void Get_subscriptions_honors_custom_channel_ids_from_CarFuelConfig()
+    {
+        // Regression test for the Phase 1 + Phase 2 refactor: input channel IDs are now sourced
+        // from ThrottleConsumptionConfig (throttle signals) + CarFuelConfig (fuel signals) rather
+        // than hardcoded reserved GUIDs. Build an ActiveConfiguration whose session map binds the
+        // SAME session indices to CUSTOM channel GUIDs, and a CarConfiguration that points the
+        // bindings at those custom GUIDs. GetSubscriptions should return the session indices
+        // that correspond to the user-configured channels.
+        var time = new FakeTimeProvider(new DateTimeOffset(2026, 5, 24, 0, 0, 0, TimeSpan.Zero));
+
+        var customTps      = Guid.Parse("aaaaaaaa-0000-0000-0000-000000000001");
+        var customRpm      = Guid.Parse("aaaaaaaa-0000-0000-0000-000000000002");
+        var customTrip     = Guid.Parse("aaaaaaaa-0000-0000-0000-000000000003");
+        var customFuelUsed = Guid.Parse("aaaaaaaa-0000-0000-0000-000000000004");
+        var customFuelFull = Guid.Parse("aaaaaaaa-0000-0000-0000-000000000005");
+        var customInPit    = Guid.Parse("aaaaaaaa-0000-0000-0000-000000000006");
+
+        ChannelDefinition Def(Guid id) => new() { Id = id };
+        var channels = new Dictionary<int, ChannelDefinition>
+        {
+            [TpsId] = Def(customTps),
+            [RpmId] = Def(customRpm),
+            [TripFuelId] = Def(customTrip),
+            [FuelUsedId] = Def(customFuelUsed),
+            [FuelFullId] = Def(customFuelFull),
+            [InPitId] = Def(customInPit),
+        };
+        var config = ActiveConfiguration.Empty with
+        {
+            Channels = channels,
+            ChannelIdsByDefinition = channels.ToDictionary(kv => kv.Value.Id, kv => kv.Key),
+        };
+
+        var carConfig = BuildCarConfig();
+        carConfig.FuelConfig.ThrottleConsumption.ThrottlePositionChannelId = customTps;
+        carConfig.FuelConfig.ThrottleConsumption.EngineRpmChannelId = customRpm;
+        carConfig.FuelConfig.TripFuelChannelId = customTrip;
+        carConfig.FuelConfig.FuelUsedChannelId = customFuelUsed;
+        carConfig.FuelConfig.FuelFullChannelId = customFuelFull;
+        carConfig.FuelConfig.InPitChannelId = customInPit;
+
+        var consumer = BuildConsumer(time, config, carConfig, FastOptions(NewTempPath()), out _, out _);
+
+        var subs = consumer.GetSubscriptions(config);
+
+        Assert.IsNotNull(subs);
+        Assert.HasCount(6, subs);
+        Assert.Contains(TpsId, subs);
+        Assert.Contains(RpmId, subs);
+        Assert.Contains(TripFuelId, subs);
+        Assert.Contains(FuelUsedId, subs);
+        Assert.Contains(FuelFullId, subs);
+        Assert.Contains(InPitId, subs);
+    }
+
+    [TestMethod]
+    public void Get_subscriptions_excludes_inpit_when_config_clears_it()
+    {
+        // ThrottleConsumption only treats InPit as optional — when the user clears the binding
+        // (CarFuelConfig.InPitChannelId = null), the subscription set drops to five.
+        var time = new FakeTimeProvider(new DateTimeOffset(2026, 5, 24, 0, 0, 0, TimeSpan.Zero));
+        var config = BuildConfig();
+
+        var carConfig = BuildCarConfig();
+        carConfig.FuelConfig.InPitChannelId = null;
+
+        var consumer = BuildConsumer(time, config, carConfig, FastOptions(NewTempPath()), out _, out _);
+
+        var subs = consumer.GetSubscriptions(config);
+
+        Assert.IsNotNull(subs);
+        Assert.HasCount(5, subs);
+        Assert.DoesNotContain(InPitId, subs, "InPit subscription should drop when InPitChannelId is null.");
+    }
+
+    [TestMethod]
     public async Task Without_calibration_emits_only_confidence_not_fuel_used_or_rate()
     {
         var time = new FakeTimeProvider(new DateTimeOffset(2026, 5, 24, 0, 0, 0, TimeSpan.Zero));
