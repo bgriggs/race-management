@@ -11,6 +11,16 @@ import { AlarmDefinition } from '../../../models/alarm-definition';
 
 const EMPTY_GUID = '00000000-0000-0000-0000-000000000000';
 
+const FEATURE_LABELS: Readonly<Record<string, string>> = {
+  'fuel-analysis': 'Fuel Analysis',
+  'throttle-consumption': 'Throttle Consumption',
+};
+
+function formatFeatureLabel(featureId: string): string {
+  return FEATURE_LABELS[featureId]
+    ?? featureId.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
 @Injectable({ providedIn: 'root' })
 export class ChannelUsageService {
   private readonly _usedChannelIds = signal<string[]>([]);
@@ -82,6 +92,15 @@ export class ChannelUsageService {
     for (const def of config.alarmDefinitions ?? []) {
       if (def.alarmStatusChannelId) {
         addUsage(def.alarmStatusChannelId, `Alarm: ${def.name}`);
+      }
+    }
+
+    // Channels populated by an internal feature's code (e.g., FuelReconciler writing the
+    // FuelRange* channels, ThrottleProxyConsumer writing the ThrottleProxy* channels).
+    // Counts as a value source, same as a math/timer/alarm output.
+    for (const def of config.channelDefinitions ?? []) {
+      if (def.producedByFeature) {
+        addUsage(def.id, `Output: ${formatFeatureLabel(def.producedByFeature)}`);
       }
     }
 

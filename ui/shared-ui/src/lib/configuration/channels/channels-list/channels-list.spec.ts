@@ -56,6 +56,7 @@ function buildConfigurationWithChannels(channelCount: number): CarConfiguration 
       isDistributionLocked: false,
       scope: ChannelScope.PerCar,
       managedByFeature: null,
+      producedByFeature: null,
     })),
     alarmDefinitions: [],
     counterDefinitions: [],

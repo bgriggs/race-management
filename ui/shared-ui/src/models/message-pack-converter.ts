@@ -163,6 +163,7 @@ export function channelDefinitionFromMessagePack(obj: Record<string, unknown>): 
         isDistributionLocked: obj["IsDistributionLocked"] as boolean,
         scope: obj["Scope"] as ChannelScope,
         managedByFeature: obj["ManagedByFeature"] != null ? obj["ManagedByFeature"] as string : null,
+        producedByFeature: obj["ProducedByFeature"] != null ? obj["ProducedByFeature"] as string : null,
     };
 }
 

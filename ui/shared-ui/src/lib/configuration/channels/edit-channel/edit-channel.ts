@@ -203,9 +203,22 @@ export class EditChannel implements OnInit {
         .map((channel) => channel.id)
     );
 
+    // Hide managed reserved templates from the picker (users get them via feature toggle),
+    // BUT keep the currently-edited channel in the list so its <option> exists in the
+    // Name <select> and the bound reservedChannelId selects correctly.
     return this.reservedChannels()
-      .filter((channel) => !reservedIdsInUse.has(channel.id) && !channel.managedByFeature)
+      .filter((channel) =>
+        !reservedIdsInUse.has(channel.id)
+        && (!channel.managedByFeature || channel.id === currentChannelId))
       .sort((a, b) => a.name.localeCompare(b.name));
+  });
+
+  // True when the editor is bound to an existing managed reserved channel. The Name <select>
+  // is disabled in this case so the user can't accidentally swap the managed channel for an
+  // unmanaged one (which would strip ManagedByFeature and break the feature toggle's lifecycle).
+  readonly isEditingManagedChannel = computed(() => {
+    const ch = this.channel();
+    return ch != null && ch.isReserved && !!ch.managedByFeature;
   });
 
   private lastResetChannelId: string | null | undefined = undefined;
@@ -354,7 +367,8 @@ export class EditChannel implements OnInit {
       distribution: this.form.controls.distribution.value,
       isDistributionLocked: false,
       scope: this.form.controls.scope.value,
-      managedByFeature: null
+      managedByFeature: null,
+      producedByFeature: null
     };
 
     if (isReserved && selectedReservedChannel) {
@@ -368,9 +382,11 @@ export class EditChannel implements OnInit {
       channel.managedByFeature = selectedReservedChannel.managedByFeature;
       // Propagate the template's lock state; if true the server rejects any distribution change.
       channel.isDistributionLocked = selectedReservedChannel.isDistributionLocked;
+      channel.producedByFeature = selectedReservedChannel.producedByFeature;
     } else if (existingChannel?.isReserved) {
-      // Editing an existing reserved channel — preserve the lock from the persisted record.
+      // Editing an existing reserved channel — preserve the lock + producer from the persisted record.
       channel.isDistributionLocked = existingChannel.isDistributionLocked;
+      channel.producedByFeature = existingChannel.producedByFeature;
     }
 
     this.save.emit(channel);
@@ -406,6 +422,14 @@ export class EditChannel implements OnInit {
       this.form.controls.distribution.disable(opts);
     } else {
       this.form.controls.distribution.enable(opts);
+    }
+
+    // Lock the Name dropdown when editing a managed channel — swapping its identity would
+    // strip ManagedByFeature and leave the feature's lifecycle handler dangling.
+    if (this.isEditingManagedChannel()) {
+      this.form.controls.reservedChannelId.disable(opts);
+    } else {
+      this.form.controls.reservedChannelId.enable(opts);
     }
   }
 

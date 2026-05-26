@@ -95,7 +95,8 @@ function buildReservedChannel(
     distribution,
     isDistributionLocked: false,
     scope: ChannelScope.PerCar,
-    managedByFeature
+    managedByFeature,
+    producedByFeature: null
   };
 }
 

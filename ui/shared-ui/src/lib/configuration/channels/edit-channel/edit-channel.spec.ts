@@ -27,6 +27,7 @@ function makeChannel(overrides: Partial<ChannelDefinition> = {}): ChannelDefinit
     isDistributionLocked: false,
     scope: ChannelScope.PerCar,
     managedByFeature: null,
+    producedByFeature: null,
     ...overrides
   };
 }

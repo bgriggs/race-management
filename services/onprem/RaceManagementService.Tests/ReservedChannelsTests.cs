@@ -206,6 +206,55 @@ public sealed class ReservedChannelsTests
     }
 
     [TestMethod]
+    public void ProducedByFeature_MatchesExpectedSet()
+    {
+        // Channels written by an internal feature's code. The Channels-list "Used" column shows
+        // these as "Output: {feature}". If this set changes, update Piece-1 (ProducedByFeature
+        // for usage tracking) and the feature manifest documentation.
+        var expected = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            // fuel-analysis — FuelReconciler outputs.
+            { "FuelConsumption",            "fuel-analysis" },
+            { "FuelRangeMinutes",           "fuel-analysis" },
+            { "FuelRangeGallons",           "fuel-analysis" },
+            { "FuelRangeLaps",              "fuel-analysis" },
+            { "FuelRangeMinutesHighConf",   "fuel-analysis" },
+            { "FuelRangeGallonsHighConf",   "fuel-analysis" },
+            { "FuelRangeLapsHighConf",      "fuel-analysis" },
+            { "FuelRangeConfidence",        "fuel-analysis" },
+            { "FuelConsumptionGalPerLap",   "fuel-analysis" },
+            { "FuelWindowElapsedMinutes",   "fuel-analysis" },
+
+            // throttle-consumption — in-car ThrottleProxyConsumer outputs.
+            { "ThrottleProxyFuelUsed",      "throttle-consumption" },
+            { "ThrottleProxyRate",          "throttle-consumption" },
+            { "ThrottleProxyConfidence",    "throttle-consumption" },
+            { "ThrottleProxyGridCoverage",  "throttle-consumption" },
+        };
+
+        var actual = ReservedChannels.Channels
+            .Where(c => !string.IsNullOrEmpty(c.ProducedByFeature))
+            .ToDictionary(c => c.Name, c => c.ProducedByFeature!, StringComparer.OrdinalIgnoreCase);
+
+        var failures = new List<string>();
+        foreach (var (name, feature) in expected)
+        {
+            if (!actual.TryGetValue(name, out var actualFeature))
+                failures.Add($"{name}: missing ProducedByFeature (expected '{feature}')");
+            else if (actualFeature != feature)
+                failures.Add($"{name}: ProducedByFeature='{actualFeature}' (expected '{feature}')");
+        }
+        foreach (var (name, feature) in actual)
+        {
+            if (!expected.ContainsKey(name))
+                failures.Add($"{name}: unexpected ProducedByFeature='{feature}' (not in expected set)");
+        }
+
+        Assert.IsEmpty(failures,
+            $"ProducedByFeature drift:{Environment.NewLine}{string.Join(Environment.NewLine, failures)}");
+    }
+
+    [TestMethod]
     public void OnlyThrottleProxyOutputs_HaveDistributionLocked()
     {
         // The set of distribution-locked reserved channels is a contract. Adding to it requires a deliberate

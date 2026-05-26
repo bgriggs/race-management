@@ -73,4 +73,16 @@ export interface ChannelDefinition {
      * uses it to lock editing and deletion.
      */
     managedByFeature: string | null;
+    /**
+     * Identifier of the internal feature whose code writes values to this channel (e.g.,
+     * "fuel-analysis" for the FuelReconciler's range outputs, "throttle-consumption" for
+     * the in-car ThrottleProxyConsumer's outputs). When non-null, the channel-usage UI
+     * counts the channel as "used" and labels it "Output: {feature}" — analogous to a
+     * math/timer/counter definition declaring its output channel. Distinct from
+     * @see {@link Channels.ChannelDefinition.ManagedByFeature}, which is lifecycle ownership: a channel can be
+     * managed by a feature (auto-injected with the toggle) without being produced by it
+     * (e.g., ThrottlePosition is consumed by throttle-consumption but produced by the
+     * user's CAN-bus mapping).
+     */
+    producedByFeature: string | null;
 }

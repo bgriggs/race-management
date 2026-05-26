@@ -90,6 +90,20 @@ public class ChannelDefinition
     /// </summary>
     [StringLength(32)]
     public string? ManagedByFeature { get; set; }
+
+    /// <summary>
+    /// Identifier of the internal feature whose code writes values to this channel (e.g.,
+    /// "fuel-analysis" for the FuelReconciler's range outputs, "throttle-consumption" for
+    /// the in-car ThrottleProxyConsumer's outputs). When non-null, the channel-usage UI
+    /// counts the channel as "used" and labels it "Output: {feature}" — analogous to a
+    /// math/timer/counter definition declaring its output channel. Distinct from
+    /// <see cref="ManagedByFeature"/>, which is lifecycle ownership: a channel can be
+    /// managed by a feature (auto-injected with the toggle) without being produced by it
+    /// (e.g., ThrottlePosition is consumed by throttle-consumption but produced by the
+    /// user's CAN-bus mapping).
+    /// </summary>
+    [StringLength(32)]
+    public string? ProducedByFeature { get; set; }
 }
 
 [AttributeUsage(AttributeTargets.Property)]
