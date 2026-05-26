@@ -415,7 +415,23 @@ describe('ChannelUsageService - per-type output methods', () => {
       userConditions: [{ id: 'u1', name: 'U', outputChannelId: 'ch-uc', statements: [] }],
       loggingDefinitions: [],
       enumDefinitions: [],
-      fuelConfig: { isEnabled: false, tankCapacityGallons: 0, defaultConsumptionGalPerMin: 0, defaultYellowConsumptionMultiplier: 1, defaultCode35ConsumptionMultiplier: 1, throttleConsumption: { isEnabled: false, maxRpm: 0 } },
+      fuelConfig: {
+        isEnabled: false,
+        tankCapacityGallons: 0,
+        defaultConsumptionGalPerMin: 0,
+        defaultYellowConsumptionMultiplier: 1,
+        defaultCode35ConsumptionMultiplier: 1,
+        tripFuelChannelId: 'acd3d127-acaf-4f8a-b27a-8623cfda09f3',
+        fuelUsedChannelId: '740ce2a6-dc88-4425-85dc-7f99f2a902f1',
+        fuelFullChannelId: 'c3b94831-95f6-4935-bf67-1aacfd611f75',
+        inPitChannelId: 'da12563a-1167-4899-9956-700b0b693005',
+        throttleConsumption: {
+          isEnabled: false,
+          maxRpm: 0,
+          throttlePositionChannelId: 'c4a1f8e3-2b9d-4f6c-8a7e-1d3e5b9c2a01',
+          engineRpmChannelId: '74c57a58-d78d-499a-977b-11cee221926a',
+        },
+      },
     });
 
     const ids = service.usedChannelIds();

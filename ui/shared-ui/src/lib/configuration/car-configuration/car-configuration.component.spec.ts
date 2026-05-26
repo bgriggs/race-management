@@ -21,6 +21,18 @@ try {
   // Test environment may already be initialized by the runner.
 }
 
+const DEFAULT_THROTTLE_CHANNEL_IDS = {
+  throttlePositionChannelId: 'c4a1f8e3-2b9d-4f6c-8a7e-1d3e5b9c2a01',
+  engineRpmChannelId: '74c57a58-d78d-499a-977b-11cee221926a',
+};
+
+const DEFAULT_FUEL_CHANNEL_IDS = {
+  tripFuelChannelId: 'acd3d127-acaf-4f8a-b27a-8623cfda09f3',
+  fuelUsedChannelId: '740ce2a6-dc88-4425-85dc-7f99f2a902f1',
+  fuelFullChannelId: 'c3b94831-95f6-4935-bf67-1aacfd611f75',
+  inPitChannelId: 'da12563a-1167-4899-9956-700b0b693005',
+};
+
 function buildConfig(name: string): CarConfiguration {
   return {
     configurationId: 'cfg-1',
@@ -65,7 +77,7 @@ function buildConfig(name: string): CarConfiguration {
       defaultConsumptionGalPerMin: 0,
       defaultYellowConsumptionMultiplier: 0.5,
       defaultCode35ConsumptionMultiplier: 0.3,
-      throttleConsumption: { isEnabled: false, maxRpm: 7000 }
+      ...DEFAULT_FUEL_CHANNEL_IDS, throttleConsumption: { isEnabled: false, maxRpm: 7000, ...DEFAULT_THROTTLE_CHANNEL_IDS }
     }
   };
 }
@@ -460,7 +472,7 @@ describe('CarConfigurationComponent', () => {
         defaultConsumptionGalPerMin: 0.3,
         defaultYellowConsumptionMultiplier: 0.5,
         defaultCode35ConsumptionMultiplier: 0.3,
-        throttleConsumption: { isEnabled: false, maxRpm: 7000 }
+        ...DEFAULT_FUEL_CHANNEL_IDS, throttleConsumption: { isEnabled: false, maxRpm: 7000, ...DEFAULT_THROTTLE_CHANNEL_IDS }
       });
 
       const ids = component.activeConfiguration()!.channelDefinitions.map((c) => c.id);
@@ -487,7 +499,7 @@ describe('CarConfigurationComponent', () => {
           defaultConsumptionGalPerMin: 0.3,
           defaultYellowConsumptionMultiplier: 0.5,
           defaultCode35ConsumptionMultiplier: 0.3,
-          throttleConsumption: { isEnabled: true, maxRpm: 7000 }
+          ...DEFAULT_FUEL_CHANNEL_IDS, throttleConsumption: { isEnabled: true, maxRpm: 7000, ...DEFAULT_THROTTLE_CHANNEL_IDS }
         }
       });
 
@@ -497,7 +509,7 @@ describe('CarConfigurationComponent', () => {
         defaultConsumptionGalPerMin: 0.3,
         defaultYellowConsumptionMultiplier: 0.5,
         defaultCode35ConsumptionMultiplier: 0.3,
-        throttleConsumption: { isEnabled: true, maxRpm: 7000 }
+        ...DEFAULT_FUEL_CHANNEL_IDS, throttleConsumption: { isEnabled: true, maxRpm: 7000, ...DEFAULT_THROTTLE_CHANNEL_IDS }
       });
 
       const ids = component.activeConfiguration()!.channelDefinitions.map((c) => c.id);
@@ -517,7 +529,7 @@ describe('CarConfigurationComponent', () => {
           defaultConsumptionGalPerMin: 0.3,
           defaultYellowConsumptionMultiplier: 0.5,
           defaultCode35ConsumptionMultiplier: 0.3,
-          throttleConsumption: { isEnabled: false, maxRpm: 7000 }
+          ...DEFAULT_FUEL_CHANNEL_IDS, throttleConsumption: { isEnabled: false, maxRpm: 7000, ...DEFAULT_THROTTLE_CHANNEL_IDS }
         }
       });
 
@@ -527,7 +539,7 @@ describe('CarConfigurationComponent', () => {
         defaultConsumptionGalPerMin: 0.3,
         defaultYellowConsumptionMultiplier: 0.5,
         defaultCode35ConsumptionMultiplier: 0.3,
-        throttleConsumption: { isEnabled: true, maxRpm: 7000 }
+        ...DEFAULT_FUEL_CHANNEL_IDS, throttleConsumption: { isEnabled: true, maxRpm: 7000, ...DEFAULT_THROTTLE_CHANNEL_IDS }
       });
 
       const ids = component.activeConfiguration()!.channelDefinitions.map((c) => c.id);
@@ -546,7 +558,7 @@ describe('CarConfigurationComponent', () => {
           defaultConsumptionGalPerMin: 0.3,
           defaultYellowConsumptionMultiplier: 0.5,
           defaultCode35ConsumptionMultiplier: 0.3,
-          throttleConsumption: { isEnabled: true, maxRpm: 7000 }
+          ...DEFAULT_FUEL_CHANNEL_IDS, throttleConsumption: { isEnabled: true, maxRpm: 7000, ...DEFAULT_THROTTLE_CHANNEL_IDS }
         }
       });
 
@@ -556,7 +568,7 @@ describe('CarConfigurationComponent', () => {
         defaultConsumptionGalPerMin: 0.3,
         defaultYellowConsumptionMultiplier: 0.5,
         defaultCode35ConsumptionMultiplier: 0.3,
-        throttleConsumption: { isEnabled: false, maxRpm: 7000 }
+        ...DEFAULT_FUEL_CHANNEL_IDS, throttleConsumption: { isEnabled: false, maxRpm: 7000, ...DEFAULT_THROTTLE_CHANNEL_IDS }
       });
 
       const ids = component.activeConfiguration()!.channelDefinitions.map((c) => c.id);
@@ -577,7 +589,7 @@ describe('CarConfigurationComponent', () => {
         defaultConsumptionGalPerMin: 0.3,
         defaultYellowConsumptionMultiplier: 0.5,
         defaultCode35ConsumptionMultiplier: 0.3,
-        throttleConsumption: { isEnabled: false, maxRpm: 7000 }
+        ...DEFAULT_FUEL_CHANNEL_IDS, throttleConsumption: { isEnabled: false, maxRpm: 7000, ...DEFAULT_THROTTLE_CHANNEL_IDS }
       });
 
       const ids = component.activeConfiguration()!.channelDefinitions.map((c) => c.id);

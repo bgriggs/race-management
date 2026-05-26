@@ -27,5 +27,40 @@
 				<p class="field-error">Max RPM must be between 2000 and 12000.</p>
 			}
 		</div>
+
+		<fieldset class="input-channels">
+			<legend>Input Channels</legend>
+			<small class="field-hint">
+				Defaults bind to the reserved channels carrying these signals. Override if you have a different source
+				(e.g., a math-computed throttle signal). Fuel-side inputs (TripFuel, FuelUsed, FuelFull, InPit) are
+				declared on the Fuel Analysis page.
+			</small>
+
+			<div class="field">
+				<label class="field-label">Throttle Position <span class="required-mark">*</span></label>
+				<lib-channel-selector
+					[channels]="channels()"
+					[usedChannelIds]="usedChannelIds()"
+					[channelId]="form.controls.throttlePositionChannelId.value"
+					(channelIdChange)="onChannelChange('throttlePositionChannelId', $event)"
+				/>
+				@if (form.controls.throttlePositionChannelId.touched && form.controls.throttlePositionChannelId.invalid) {
+					<p class="field-error">Throttle Position channel is required.</p>
+				}
+			</div>
+
+			<div class="field">
+				<label class="field-label">Engine RPM <span class="required-mark">*</span></label>
+				<lib-channel-selector
+					[channels]="channels()"
+					[usedChannelIds]="usedChannelIds()"
+					[channelId]="form.controls.engineRpmChannelId.value"
+					(channelIdChange)="onChannelChange('engineRpmChannelId', $event)"
+				/>
+				@if (form.controls.engineRpmChannelId.touched && form.controls.engineRpmChannelId.invalid) {
+					<p class="field-error">Engine RPM channel is required.</p>
+				}
+			</div>
+		</fieldset>
 	</form>
 </section>

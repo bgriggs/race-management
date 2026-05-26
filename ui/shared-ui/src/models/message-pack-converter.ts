@@ -373,6 +373,10 @@ export function carFuelConfigFromMessagePack(obj: Record<string, unknown>): CarF
         defaultConsumptionGalPerMin: obj["DefaultConsumptionGalPerMin"] as number,
         defaultYellowConsumptionMultiplier: obj["DefaultYellowConsumptionMultiplier"] as number,
         defaultCode35ConsumptionMultiplier: obj["DefaultCode35ConsumptionMultiplier"] as number,
+        tripFuelChannelId: obj["TripFuelChannelId"] as string,
+        fuelUsedChannelId: obj["FuelUsedChannelId"] as string,
+        fuelFullChannelId: obj["FuelFullChannelId"] as string,
+        inPitChannelId: obj["InPitChannelId"] != null ? obj["InPitChannelId"] as string : null,
         throttleConsumption: throttleConsumptionConfigFromMessagePack(obj["ThrottleConsumption"] as Record<string, unknown>),
     };
 }
@@ -385,6 +389,8 @@ export function throttleConsumptionConfigFromMessagePack(obj: Record<string, unk
     return {
         isEnabled: obj["IsEnabled"] as boolean,
         maxRpm: obj["MaxRpm"] as number,
+        throttlePositionChannelId: obj["ThrottlePositionChannelId"] as string,
+        engineRpmChannelId: obj["EngineRpmChannelId"] as string,
     };
 }
 

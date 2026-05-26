@@ -1,4 +1,5 @@
 using Common;
+using Common.FuelAnalysis;
 using Microsoft.Extensions.Options;
 using Racecar.Pipeline;
 using Racecar.Pipeline.Dispatch;
@@ -18,13 +19,8 @@ namespace Racecar.FuelAnalysis;
 public sealed class ThrottleProxyConsumer
     : IChannelConsumer, IHostedService, IAsyncDisposable
 {
-    // Reserved-channel GUIDs — kept in sync with ReservedChannels.cs by id, not by name.
-    private static readonly Guid ThrottlePositionGuid = Guid.Parse("c4a1f8e3-2b9d-4f6c-8a7e-1d3e5b9c2a01");
-    private static readonly Guid EngineRpmGuid = Guid.Parse("74c57a58-d78d-499a-977b-11cee221926a");
-    private static readonly Guid TripFuelGuid = Guid.Parse("acd3d127-acaf-4f8a-b27a-8623cfda09f3");
-    private static readonly Guid FuelUsedGuid = Guid.Parse("740ce2a6-dc88-4425-85dc-7f99f2a902f1");
-    private static readonly Guid FuelFullGuid = Guid.Parse("c3b94831-95f6-4935-bf67-1aacfd611f75");
-    private static readonly Guid InPitGuid = Guid.Parse("da12563a-1167-4899-9956-700b0b693005");
+    // Output channel GUIDs — kept in sync with ReservedChannels.cs by id, not by name.
+    // Inputs are now resolved via ThrottleConsumptionConfig (user-configurable per-config) — see InputChannelMap.Build.
     private static readonly Guid ThrottleProxyFuelUsedGuid = Guid.Parse("916d4b4f-5bcf-4d9c-2a1e-4d6e8b3c5a0d");
     private static readonly Guid ThrottleProxyRateGuid = Guid.Parse("a27e5c50-6cd1-4eac-3b2f-5e7f9c4d6b0e");
     private static readonly Guid ThrottleProxyConfidenceGuid = Guid.Parse("b38f6d61-7de2-4fbd-4c3a-6f8a1d5e7c0f");
@@ -110,7 +106,7 @@ public sealed class ThrottleProxyConsumer
             Interlocked.Exchange(ref _inputs, null);
             return new HashSet<int>();
         }
-        var inputs = InputChannelMap.Build(config);
+        var inputs = InputChannelMap.Build(config, _carConfig.CurrentValue.FuelConfig);
         Interlocked.Exchange(ref _inputs, inputs);
         return inputs.AllIds;
     }
@@ -460,14 +456,15 @@ public sealed class ThrottleProxyConsumer
         int InPit,
         IReadOnlySet<int> AllIds)
     {
-        public static InputChannelMap Build(ActiveConfiguration config)
+        public static InputChannelMap Build(ActiveConfiguration config, CarFuelConfig fuelConfig)
         {
-            var tps = Resolve(config, ThrottlePositionGuid);
-            var rpm = Resolve(config, EngineRpmGuid);
-            var trip = Resolve(config, TripFuelGuid);
-            var used = Resolve(config, FuelUsedGuid);
-            var full = Resolve(config, FuelFullGuid);
-            var pit = Resolve(config, InPitGuid);
+            var throttleConfig = fuelConfig.ThrottleConsumption;
+            var tps = Resolve(config, throttleConfig.ThrottlePositionChannelId);
+            var rpm = Resolve(config, throttleConfig.EngineRpmChannelId);
+            var trip = Resolve(config, fuelConfig.TripFuelChannelId);
+            var used = Resolve(config, fuelConfig.FuelUsedChannelId);
+            var full = Resolve(config, fuelConfig.FuelFullChannelId);
+            var pit = fuelConfig.InPitChannelId is Guid pitGuid ? Resolve(config, pitGuid) : -1;
 
             var ids = new HashSet<int>();
             if (tps >= 0) ids.Add(tps);
@@ -481,6 +478,6 @@ public sealed class ThrottleProxyConsumer
         }
 
         private static int Resolve(ActiveConfiguration config, Guid guid) =>
-            config.ChannelIdsByDefinition.TryGetValue(guid, out var id) ? id : -1;
+            guid != Guid.Empty && config.ChannelIdsByDefinition.TryGetValue(guid, out var id) ? id : -1;
     }
 }

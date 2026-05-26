@@ -1,4 +1,4 @@
-import { Component, computed, input, output, signal } from '@angular/core';
+import { afterNextRender, Component, computed, ElementRef, input, output, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { ChannelDefinition } from '../../../../models/channel-definition';
@@ -16,6 +16,12 @@ export class ChannelSelectionList {
 
   readonly searchText = signal('');
   readonly showUnusedOnly = signal(true);
+
+  private readonly searchInput = viewChild.required<ElementRef<HTMLInputElement>>('searchInput');
+
+  constructor() {
+    afterNextRender(() => this.searchInput().nativeElement.focus());
+  }
 
   readonly filteredChannels = computed(() => {
     let result = this.channels();

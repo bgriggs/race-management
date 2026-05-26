@@ -212,6 +212,8 @@
         @if (selectedNodeId() === 'fuel-analysis') {
           <lib-fuel-configuration
             [configuration]="fuelConfig()"
+            [channels]="activeConfiguration()?.channelDefinitions ?? []"
+            [usedChannelIds]="usedChannelIds()"
             (configurationChange)="onFuelConfigChange($event)"
           />
         }
@@ -219,6 +221,8 @@
         @if (selectedNodeId() === 'throttle-consumption') {
           <lib-throttle-consumption-config
             [configuration]="throttleConsumption()"
+            [channels]="activeConfiguration()?.channelDefinitions ?? []"
+            [usedChannelIds]="usedChannelIds()"
             (configurationChange)="onThrottleConsumptionChange($event)"
           />
         }
