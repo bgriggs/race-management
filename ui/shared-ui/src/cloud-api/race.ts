@@ -13,4 +13,5 @@ export interface Race {
     notes: string;
     redMistEventId: number | null;
     redMistOrganizationId: number | null;
+    redMistAccessCode: string | null;
 }

@@ -101,6 +101,7 @@ public class Program
         builder.Services.AddSingleton<RedMistActivationEvaluator>();
         builder.Services.AddSingleton<RedMistStatusWriter>();
         builder.Services.AddSingleton<RedMistChannelPublisher>();
+        builder.Services.AddSingleton<RedMistRaceStatePublisher>();
         builder.Services.AddHostedService<RedMistConsumerWorker>();
 
         // StintTracker — derives CurrentStintMinutes / StintCount from InPit transitions.

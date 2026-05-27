@@ -11,7 +11,8 @@ namespace Cloud.Tests.ChannelProcessor.RedMist;
 /// <c>Race</c> for a team given <c>nowUtc</c>, applying:
 ///   - 30-min pre / 30-min post pad around <c>(Race.Start, Race.Start+Race.Duration)</c>,
 ///   - tie-break by smallest |Start - now|, then by Race.Id ascending,
-///   - skip races without <c>RedMistEventId</c>,
+///   - skip races without either <c>RedMistEventId</c> or <c>RedMistOrganizationId</c>
+///     (org-only rows are kept so the worker can resolve them to a live event id),
 ///   - resolve <c>Race.Start</c> through <c>Race.TimeZone</c> (IANA) into UTC.
 ///
 /// Plus the supporting <c>LoadTeamCarNumbersAsync</c> lookup over <c>CarConfiguration.Car</c>.
@@ -165,8 +166,10 @@ public class RedMistActivationEvaluatorTests
     // ----- Filtering and tie-break -----
 
     [TestMethod]
-    public async Task Select_SkipsRacesWithoutRedMistEventId()
+    public async Task Select_SkipsRacesWithoutEventOrOrganization()
     {
+        // Race has neither RedMistEventId nor RedMistOrganizationId — not paired to RedMist
+        // at all, so it should not produce a candidate.
         AddRace(teamId: TeamId, startWallClock: Wall(2026, 6, 1, 10, 00), redMistEventId: null);
         await _db.SaveChangesAsync();
 
@@ -175,6 +178,148 @@ public class RedMistActivationEvaluatorTests
         var c = await _eval.SelectCandidateAsync(TeamId, nowUtc, default);
 
         Assert.IsNull(c);
+    }
+
+    [TestMethod]
+    public async Task Select_OrgOnlyRow_ReturnsCandidateWithOrgId_AndNullEventId()
+    {
+        // Org-only Race: no explicit event id, but the org is set. Evaluator returns it as
+        // a candidate; the worker's resolver fills in EventId from RedMist live-events.
+        AddRace(teamId: TeamId, startWallClock: Wall(2026, 6, 1, 10, 00),
+            redMistEventId: null, redMistOrganizationId: 42);
+        await _db.SaveChangesAsync();
+
+        var nowUtc = WallToUtc(Wall(2026, 6, 1, 10, 30));
+
+        var c = await _eval.SelectCandidateAsync(TeamId, nowUtc, default);
+
+        Assert.IsNotNull(c);
+        Assert.IsNull(c.RedMistEventId);
+        Assert.AreEqual(42, c.RedMistOrganizationId);
+        Assert.IsTrue(c.InWindow);
+    }
+
+    [TestMethod]
+    public async Task ListCandidateTeams_IncludesOrgOnlyTeams()
+    {
+        AddRace(teamId: 10, startWallClock: Wall(2026, 6, 1, 10, 00), redMistEventId: 100);
+        AddRace(teamId: 20, startWallClock: Wall(2026, 6, 1, 10, 00),
+            redMistEventId: null, redMistOrganizationId: 99);
+        await _db.SaveChangesAsync();
+
+        var teams = await _eval.ListCandidateTeamsAsync(default);
+
+        CollectionAssert.AreEquivalent(new[] { 10, 20 }, teams.ToArray());
+    }
+
+    // ----- Explicit selection (Team.SelectedRaceId) -----
+
+    [TestMethod]
+    public async Task Select_HonorsExplicitSelection_OverTimeWindowAutoPick()
+    {
+        // Race A (id 1) is closer to "now" by the time-window rule, but the team has
+        // explicitly selected Race B (id 2) — the explicit choice must win.
+        AddRace(id: 1, teamId: TeamId, startWallClock: Wall(2026, 6, 1, 10, 00), redMistEventId: 100);
+        AddRace(id: 2, teamId: TeamId, startWallClock: Wall(2026, 6, 1, 14, 00), redMistEventId: 200);
+        AddTeam(id: TeamId, selectedRaceId: 2);
+        await _db.SaveChangesAsync();
+
+        var nowUtc = WallToUtc(Wall(2026, 6, 1, 10, 30));
+
+        var c = await _eval.SelectCandidateAsync(TeamId, nowUtc, default);
+
+        Assert.IsNotNull(c);
+        Assert.AreEqual(2, c.RaceId);
+        Assert.AreEqual(200, c.RedMistEventId);
+    }
+
+    [TestMethod]
+    public async Task Select_ExplicitSelection_OutOfWindow_ReturnsCandidateWithInWindowFalse()
+    {
+        // User picked a future race. Activation evaluator returns the candidate but flags
+        // InWindow=false so the lease decision treats it as "no attach yet".
+        AddRace(id: 1, teamId: TeamId, startWallClock: Wall(2026, 6, 5, 10, 00), redMistEventId: 100);
+        AddTeam(id: TeamId, selectedRaceId: 1);
+        await _db.SaveChangesAsync();
+
+        var nowUtc = WallToUtc(Wall(2026, 6, 1, 10, 00));
+
+        var c = await _eval.SelectCandidateAsync(TeamId, nowUtc, default);
+
+        Assert.IsNotNull(c);
+        Assert.AreEqual(1, c.RaceId);
+        Assert.IsFalse(c.InWindow);
+    }
+
+    [TestMethod]
+    public async Task Select_ExplicitSelection_UnpairedRace_ReturnsNull_NoFallback()
+    {
+        // Picking an unpaired race is an explicit "stop monitoring RedMist" — even if
+        // another race is paired and in window, the user's choice wins. Returns null so
+        // the worker detaches; falling back to the paired race would silently override
+        // the user's intent.
+        AddRace(id: 1, teamId: TeamId, startWallClock: Wall(2026, 6, 1, 10, 00), redMistEventId: 100);
+        AddRace(id: 2, teamId: TeamId, startWallClock: Wall(2026, 6, 1, 11, 00), redMistEventId: null);
+        AddTeam(id: TeamId, selectedRaceId: 2);
+        await _db.SaveChangesAsync();
+
+        var nowUtc = WallToUtc(Wall(2026, 6, 1, 10, 30));
+
+        var c = await _eval.SelectCandidateAsync(TeamId, nowUtc, default);
+
+        Assert.IsNull(c);
+    }
+
+    [TestMethod]
+    public async Task Select_ExplicitSelection_MissingRace_ReturnsNull_NoFallback()
+    {
+        // Selection points at a race that doesn't exist (drift — DeleteRace should have
+        // cleared it but didn't). Don't silently switch to another race; return null so
+        // the user gets a blank header and can re-pick from the dropdown.
+        AddRace(id: 1, teamId: TeamId, startWallClock: Wall(2026, 6, 1, 10, 00), redMistEventId: 100);
+        AddTeam(id: TeamId, selectedRaceId: 999);
+        await _db.SaveChangesAsync();
+
+        var nowUtc = WallToUtc(Wall(2026, 6, 1, 10, 30));
+
+        var c = await _eval.SelectCandidateAsync(TeamId, nowUtc, default);
+
+        Assert.IsNull(c);
+    }
+
+    [TestMethod]
+    public async Task Select_AccessCode_FlowsFromRaceToCandidate()
+    {
+        // Private-event access code carries through to ActivationCandidate so the worker
+        // can pass it to SubscribeToEventV2WithCode. Tested separately from event-id
+        // selection so a regression in the projection wouldn't be masked by the other
+        // happy-path tests (which leave AccessCode null).
+        AddRace(id: 1, teamId: TeamId, startWallClock: Wall(2026, 6, 1, 10, 00),
+            redMistEventId: 100, redMistAccessCode: "ABC123");
+        await _db.SaveChangesAsync();
+
+        var nowUtc = WallToUtc(Wall(2026, 6, 1, 10, 30));
+
+        var c = await _eval.SelectCandidateAsync(TeamId, nowUtc, default);
+
+        Assert.IsNotNull(c);
+        Assert.AreEqual("ABC123", c.RedMistAccessCode);
+    }
+
+    [TestMethod]
+    public async Task ListCandidateTeams_IncludesTeamsWithSelectionButNoPairedRaces()
+    {
+        // Edge case: team has a SelectedRaceId set, but no Race row currently has a
+        // RedMistEventId/OrgId (perhaps the user-selected race is itself an unpaired one).
+        // The team still needs to appear in the candidate list so SelectCandidateAsync can
+        // run and either return the selected candidate or fall back.
+        AddRace(id: 1, teamId: TeamId, startWallClock: Wall(2026, 6, 1, 10, 00), redMistEventId: null);
+        AddTeam(id: TeamId, selectedRaceId: 1);
+        await _db.SaveChangesAsync();
+
+        var teams = await _eval.ListCandidateTeamsAsync(default);
+
+        Assert.Contains(TeamId, teams);
     }
 
     [TestMethod]
@@ -298,6 +443,8 @@ public class RedMistActivationEvaluatorTests
         DateTime startWallClock,
         double durationHours = 2,
         int? redMistEventId = null,
+        int? redMistOrganizationId = null,
+        string? redMistAccessCode = null,
         string timeZone = Tz,
         int id = 0)
     {
@@ -310,6 +457,19 @@ public class RedMistActivationEvaluatorTests
             Duration = durationHours,
             TimeZone = timeZone,
             RedMistEventId = redMistEventId,
+            RedMistOrganizationId = redMistOrganizationId,
+            RedMistAccessCode = redMistAccessCode,
+        });
+    }
+
+    private void AddTeam(int id, int? selectedRaceId = null)
+    {
+        _db.Teams.Add(new Team
+        {
+            Id = id,
+            Name = $"team-{id}",
+            ClientId = $"client-{id}",
+            SelectedRaceId = selectedRaceId,
         });
     }
 

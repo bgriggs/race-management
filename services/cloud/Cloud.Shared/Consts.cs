@@ -65,4 +65,19 @@ public static class Consts
     // definition save/delete; consumed by ChannelProcessor's AlarmDefinitionRepository
     // to evict cached per-car alarm sets immediately rather than waiting on the TTL.
     public const string ALARM_CONFIG_CHANGED_CHANNEL = "alarm-config-changed:{0}";
+
+    // Per-team current race-header state (race time, time-to-go, leader lap, flag).
+    // Written by ChannelProcessor's RedmistConsumer on every session/car patch and
+    // snapshot. JSON serialized. Read by WebHub on SubscribeToTeam to seed the client.
+    // No persistence semantics — value reflects the most recent RedMist update only;
+    // cleared on detach.
+    public const string RACE_STATE_KEY = "race-state:{0}";
+    public const string RACE_STATE_CHANGES_CHANNEL = "race-state-changes:{0}";
+
+    // Per-team race configuration / selection change pub/sub. Published by WebApi after
+    // SaveRace / DeleteRace / SelectRace; consumed by ChannelProcessor's RedmistConsumer
+    // to break its poll delay and re-evaluate the team's activation candidate immediately
+    // instead of waiting up to RenewalInterval (30s). Payload is unused — the channel name
+    // carries the only required information (which team to re-tick).
+    public const string TEAM_RACE_CHANGED_CHANNEL = "team-race-changed:{0}";
 }

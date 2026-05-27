@@ -4,6 +4,7 @@ using Cloud.Shared.Database.Models;
 using Cloud.Shared.Database.Models.Alarms;
 using Cloud.Shared.Database.Models.FuelAnalysis;
 using Cloud.Shared.FuelAnalysis;
+using Cloud.Shared.RedMist;
 using Cloud.Shared.Telemetry;
 using Common.TypeScript;
 using TypeGen.Core.SpecGeneration;
@@ -53,6 +54,9 @@ public class ModelGenerationSpec : GenerationSpec
         typeof(AlarmChangeNotification),
         typeof(StatementDefinition),
         typeof(ComparisonDefinition),
+        // RedMist
+        typeof(OrganizationSummary),
+        typeof(RaceStateDto),
     ];
 
     private static readonly Type[] EnumTypes =
@@ -72,6 +76,7 @@ public class ModelGenerationSpec : GenerationSpec
         typeof(ChannelValueSnapshot),
         typeof(ChannelChangeNotification),
         typeof(AlarmChangeNotification),
+        typeof(RaceStateDto),
     ];
 
     public override void OnBeforeGeneration(OnBeforeGenerationArgs args)

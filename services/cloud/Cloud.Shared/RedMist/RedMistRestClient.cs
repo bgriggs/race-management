@@ -52,6 +52,9 @@ public sealed class RedMistRestClient : IRedMistRestClient
     public async Task<IReadOnlyList<CarPosition>> LoadSessionLapsAsync(int teamId, int eventId, int sessionId, CancellationToken ct) =>
         await GetJsonAsync<List<CarPosition>>(teamId, $"/v2/Events/LoadSessionLaps?eventId={eventId}&sessionId={sessionId}", ct) ?? [];
 
+    public async Task<IReadOnlyList<OrganizationSummary>> LoadOrganizationsAsync(int teamId, CancellationToken ct) =>
+        await GetJsonAsync<List<OrganizationSummary>>(teamId, "/v1/Organization/GetOrganizations", ct) ?? [];
+
     private async Task<T?> GetJsonAsync<T>(int teamId, string pathAndQuery, CancellationToken ct)
     {
         var url = options.StatusApiUrl.TrimEnd('/') + pathAndQuery;
@@ -60,6 +63,13 @@ public sealed class RedMistRestClient : IRedMistRestClient
         for (var attempt = 0; attempt < 2; attempt++)
         {
             var token = await tokenProvider.GetAccessTokenAsync(teamId, ct);
+            if (token is null)
+            {
+                // No credentials configured — treat the same as a 404 / empty result so the
+                // read-side surface (UI dropdowns, event pickers) stays quiet for teams that
+                // haven't opted into RedMist.
+                return default;
+            }
             using var request = new HttpRequestMessage(HttpMethod.Get, url);
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
             request.Headers.Accept.Clear();

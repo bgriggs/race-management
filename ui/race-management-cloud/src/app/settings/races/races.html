@@ -48,10 +48,10 @@
             </td>
             <td>{{ race.name }}</td>
             <td>{{ formatStart(race.start) }}</td>
-            <td>{{ race.timeZone }}</td>
+            <td>{{ timeZoneLabel(race.timeZone) }}</td>
             <td>{{ race.duration }}</td>
             <td>{{ race.redMistEventId ?? '—' }}</td>
-            <td>{{ race.redMistOrganizationId ?? '—' }}</td>
+            <td>{{ organizationLabel(race.redMistOrganizationId) }}</td>
           </tr>
         }
       </tbody>
@@ -102,12 +102,11 @@
         <select
           id="race-time-zone"
           class="field-input"
-          [value]="draftTimeZone()"
           (change)="onTimeZoneInput($any($event.target).value)"
           [disabled]="saving()"
         >
           @for (tz of timeZoneOptions; track tz.id) {
-            <option [value]="tz.id">{{ tz.label }}</option>
+            <option [value]="tz.id" [selected]="tz.id === draftTimeZone()">{{ tz.label }}</option>
           }
         </select>
       </div>
@@ -151,18 +150,43 @@
           (input)="onEventIdInput($any($event.target).value)"
           [disabled]="saving()"
         />
+        <p class="field-hint">When set, the explicit event takes precedence over the organization selection below.</p>
       </div>
 
       <div class="field">
-        <label for="race-org-id" class="field-label">RedMist Organization ID</label>
-        <input
+        <label for="race-org-id" class="field-label">RedMist Organization</label>
+        <select
           id="race-org-id"
-          type="number"
           class="field-input"
-          [value]="draftOrgId()"
-          (input)="onOrgIdInput($any($event.target).value)"
+          (change)="onOrgIdInput($any($event.target).value)"
+          [disabled]="saving()"
+        >
+          <option value="" [selected]="draftOrgId() === ''">— None —</option>
+          @for (org of organizations(); track org.id) {
+            <option [value]="org.id" [selected]="draftOrgId() !== '' && +draftOrgId() === org.id">{{ org.name }}</option>
+          }
+          @if (draftOrgId() !== '' && !organizationsById().has(+draftOrgId())) {
+            <option [value]="draftOrgId()" selected>#{{ draftOrgId() }} (not in current list)</option>
+          }
+        </select>
+        @if (organizationsError(); as msg) {
+          <p class="field-error">{{ msg }}</p>
+        }
+      </div>
+
+      <div class="field">
+        <label for="race-access-code" class="field-label">RedMist Access Code</label>
+        <input
+          id="race-access-code"
+          type="text"
+          class="field-input"
+          maxlength="6"
+          autocomplete="off"
+          [value]="draftAccessCode()"
+          (input)="onAccessCodeInput($any($event.target).value)"
           [disabled]="saving()"
         />
+        <p class="field-hint">Leave blank for public events. Required only for private events (up to 6 characters).</p>
       </div>
 
       @if (saveError(); as msg) {

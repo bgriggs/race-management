@@ -70,6 +70,7 @@ public class Program
         builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
         builder.Services.AddSingleton<IRedisAlarmStateGateway, RedisAlarmStateGateway>();
         builder.Services.AddSingleton<IActiveAlarmsReader, ActiveAlarmsReader>();
+        builder.Services.AddSingleton<IRaceStateReader, RaceStateReader>();
         builder.Services.AddHostedService<ChannelPropagatorService>();
 
         // Fuel Analysis — needed by FuelController to read snapshots from Redis and publish

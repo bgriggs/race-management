@@ -162,6 +162,16 @@ export class ConfigurationClient {
     );
   }
 
+  // Sets which Race the team is currently monitoring (drives the ChannelProcessor's RedMist
+  // subscription). Pass null to clear and fall back to the time-window auto-pick.
+  selectRace(teamId: number, raceId: number | null): Promise<void> {
+    const params: Record<string, string | number> = { teamId };
+    if (raceId !== null) params['raceId'] = raceId;
+    return firstValueFrom(
+      this.http.post<void>(this.url('select-race'), null, { params }),
+    );
+  }
+
   async loadSiteSettings(teamId: number): Promise<SiteSettings | null> {
     try {
       return await firstValueFrom(

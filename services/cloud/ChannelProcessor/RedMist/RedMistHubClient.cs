@@ -18,6 +18,7 @@ public sealed class RedMistHubClient : IAsyncDisposable
 {
     private readonly int teamId;
     private readonly int eventId;
+    private readonly string? accessCode;
     private readonly IRedMistTokenProvider tokens;
     private readonly RedMistOptions options;
     private readonly ILogger logger;
@@ -26,12 +27,14 @@ public sealed class RedMistHubClient : IAsyncDisposable
     public RedMistHubClient(
         int teamId,
         int eventId,
+        string? accessCode,
         IRedMistTokenProvider tokens,
         RedMistOptions options,
         ILogger logger)
     {
         this.teamId = teamId;
         this.eventId = eventId;
+        this.accessCode = accessCode;
         this.tokens = tokens;
         this.options = options;
         this.logger = logger;
@@ -51,7 +54,8 @@ public sealed class RedMistHubClient : IAsyncDisposable
 
     /// <summary>
     /// Opens the connection and subscribes to the event. Returns when the initial
-    /// <c>SubscribeToEventV2</c> server invocation has completed.
+    /// <c>SubscribeToEventV2WithCode</c> server invocation has completed. The access code
+    /// is passed through unchanged (null for public events; 1-6 chars for private ones).
     /// </summary>
     public async Task StartAsync(CancellationToken ct)
     {
@@ -92,7 +96,7 @@ public sealed class RedMistHubClient : IAsyncDisposable
             StateChanged?.Invoke(HubConnectionState.Connected, null);
             try
             {
-                await hub.InvokeAsync("SubscribeToEventV2", eventId, (string?)null);
+                await hub.InvokeAsync("SubscribeToEventV2WithCode", eventId, accessCode);
                 // After a reconnect there is no guarantee of state continuity — surface a reset so
                 // the consumer re-runs the REST snapshot and resyncs derived state.
                 ResetReceived?.Invoke();
@@ -114,7 +118,7 @@ public sealed class RedMistHubClient : IAsyncDisposable
 
         await hub.StartAsync(ct);
         StateChanged?.Invoke(HubConnectionState.Connected, null);
-        await hub.InvokeAsync("SubscribeToEventV2", eventId, null, ct);
+        await hub.InvokeAsync("SubscribeToEventV2WithCode", eventId, accessCode, ct);
         logger.LogInformation("Subscribed to RedMist event {EventId} for team {TeamId}", eventId, teamId);
     }
 

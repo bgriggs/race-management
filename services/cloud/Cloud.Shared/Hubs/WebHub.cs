@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Cloud.Shared.Alarms;
 using Cloud.Shared.Auth;
+using Cloud.Shared.RedMist;
 using Cloud.Shared.Telemetry;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
@@ -14,7 +15,8 @@ public class WebHub(
     ITeamRoleContext teamRoleContext,
     IConnectedTeamsTracker teamsTracker,
     ITeamChannelSnapshotService snapshotService,
-    IActiveAlarmsReader activeAlarmsReader) : Hub<IWebHubClient>
+    IActiveAlarmsReader activeAlarmsReader,
+    IRaceStateReader raceStateReader) : Hub<IWebHubClient>
 {
     public const string TeamGroupPrefix = "team-";
     private const string TeamIdItemKey = "teamId";
@@ -88,6 +90,11 @@ public class WebHub(
 
             var alarms = await activeAlarmsReader.GetForTeamAsync(teamId, includeAcknowledged: false, Context.ConnectionAborted);
             await Clients.Caller.AlarmSnapshot(alarms);
+
+            // Seed the Race Monitor header. null = no RedMist data flowing for this team —
+            // the client should render blanks rather than fall back to local clocks.
+            var raceState = await raceStateReader.GetAsync(teamId, Context.ConnectionAborted);
+            await Clients.Caller.RaceStateChanged(raceState);
         }
         catch (OperationCanceledException) { /* client disconnected before we could send */ }
         catch (Exception ex)

@@ -23,4 +23,12 @@ public class Race
     public string Notes { get; set; } = string.Empty;
     public int? RedMistEventId { get; set; }
     public int? RedMistOrganizationId { get; set; }
+    /// <summary>
+    /// Optional access code for private RedMist events. Passed through to the hub on
+    /// <c>SubscribeToEventV2WithCode</c>. Stored clear-text per the operator's request —
+    /// these codes are short-lived per-event tokens, not credentials. 1-6 characters when
+    /// present; <c>null</c> for public events.
+    /// </summary>
+    [StringLength(6, MinimumLength = 1)]
+    public string? RedMistAccessCode { get; set; }
 }

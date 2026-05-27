@@ -6,9 +6,11 @@ import Keycloak from 'keycloak-js';
 import { APP_CONFIG } from '../config/app-config';
 import { CarChannelSnapshot } from '../../../../shared-ui/src/cloud-api/car-channel-snapshot';
 import { ChannelChangeNotification } from '../../../../shared-ui/src/cloud-api/channel-change-notification';
+import { RaceStateDto } from '../../../../shared-ui/src/cloud-api/race-state-dto';
 import {
   carChannelSnapshotFromMessagePack,
   channelChangeNotificationFromMessagePack,
+  raceStateDtoFromMessagePack,
 } from '../../../../shared-ui/src/cloud-api/message-pack-converter';
 
 export type HubConnectionStatus = 'Disconnected' | 'Connecting' | 'Connected' | 'Reconnecting';
@@ -31,6 +33,8 @@ export class HubClient implements OnDestroy {
   readonly connectionStatus$ = new Subject<HubConnectionStatus>();
   readonly channelSnapshot$ = new Subject<CarChannelSnapshot[]>();
   readonly channelValueChanged$ = new Subject<ChannelValueChange>();
+  /** Most recent RaceStateDto, or null when the server signaled "no data flowing". */
+  readonly raceStateChanged$ = new Subject<RaceStateDto | null>();
 
   async connect(): Promise<void> {
     if (this.connection) return;
@@ -74,6 +78,17 @@ export class HubClient implements OnDestroy {
       this.channelSnapshot$.next(cars.map(c => carChannelSnapshotFromMessagePack(c as unknown[]))));
     this.connection.on('ChannelValueChanged', (carKey: string, change: unknown[]) =>
       this.channelValueChanged$.next({ carKey, change: channelChangeNotificationFromMessagePack(change) }));
+    // RaceStateDto has no [MessagePackObject]/[Key] attributes, so the ContractlessStandardResolver
+    // serializes it as a MessagePack map (PascalCase keys) — not an array like the other DTOs.
+    // The decoder may surface that map as either a JS Map or a plain object; normalize so the
+    // converter's keyed access works either way.
+    this.connection.on('RaceStateChanged', (state: unknown) => {
+      if (state == null) { this.raceStateChanged$.next(null); return; }
+      const obj = state instanceof Map
+        ? Object.fromEntries(state.entries()) as Record<string, unknown>
+        : state as Record<string, unknown>;
+      this.raceStateChanged$.next(raceStateDtoFromMessagePack(obj));
+    });
   }
 
   private async startWithRetry(): Promise<void> {

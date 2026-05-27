@@ -1,7 +1,9 @@
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Cloud.Shared;
 using Cloud.Shared.Alarms;
 using Cloud.Shared.Hubs;
+using Cloud.Shared.RedMist;
 using Cloud.Shared.Telemetry;
 using MessagePack;
 using Microsoft.AspNetCore.SignalR;
@@ -15,9 +17,10 @@ namespace WebApi.Telemetry;
 /// snapshot (channels + active alarms) to every team with at least one active
 /// connection.
 ///
-/// Subscribes to two pub/sub patterns:
+/// Subscribes to three pub/sub patterns:
 /// - <c>car-channel-changes:*</c> — per-channel-value changes → <see cref="IWebHubClient.ChannelValueChanged"/>
 /// - <c>alarm-changes:*</c> — alarm edge/ack notifications → <see cref="IWebHubClient.AlarmChanged"/>
+/// - <c>race-state-changes:*</c> — RedMist race-header state → <see cref="IWebHubClient.RaceStateChanged"/>
 ///
 /// Note: when WebApi runs multiple replicas, every replica subscribes to the same
 /// pub/sub patterns and forwards into the SignalR backplane, so clients would
@@ -35,16 +38,20 @@ public partial class ChannelPropagatorService(
     private static readonly TimeSpan SnapshotInterval = TimeSpan.FromMilliseconds(2500);
     private static readonly Regex CarKeyRegex = BuildCarKeyRegex();
     private static readonly Regex AlarmTeamIdRegex = BuildAlarmTeamIdRegex();
+    private static readonly Regex RaceStateTeamIdRegex = BuildRaceStateTeamIdRegex();
+    private static readonly JsonSerializerOptions RaceStateJsonOptions = new() { PropertyNameCaseInsensitive = true };
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var sub = redis.GetSubscriber();
         var channelPattern = RedisChannel.Pattern(string.Format(Consts.CAR_CHANNEL_CHANGES_CHANNEL, "*"));
         var alarmPattern = RedisChannel.Pattern(string.Format(Consts.ALARM_CHANGES_CHANNEL, "*"));
+        var raceStatePattern = RedisChannel.Pattern(string.Format(Consts.RACE_STATE_CHANGES_CHANNEL, "*"));
 
         await sub.SubscribeAsync(channelPattern, OnChannelChange);
         await sub.SubscribeAsync(alarmPattern, OnAlarmChange);
-        logger.LogInformation("ChannelPropagatorService subscribed to patterns '{ChannelPattern}', '{AlarmPattern}'", channelPattern, alarmPattern);
+        await sub.SubscribeAsync(raceStatePattern, OnRaceStateChange);
+        logger.LogInformation("ChannelPropagatorService subscribed to patterns '{ChannelPattern}', '{AlarmPattern}', '{RaceStatePattern}'", channelPattern, alarmPattern, raceStatePattern);
 
         try
         {
@@ -59,6 +66,7 @@ public partial class ChannelPropagatorService(
         {
             await sub.UnsubscribeAsync(channelPattern);
             await sub.UnsubscribeAsync(alarmPattern);
+            await sub.UnsubscribeAsync(raceStatePattern);
             logger.LogInformation("ChannelPropagatorService stopped");
         }
     }
@@ -115,6 +123,39 @@ public partial class ChannelPropagatorService(
         }
     }
 
+    private void OnRaceStateChange(RedisChannel channel, RedisValue value)
+    {
+        try
+        {
+            var match = RaceStateTeamIdRegex.Match(channel.ToString());
+            if (!match.Success || !int.TryParse(match.Groups[1].ValueSpan, out var teamId))
+            {
+                logger.LogWarning("Unparseable race-state-changes channel '{Channel}'", channel);
+                return;
+            }
+
+            // An empty payload signals "clear" — sent on detach so the UI blanks the header.
+            // (StackExchange.Redis rejects truly null values on PUBLISH, so the publisher
+            // uses RedisValue.EmptyString as the clear sentinel.)
+            RaceStateDto? dto = null;
+            if (!value.IsNullOrEmpty)
+            {
+                try { dto = JsonSerializer.Deserialize<RaceStateDto>(value.ToString(), RaceStateJsonOptions); }
+                catch (JsonException ex)
+                {
+                    logger.LogWarning(ex, "Corrupt race-state JSON on '{Channel}'", channel);
+                    return;
+                }
+            }
+
+            _ = hub.Clients.Group(WebHub.TeamGroup(teamId)).RaceStateChanged(dto);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to forward race-state change from '{Channel}'", channel);
+        }
+    }
+
     private async Task BroadcastSnapshotsAsync(CancellationToken ct)
     {
         var teams = teamsTracker.GetConnectedTeams();
@@ -143,4 +184,7 @@ public partial class ChannelPropagatorService(
 
     [GeneratedRegex(@"^alarm-changes:(\d+)$", RegexOptions.Compiled)]
     private static partial Regex BuildAlarmTeamIdRegex();
+
+    [GeneratedRegex(@"^race-state-changes:(\d+)$", RegexOptions.Compiled)]
+    private static partial Regex BuildRaceStateTeamIdRegex();
 }

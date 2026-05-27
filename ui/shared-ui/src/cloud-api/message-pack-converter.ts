@@ -8,6 +8,7 @@ import { CarChannelSnapshot } from "./car-channel-snapshot";
 import { ChannelValueSnapshot } from "./channel-value-snapshot";
 import { ChannelChangeNotification } from "./channel-change-notification";
 import { AlarmChangeNotification } from "./alarm-change-notification";
+import { RaceStateDto } from "./race-state-dto";
 import { AlarmEventType } from "./alarm-event-type";
 
 export function decodeMessagePack<T>(bytes: Uint8Array): T {
@@ -81,5 +82,21 @@ export function alarmChangeNotificationFromMessagePack(arr: unknown[]): AlarmCha
 
 export function decodeAlarmChangeNotificationMessagePack(bytes: Uint8Array): AlarmChangeNotification {
     return alarmChangeNotificationFromMessagePack(decode(bytes) as unknown[]);
+}
+
+export function raceStateDtoFromMessagePack(obj: Record<string, unknown>): RaceStateDto {
+    return {
+        eventId: obj["EventId"] != null ? obj["EventId"] as number : null,
+        localTimeOfDay: obj["LocalTimeOfDay"] != null ? obj["LocalTimeOfDay"] as string : null,
+        runningRaceTime: obj["RunningRaceTime"] != null ? obj["RunningRaceTime"] as string : null,
+        timeToGo: obj["TimeToGo"] != null ? obj["TimeToGo"] as string : null,
+        leaderLap: obj["LeaderLap"] != null ? obj["LeaderLap"] as number : null,
+        flag: obj["Flag"] != null ? obj["Flag"] as string : null,
+        lastUpdatedUtc: new Date(obj["LastUpdatedUtc"] as string | number | Date),
+    };
+}
+
+export function decodeRaceStateDtoMessagePack(bytes: Uint8Array): RaceStateDto {
+    return raceStateDtoFromMessagePack(decode(bytes) as Record<string, unknown>);
 }
 

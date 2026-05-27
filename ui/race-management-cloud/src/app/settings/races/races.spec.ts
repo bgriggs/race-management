@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 
 import { ConfigurationClient } from '../../clients/configuration-client';
+import { RedMistClient } from '../../clients/red-mist-client';
 import { TeamSelectionService } from '../../teams/team-selection.service';
 import { Races } from './races';
 
@@ -15,6 +16,10 @@ describe('Races', () => {
       saveRace: vi.fn(),
       deleteRace: vi.fn(),
     } as unknown as ConfigurationClient;
+
+    const redMistClientStub = {
+      loadOrganizations: vi.fn().mockResolvedValue([]),
+    } as unknown as RedMistClient;
 
     const teamSelectionStub = {
       selectedTeamId: signal<number | null>(null),
@@ -32,6 +37,7 @@ describe('Races', () => {
       imports: [Races],
       providers: [
         { provide: ConfigurationClient, useValue: configClientStub },
+        { provide: RedMistClient, useValue: redMistClientStub },
         { provide: TeamSelectionService, useValue: teamSelectionStub },
       ],
     })

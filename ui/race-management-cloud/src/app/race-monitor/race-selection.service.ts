@@ -58,7 +58,16 @@ export class RaceSelectionService {
   }
 
   selectRace(raceId: number): void {
+    // Optimistic local update so the dropdown reflects the choice instantly,
+    // then persist to the team so ChannelProcessor re-subscribes to this race's
+    // event. The WebApi handler publishes a pub/sub notification that wakes the
+    // worker — no need to wait for the 30s poll tick.
     this._selectedRaceId.set(raceId);
+    const teamId = this.teamSelection.selectedTeamId();
+    if (teamId === null) return;
+    this.client.selectRace(teamId, raceId).catch(err => {
+      console.error('Failed to persist race selection:', err);
+    });
   }
 
   async refresh(): Promise<void> {
@@ -68,17 +77,26 @@ export class RaceSelectionService {
 
   private async loadRaces(teamId: number): Promise<void> {
     try {
-      const all = await this.client.listRaces(teamId);
+      // Load races and the team's persisted selection in parallel. The selection is the
+      // shared per-team "which race is being monitored" — drives the ChannelProcessor.
+      // If unset, fall back to the most recent race so the dropdown isn't empty.
+      const [all, team] = await Promise.all([
+        this.client.listRaces(teamId),
+        this.client.getTeam(teamId).catch(() => null),
+      ]);
       const cutoff = Date.now() + ONE_DAY_MS;
       const filtered = all
         .filter(r => new Date(r.start).getTime() <= cutoff)
         .sort((a, b) => new Date(b.start).getTime() - new Date(a.start).getTime());
       this._races.set(filtered);
-      const current = this._selectedRaceId();
-      if (current === null && filtered.length > 0) {
+
+      const persisted = team?.selectedRaceId ?? null;
+      if (persisted !== null && filtered.some(r => r.id === persisted)) {
+        this._selectedRaceId.set(persisted);
+      } else if (filtered.length > 0) {
         this._selectedRaceId.set(filtered[0].id);
-      } else if (current !== null && !filtered.some(r => r.id === current)) {
-        this._selectedRaceId.set(filtered.length > 0 ? filtered[0].id : null);
+      } else {
+        this._selectedRaceId.set(null);
       }
     } catch (err) {
       console.error('Failed to load races:', err);

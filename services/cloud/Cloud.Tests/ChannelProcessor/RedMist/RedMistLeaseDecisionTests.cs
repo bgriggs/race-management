@@ -24,6 +24,8 @@ public class RedMistLeaseDecisionTests
         RaceId: 1,
         RaceName: "Race",
         RedMistEventId: 100,
+        RedMistOrganizationId: null,
+        RedMistAccessCode: null,
         StartUtc: new DateTime(2026, 6, 1, 15, 0, 0, DateTimeKind.Utc),
         EndUtc: new DateTime(2026, 6, 1, 17, 0, 0, DateTimeKind.Utc),
         InWindow: true);

@@ -1,4 +1,5 @@
 using Cloud.Shared.Alarms;
+using Cloud.Shared.RedMist;
 using Cloud.Shared.Telemetry;
 
 namespace Cloud.Shared.Hubs;
@@ -19,4 +20,11 @@ public interface IWebHubClient
 
     /// <summary>Full snapshot of active alarms for the team — drives the Race Monitor §3 panel.</summary>
     Task AlarmSnapshot(ActiveAlarmDto[] alarms);
+
+    /// <summary>
+    /// Latest RedMist-sourced race-header state (race time, time-to-go, leader lap, flag).
+    /// <c>null</c> means the team has no active RedMist session — the client should render
+    /// blanks rather than fall back to local clocks.
+    /// </summary>
+    Task RaceStateChanged(RaceStateDto? state);
 }

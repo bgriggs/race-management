@@ -27,7 +27,8 @@ public partial class ConfigurationController(
     IConnectionMultiplexer redis,
     IRedisAlarmStateGateway alarmStateGateway,
     IActiveAlarmsReader activeAlarmsReader,
-    TimeProvider timeProvider) : Controller
+    TimeProvider timeProvider,
+    ILogger<ConfigurationController> logger) : Controller
 {
     #region Car Configurations
 
@@ -477,6 +478,7 @@ public partial class ConfigurationController(
             race.TeamId = teamId;
             db.Races.Add(race);
             await db.SaveChangesAsync(ct);
+            await PublishTeamRaceChangedAsync(teamId);
             return race;
         }
 
@@ -486,10 +488,13 @@ public partial class ConfigurationController(
         existing.Name = race.Name;
         existing.Start = race.Start;
         existing.Duration = race.Duration;
+        existing.TimeZone = race.TimeZone;
         existing.Notes = race.Notes;
         existing.RedMistEventId = race.RedMistEventId;
         existing.RedMistOrganizationId = race.RedMistOrganizationId;
+        existing.RedMistAccessCode = race.RedMistAccessCode;
         await db.SaveChangesAsync(ct);
+        await PublishTeamRaceChangedAsync(teamId);
         return existing;
     }
 
@@ -503,11 +508,70 @@ public partial class ConfigurationController(
         if (!await teamRoleContext.IsUserInTeamRoleAsync(teamId, "admin", ct)) { return Forbid(); }
 
         await using var db = await dbFactory.CreateDbContextAsync(ct);
+        // If the team had this race selected, clear the selection so the worker falls back
+        // to the time-window auto-pick rather than holding a stale reference.
+        await db.Teams
+            .Where(t => t.Id == teamId && t.SelectedRaceId == raceId)
+            .ExecuteUpdateAsync(s => s.SetProperty(t => t.SelectedRaceId, (int?)null), ct);
+
         var rows = await db.Races
             .Where(r => r.Id == raceId && r.TeamId == teamId)
             .ExecuteDeleteAsync(ct);
 
-        return rows == 0 ? NotFound() : NoContent();
+        if (rows == 0) return NotFound();
+        await PublishTeamRaceChangedAsync(teamId);
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Sets the team's currently-monitored race. Drives the ChannelProcessor's RedMist
+    /// subscription via <see cref="Team.SelectedRaceId"/>; the activation evaluator honors
+    /// this when set and falls back to the time-window auto-pick when cleared. Pass
+    /// <paramref name="raceId"/> as <c>null</c> to clear. Any team member can change this —
+    /// the dropdown in the Race-Monitor header is the primary caller.
+    /// </summary>
+    [HttpPost]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SelectRaceAsync(int teamId, int? raceId, CancellationToken ct)
+    {
+        if (!await teamRoleContext.IsUserInTeamAsync(teamId, ct)) { return Forbid(); }
+
+        await using var db = await dbFactory.CreateDbContextAsync(ct);
+
+        // Validate the Race exists and belongs to this team — prevents pointing a team at
+        // another team's race or a deleted one.
+        if (raceId is int rid)
+        {
+            var exists = await db.Races.AnyAsync(r => r.Id == rid && r.TeamId == teamId, ct);
+            if (!exists) return NotFound();
+        }
+
+        var updated = await db.Teams
+            .Where(t => t.Id == teamId)
+            .ExecuteUpdateAsync(s => s.SetProperty(t => t.SelectedRaceId, raceId), ct);
+        if (updated == 0) return NotFound();
+
+        await PublishTeamRaceChangedAsync(teamId);
+        return NoContent();
+    }
+
+    private async Task PublishTeamRaceChangedAsync(int teamId)
+    {
+        try
+        {
+            var sub = redis.GetSubscriber();
+            var channel = RedisChannel.Literal(string.Format(Consts.TEAM_RACE_CHANGED_CHANNEL, teamId));
+            await sub.PublishAsync(channel, RedisValue.EmptyString);
+        }
+        catch (Exception ex)
+        {
+            // Pub/sub is a wake-up hint; the worker's 30s tick will pick up the change
+            // even if this publish fails. Don't fail the user's request over it.
+            logger.LogWarning(ex, "Failed to publish team-race-changed for team {TeamId}", teamId);
+        }
     }
 
     #endregion

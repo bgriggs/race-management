@@ -34,7 +34,7 @@ public sealed class RedMistTokenProvider : IRedMistTokenProvider
         this.logger = logger;
     }
 
-    public async Task<string> GetAccessTokenAsync(int teamId, CancellationToken ct)
+    public async Task<string?> GetAccessTokenAsync(int teamId, CancellationToken ct)
     {
         if (cache.TryGetValue(teamId, out var cached) && cached.ExpiresAtUtc > time.GetUtcNow().AddSeconds(30))
             return cached.AccessToken;
@@ -42,7 +42,12 @@ public sealed class RedMistTokenProvider : IRedMistTokenProvider
         await using var db = await dbFactory.CreateDbContextAsync(ct);
         var settings = await db.SiteSettings.AsNoTracking().FirstOrDefaultAsync(s => s.TeamId == teamId, ct);
         if (settings is null || string.IsNullOrWhiteSpace(settings.RedMistClientId) || string.IsNullOrWhiteSpace(settings.RedMistClientSecret))
-            throw new RedMistAuthException(teamId, "RedMist credentials are not configured for this team.");
+        {
+            // RedMist is opt-in. No creds means "this team isn't using RedMist" — let callers
+            // skip RedMist work passively rather than treating it as an auth failure.
+            logger.LogDebug("RedMist credentials not configured for team {TeamId}; skipping token acquisition.", teamId);
+            return null;
+        }
 
         var tokenUrl = $"{options.AuthServerUrl.TrimEnd('/')}/realms/{options.Realm}/protocol/openid-connect/token";
         using var http = httpFactory.CreateClient("redmist-auth");

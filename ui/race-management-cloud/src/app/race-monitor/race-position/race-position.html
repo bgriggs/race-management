@@ -1,5 +1,9 @@
-<iframe
-  src="https://redmist.racing/timing/217?embed=1&hideHeader=1&groupClass=1&fontSize=1"
-  title="Race Position"
-  loading="lazy"
-></iframe>
+@if (iframeUrl(); as url) {
+  <iframe
+    [src]="url"
+    title="Race Position"
+    loading="lazy"
+  ></iframe>
+} @else {
+  <p class="empty">No active RedMist event.</p>
+}

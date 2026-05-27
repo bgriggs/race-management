@@ -97,6 +97,48 @@ public sealed class RedMistController(
     }
 
     /// <summary>
+    /// Lists every RedMist organization for the Race-form picker. Returned sorted by name
+    /// (case-insensitive) so the UI can render the dropdown without re-sorting. Cached for
+    /// 60 seconds per team — orgs change rarely and the call is cheap.
+    /// </summary>
+    [HttpGet]
+    [ProducesResponseType<IReadOnlyList<OrganizationSummary>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status424FailedDependency)]
+    public async Task<ActionResult<IReadOnlyList<OrganizationSummary>>> LoadOrganizationsAsync(int teamId, CancellationToken ct)
+    {
+        if (!await teamRoleContext.IsUserInTeamAsync(teamId, ct)) return Forbid();
+
+        var cacheKey = $"redmist:organizations:{teamId}";
+
+        try
+        {
+            return Ok(await cache.GetOrCreateAsync<IReadOnlyList<OrganizationSummary>>(
+                cacheKey,
+                async innerCt =>
+                {
+                    var orgs = await redMist.LoadOrganizationsAsync(teamId, innerCt);
+                    return orgs
+                        .OrderBy(o => o.Name, StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+                },
+                EventsCacheOptions,
+                cancellationToken: ct));
+        }
+        catch (RedMistAuthException ex)
+        {
+            logger.LogWarning(ex, "RedMist organizations lookup auth-failed for team {TeamId}", teamId);
+            return StatusCode(StatusCodes.Status424FailedDependency, new { error = "redmist-auth-failed", message = ex.Message });
+        }
+        catch (HttpRequestException ex)
+        {
+            logger.LogWarning(ex, "RedMist organizations lookup transport failure for team {TeamId}", teamId);
+            return StatusCode(StatusCodes.Status424FailedDependency, new { error = "redmist-unavailable", message = ex.Message });
+        }
+    }
+
+    /// <summary>
     /// Returns the per-team RedMist connection status written by ChannelProcessor's
     /// <c>RedmistConsumer</c>. <c>null</c> when no status has ever been written for the team.
     /// </summary>

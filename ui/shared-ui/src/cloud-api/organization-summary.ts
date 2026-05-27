@@ -3,9 +3,8 @@
  * Any changes made to this file can be lost when this file is regenerated.
  */
 
-export interface Team {
+export interface OrganizationSummary {
     id: number;
     name: string;
-    clientId: string;
-    selectedRaceId: number | null;
+    website: string | null;
 }

@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 import { ConfigurationClient } from '../../clients/configuration-client';
 import { TeamSelectionService } from '../../teams/team-selection.service';
 import { RaceSelectionService } from '../race-selection.service';
+import { RaceStateStore } from '../race-state-store';
 import { RaceHeader } from './race-header';
 
 describe('RaceHeader', () => {
@@ -38,6 +39,10 @@ describe('RaceHeader', () => {
       refresh: vi.fn().mockResolvedValue(undefined),
     } as unknown as RaceSelectionService;
 
+    const raceStateStub = {
+      state: signal(null),
+    } as unknown as RaceStateStore;
+
     await TestBed.configureTestingModule({
       imports: [RaceHeader],
       providers: [
@@ -45,6 +50,7 @@ describe('RaceHeader', () => {
         { provide: ConfigurationClient, useValue: configClientStub },
         { provide: TeamSelectionService, useValue: teamSelectionStub },
         { provide: RaceSelectionService, useValue: raceSelectionStub },
+        { provide: RaceStateStore, useValue: raceStateStub },
       ],
     }).compileComponents();
 

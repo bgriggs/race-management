@@ -31,4 +31,10 @@ public interface IRedMistRestClient
 
     /// <summary>Loads completed laps for every car in the session (used by competitor-analysis proxy).</summary>
     Task<IReadOnlyList<CarPosition>> LoadSessionLapsAsync(int teamId, int eventId, int sessionId, CancellationToken ct);
+
+    /// <summary>
+    /// Lists every organization (series/club) known to RedMist. Used by the Race-form picker
+    /// so an engineer can pair the Race to an organization in advance of a concrete event.
+    /// </summary>
+    Task<IReadOnlyList<OrganizationSummary>> LoadOrganizationsAsync(int teamId, CancellationToken ct);
 }

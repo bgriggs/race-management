@@ -2,6 +2,10 @@ import { Component, HostListener, computed, inject, signal } from '@angular/core
 import { Router } from '@angular/router';
 import { Race } from '../../../../../shared-ui/src/cloud-api/race';
 import { RaceSelectionService } from '../race-selection.service';
+import { RaceStateStore } from '../race-state-store';
+
+const PLACEHOLDER_TIME = '--:--:--';
+const PLACEHOLDER_SHORT = '--';
 
 @Component({
   selector: 'app-race-header',
@@ -11,6 +15,7 @@ import { RaceSelectionService } from '../race-selection.service';
 })
 export class RaceHeader {
   private readonly raceSelection = inject(RaceSelectionService);
+  private readonly raceState = inject(RaceStateStore);
   private readonly router = inject(Router);
 
   protected readonly races = this.raceSelection.races;
@@ -18,27 +23,20 @@ export class RaceHeader {
   protected readonly selectedRace = this.raceSelection.selectedRace;
   protected readonly dropdownOpen = signal(false);
 
-  protected readonly localTime = computed(() => formatClock(this.raceSelection.now()));
-
-  protected readonly raceTime = computed(() => {
-    const race = this.selectedRace();
-    if (!race) return '--:--:--';
-    const elapsedMs = this.raceSelection.now().getTime() - new Date(race.start).getTime();
-    if (elapsedMs <= 0) return '00:00:00';
-    return formatDuration(elapsedMs);
+  // All header values — including "Local" — come from the RedMist feed (RaceStateStore).
+  // The browser's wall clock is intentionally NOT used: every engineer in the strategy
+  // booth should see exactly what the timing tower sees, and clock drift between machines
+  // would otherwise cause subtle disagreements during a stop-window discussion. When
+  // RedMist isn't streaming for this team — no event paired, lease lost, creds missing —
+  // the store reports null and we render placeholders.
+  protected readonly localTime = computed(() => this.raceState.state()?.localTimeOfDay ?? PLACEHOLDER_TIME);
+  protected readonly raceTime = computed(() => this.raceState.state()?.runningRaceTime ?? PLACEHOLDER_TIME);
+  protected readonly timeToGo = computed(() => this.raceState.state()?.timeToGo ?? PLACEHOLDER_TIME);
+  protected readonly currentLap = computed(() => {
+    const lap = this.raceState.state()?.leaderLap;
+    return lap == null ? PLACEHOLDER_SHORT : String(lap);
   });
-
-  protected readonly timeToGo = computed(() => {
-    const race = this.selectedRace();
-    if (!race) return '--:--:--';
-    const endMs = new Date(race.start).getTime() + race.duration * 60 * 60 * 1000;
-    const remainingMs = endMs - this.raceSelection.now().getTime();
-    if (remainingMs <= 0) return '00:00:00';
-    return formatDuration(remainingMs);
-  });
-
-  protected readonly currentLap = computed(() => '--');
-  protected readonly flagState = computed(() => '--');
+  protected readonly flagState = computed(() => this.raceState.state()?.flag ?? PLACEHOLDER_SHORT);
 
   protected toggleDropdown(event: Event): void {
     event.stopPropagation();
@@ -67,18 +65,4 @@ export class RaceHeader {
     if (Number.isNaN(date.getTime())) return race.name;
     return `${race.name} — ${date.toLocaleDateString()}`;
   }
-}
-
-function formatClock(date: Date): string {
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
-}
-
-function formatDuration(ms: number): string {
-  const totalSeconds = Math.floor(ms / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
 }
