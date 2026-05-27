@@ -13,9 +13,11 @@ export class TelemetryStore {
 
   private readonly _carsByKey = signal<ReadonlyMap<string, CarChannelSnapshot>>(new Map());
   private readonly _connectionStatus = signal<HubConnectionStatus>('Disconnected');
+  private readonly _connectedCarKeys = signal<ReadonlySet<string>>(new Set());
 
   readonly carsByKey = computed(() => this._carsByKey());
   readonly connectionStatus = computed(() => this._connectionStatus());
+  readonly connectedCarKeys = computed(() => this._connectedCarKeys());
 
   constructor() {
     this.hub.connectionStatus$.subscribe(s => {
@@ -32,6 +34,15 @@ export class TelemetryStore {
       next.set(carKey, { ...existing, channels });
       this._carsByKey.set(next);
     });
+    this.hub.carConnectionSnapshot$.subscribe(carKeys => {
+      this._connectedCarKeys.set(new Set(carKeys));
+    });
+    this.hub.carConnectionChanged$.subscribe(change => {
+      const next = new Set(this._connectedCarKeys());
+      if (change.isConnected) next.add(change.carKey);
+      else next.delete(change.carKey);
+      this._connectedCarKeys.set(next);
+    });
 
     effect(() => {
       if (this.auth.isLoggedIn()) {
@@ -39,6 +50,7 @@ export class TelemetryStore {
       } else {
         void this.hub.disconnect();
         this._carsByKey.set(new Map());
+        this._connectedCarKeys.set(new Set());
       }
     });
 
@@ -48,8 +60,16 @@ export class TelemetryStore {
       const teamId = this.teamSelection.selectedTeamId();
       if (teamId === null) return;
       this._carsByKey.set(new Map());
+      this._connectedCarKeys.set(new Set());
       void this.subscribeIfNeeded();
     });
+  }
+
+  /** True if the car is currently connected to CarHub for the selected team. */
+  isCarConnected(carNumber: string): boolean {
+    const teamId = this.teamSelection.selectedTeamId();
+    if (teamId === null) return false;
+    return this._connectedCarKeys().has(`team-${teamId}-car-${carNumber}`);
   }
 
   private async subscribeIfNeeded(): Promise<void> {

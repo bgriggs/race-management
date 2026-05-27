@@ -30,6 +30,7 @@ public class ModelGenerationSpec : GenerationSpec
         typeof(CarChannelSnapshot),
         typeof(ChannelValueSnapshot),
         typeof(ChannelChangeNotification),
+        typeof(CarConnectionChangeNotification),
         typeof(Race),
         typeof(SiteSettings),
         // Fuel Analysis — snapshot DTOs
@@ -75,6 +76,7 @@ public class ModelGenerationSpec : GenerationSpec
         typeof(CarChannelSnapshot),
         typeof(ChannelValueSnapshot),
         typeof(ChannelChangeNotification),
+        typeof(CarConnectionChangeNotification),
         typeof(AlarmChangeNotification),
         typeof(RaceStateDto),
     ];

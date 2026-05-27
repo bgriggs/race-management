@@ -41,8 +41,10 @@ describe('CarStatusTable', () => {
     const telemetryStub = {
       carsByKey: signal(new Map()),
       connectionStatus: signal('Disconnected'),
+      connectedCarKeys: signal(new Set()),
       carForNumber: vi.fn().mockReturnValue(undefined),
       lastTelemetryFor: vi.fn().mockReturnValue(null),
+      isCarConnected: vi.fn().mockReturnValue(false),
     } as unknown as TelemetryStore;
 
     await TestBed.configureTestingModule({

@@ -17,10 +17,11 @@ namespace WebApi.Telemetry;
 /// snapshot (channels + active alarms) to every team with at least one active
 /// connection.
 ///
-/// Subscribes to three pub/sub patterns:
+/// Subscribes to four pub/sub patterns:
 /// - <c>car-channel-changes:*</c> — per-channel-value changes → <see cref="IWebHubClient.ChannelValueChanged"/>
 /// - <c>alarm-changes:*</c> — alarm edge/ack notifications → <see cref="IWebHubClient.AlarmChanged"/>
 /// - <c>race-state-changes:*</c> — RedMist race-header state → <see cref="IWebHubClient.RaceStateChanged"/>
+/// - <c>car-connection-changes:*</c> — CarHub connect/disconnect → <see cref="IWebHubClient.CarConnectionChanged"/>
 ///
 /// Note: when WebApi runs multiple replicas, every replica subscribes to the same
 /// pub/sub patterns and forwards into the SignalR backplane, so clients would
@@ -39,6 +40,7 @@ public partial class ChannelPropagatorService(
     private static readonly Regex CarKeyRegex = BuildCarKeyRegex();
     private static readonly Regex AlarmTeamIdRegex = BuildAlarmTeamIdRegex();
     private static readonly Regex RaceStateTeamIdRegex = BuildRaceStateTeamIdRegex();
+    private static readonly Regex CarConnectionTeamIdRegex = BuildCarConnectionTeamIdRegex();
     private static readonly JsonSerializerOptions RaceStateJsonOptions = new() { PropertyNameCaseInsensitive = true };
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -47,11 +49,13 @@ public partial class ChannelPropagatorService(
         var channelPattern = RedisChannel.Pattern(string.Format(Consts.CAR_CHANNEL_CHANGES_CHANNEL, "*"));
         var alarmPattern = RedisChannel.Pattern(string.Format(Consts.ALARM_CHANGES_CHANNEL, "*"));
         var raceStatePattern = RedisChannel.Pattern(string.Format(Consts.RACE_STATE_CHANGES_CHANNEL, "*"));
+        var carConnectionPattern = RedisChannel.Pattern(string.Format(Consts.CAR_CONNECTION_CHANGES_CHANNEL, "*"));
 
         await sub.SubscribeAsync(channelPattern, OnChannelChange);
         await sub.SubscribeAsync(alarmPattern, OnAlarmChange);
         await sub.SubscribeAsync(raceStatePattern, OnRaceStateChange);
-        logger.LogInformation("ChannelPropagatorService subscribed to patterns '{ChannelPattern}', '{AlarmPattern}', '{RaceStatePattern}'", channelPattern, alarmPattern, raceStatePattern);
+        await sub.SubscribeAsync(carConnectionPattern, OnCarConnectionChange);
+        logger.LogInformation("ChannelPropagatorService subscribed to patterns '{ChannelPattern}', '{AlarmPattern}', '{RaceStatePattern}', '{CarConnectionPattern}'", channelPattern, alarmPattern, raceStatePattern, carConnectionPattern);
 
         try
         {
@@ -67,6 +71,7 @@ public partial class ChannelPropagatorService(
             await sub.UnsubscribeAsync(channelPattern);
             await sub.UnsubscribeAsync(alarmPattern);
             await sub.UnsubscribeAsync(raceStatePattern);
+            await sub.UnsubscribeAsync(carConnectionPattern);
             logger.LogInformation("ChannelPropagatorService stopped");
         }
     }
@@ -156,6 +161,28 @@ public partial class ChannelPropagatorService(
         }
     }
 
+    private void OnCarConnectionChange(RedisChannel channel, RedisValue value)
+    {
+        try
+        {
+            var match = CarConnectionTeamIdRegex.Match(channel.ToString());
+            if (!match.Success || !int.TryParse(match.Groups[1].ValueSpan, out var teamId))
+            {
+                logger.LogWarning("Unparseable car-connection-changes channel '{Channel}'", channel);
+                return;
+            }
+
+            if (!value.HasValue) return;
+
+            var notification = MessagePackSerializer.Deserialize<CarConnectionChangeNotification>((byte[])value!);
+            _ = hub.Clients.Group(WebHub.TeamGroup(teamId)).CarConnectionChanged(notification);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to forward car-connection change from '{Channel}'", channel);
+        }
+    }
+
     private async Task BroadcastSnapshotsAsync(CancellationToken ct)
     {
         var teams = teamsTracker.GetConnectedTeams();
@@ -187,4 +214,7 @@ public partial class ChannelPropagatorService(
 
     [GeneratedRegex(@"^race-state-changes:(\d+)$", RegexOptions.Compiled)]
     private static partial Regex BuildRaceStateTeamIdRegex();
+
+    [GeneratedRegex(@"^car-connection-changes:(\d+)$", RegexOptions.Compiled)]
+    private static partial Regex BuildCarConnectionTeamIdRegex();
 }

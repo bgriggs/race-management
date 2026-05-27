@@ -31,31 +31,35 @@ public sealed class RedMistRestClient : IRedMistRestClient
         this.logger = logger;
     }
 
+    // RedMist's [RequireEventAccessCode] filter looks for this header on private-event
+     // endpoints; it's a no-op on public events so passing it whenever we have a code is safe.
+    private const string EventAccessCodeHeader = "X-Event-Access-Code";
+
     public async Task<IReadOnlyList<Event>> LoadEventsAsync(int teamId, DateTime startDateUtc, CancellationToken ct)
     {
         var iso = startDateUtc.ToUniversalTime().ToString("o");
-        return await GetJsonAsync<List<Event>>(teamId, $"/v2/Events/LoadEvents?startDateUtc={Uri.EscapeDataString(iso)}", ct) ?? [];
+        return await GetJsonAsync<List<Event>>(teamId, $"/v2/Events/LoadEvents?startDateUtc={Uri.EscapeDataString(iso)}", null, ct) ?? [];
     }
 
     public Task<Event?> LoadEventAsync(int teamId, int eventId, CancellationToken ct) =>
-        GetJsonAsync<Event>(teamId, $"/v2/Events/LoadEvent?eventId={eventId}", ct);
+        GetJsonAsync<Event>(teamId, $"/v2/Events/LoadEvent?eventId={eventId}", null, ct);
 
     public async Task<IReadOnlyList<EventListSummary>> LoadLiveEventsAsync(int teamId, CancellationToken ct) =>
-        await GetJsonAsync<List<EventListSummary>>(teamId, "/v2/Events/LoadLiveEvents", ct) ?? [];
+        await GetJsonAsync<List<EventListSummary>>(teamId, "/v2/Events/LoadLiveEvents", null, ct) ?? [];
 
-    public Task<SessionState?> GetCurrentSessionStateAsync(int teamId, int eventId, CancellationToken ct) =>
-        GetJsonAsync<SessionState>(teamId, $"/v2/Events/GetCurrentSessionStateJson?eventId={eventId}", ct);
+    public Task<SessionState?> GetCurrentSessionStateAsync(int teamId, int eventId, string? accessCode, CancellationToken ct) =>
+        GetJsonAsync<SessionState>(teamId, $"/v2/Events/GetCurrentSessionStateJson?eventId={eventId}", accessCode, ct);
 
-    public async Task<IReadOnlyList<CarPosition>> LoadCarLapsAsync(int teamId, int eventId, int sessionId, string carNumber, CancellationToken ct) =>
-        await GetJsonAsync<List<CarPosition>>(teamId, $"/v2/Events/LoadCarLaps?eventId={eventId}&sessionId={sessionId}&carNumber={Uri.EscapeDataString(carNumber)}", ct) ?? [];
+    public async Task<IReadOnlyList<CarPosition>> LoadCarLapsAsync(int teamId, int eventId, int sessionId, string carNumber, string? accessCode, CancellationToken ct) =>
+        await GetJsonAsync<List<CarPosition>>(teamId, $"/v2/Events/LoadCarLaps?eventId={eventId}&sessionId={sessionId}&carNumber={Uri.EscapeDataString(carNumber)}", accessCode, ct) ?? [];
 
-    public async Task<IReadOnlyList<CarPosition>> LoadSessionLapsAsync(int teamId, int eventId, int sessionId, CancellationToken ct) =>
-        await GetJsonAsync<List<CarPosition>>(teamId, $"/v2/Events/LoadSessionLaps?eventId={eventId}&sessionId={sessionId}", ct) ?? [];
+    public async Task<IReadOnlyList<CarPosition>> LoadSessionLapsAsync(int teamId, int eventId, int sessionId, string? accessCode, CancellationToken ct) =>
+        await GetJsonAsync<List<CarPosition>>(teamId, $"/v2/Events/LoadSessionLaps?eventId={eventId}&sessionId={sessionId}", accessCode, ct) ?? [];
 
     public async Task<IReadOnlyList<OrganizationSummary>> LoadOrganizationsAsync(int teamId, CancellationToken ct) =>
-        await GetJsonAsync<List<OrganizationSummary>>(teamId, "/v1/Organization/GetOrganizations", ct) ?? [];
+        await GetJsonAsync<List<OrganizationSummary>>(teamId, "/v1/Organization/GetOrganizations", null, ct) ?? [];
 
-    private async Task<T?> GetJsonAsync<T>(int teamId, string pathAndQuery, CancellationToken ct)
+    private async Task<T?> GetJsonAsync<T>(int teamId, string pathAndQuery, string? accessCode, CancellationToken ct)
     {
         var url = options.StatusApiUrl.TrimEnd('/') + pathAndQuery;
         using var http = httpFactory.CreateClient("redmist-api");
@@ -74,6 +78,8 @@ public sealed class RedMistRestClient : IRedMistRestClient
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
             request.Headers.Accept.Clear();
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            if (!string.IsNullOrEmpty(accessCode))
+                request.Headers.Add(EventAccessCodeHeader, accessCode);
 
             using var response = await http.SendAsync(request, ct);
             if (response.StatusCode == HttpStatusCode.Unauthorized && attempt == 0)

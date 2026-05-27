@@ -227,7 +227,7 @@ public sealed class RedMistConsumerWorker : BackgroundService
         // RedMistEventId is non-null here — ResolveOrgToEventAsync guarantees it before
         // any candidate reaches AttachAsync (org-only candidates that can't resolve are
         // collapsed to null in TickAsync).
-        var session = new TeamSession(teamId, candidate.RedMistEventId!.Value, carNumbers);
+        var session = new TeamSession(teamId, candidate.RedMistEventId!.Value, candidate.RedMistAccessCode, carNumbers);
         held[teamId] = session;
 
         if (!await ResyncSnapshotAsync(session, ct))
@@ -283,7 +283,7 @@ public sealed class RedMistConsumerWorker : BackgroundService
     {
         try
         {
-            var snapshot = await rest.GetCurrentSessionStateAsync(session.TeamId, session.RedMistEventId, ct);
+            var snapshot = await rest.GetCurrentSessionStateAsync(session.TeamId, session.RedMistEventId, session.RedMistAccessCode, ct);
             if (snapshot is null)
             {
                 logger.LogInformation("RedMist returned no current session state for team {TeamId}, event {EventId}",
@@ -484,14 +484,16 @@ public sealed class RedMistConsumerWorker : BackgroundService
     {
         public int TeamId { get; }
         public int RedMistEventId { get; }
+        public string? RedMistAccessCode { get; }
         public IReadOnlySet<string> CarNumbers { get; }
         public RedMistHubClient? Hub { get; set; }
         public int? LastSessionId { get; set; }
 
-        public TeamSession(int teamId, int redMistEventId, IReadOnlySet<string> carNumbers)
+        public TeamSession(int teamId, int redMistEventId, string? redMistAccessCode, IReadOnlySet<string> carNumbers)
         {
             TeamId = teamId;
             RedMistEventId = redMistEventId;
+            RedMistAccessCode = redMistAccessCode;
             CarNumbers = carNumbers;
         }
 

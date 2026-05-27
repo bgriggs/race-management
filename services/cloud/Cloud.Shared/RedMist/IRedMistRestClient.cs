@@ -23,14 +23,22 @@ public interface IRedMistRestClient
     /// <summary>
     /// Fetches the full current <see cref="SessionState"/> snapshot for the given event.
     /// Used by RedmistConsumer on every connect/reconnect to re-emit current channel values.
+    /// <paramref name="accessCode"/> is forwarded as the <c>X-Event-Access-Code</c> header —
+    /// required for private events (RedMist returns 401 without it), ignored for public ones.
     /// </summary>
-    Task<SessionState?> GetCurrentSessionStateAsync(int teamId, int eventId, CancellationToken ct);
+    Task<SessionState?> GetCurrentSessionStateAsync(int teamId, int eventId, string? accessCode, CancellationToken ct);
 
-    /// <summary>Loads completed laps for one car (used by competitor-analysis proxy and gap recovery).</summary>
-    Task<IReadOnlyList<CarPosition>> LoadCarLapsAsync(int teamId, int eventId, int sessionId, string carNumber, CancellationToken ct);
+    /// <summary>
+    /// Loads completed laps for one car (used by competitor-analysis proxy and gap recovery).
+    /// <paramref name="accessCode"/> is forwarded as the <c>X-Event-Access-Code</c> header.
+    /// </summary>
+    Task<IReadOnlyList<CarPosition>> LoadCarLapsAsync(int teamId, int eventId, int sessionId, string carNumber, string? accessCode, CancellationToken ct);
 
-    /// <summary>Loads completed laps for every car in the session (used by competitor-analysis proxy).</summary>
-    Task<IReadOnlyList<CarPosition>> LoadSessionLapsAsync(int teamId, int eventId, int sessionId, CancellationToken ct);
+    /// <summary>
+    /// Loads completed laps for every car in the session (used by competitor-analysis proxy).
+    /// <paramref name="accessCode"/> is forwarded as the <c>X-Event-Access-Code</c> header.
+    /// </summary>
+    Task<IReadOnlyList<CarPosition>> LoadSessionLapsAsync(int teamId, int eventId, int sessionId, string? accessCode, CancellationToken ct);
 
     /// <summary>
     /// Lists every organization (series/club) known to RedMist. Used by the Race-form picker

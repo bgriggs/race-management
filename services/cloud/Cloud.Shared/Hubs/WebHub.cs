@@ -6,6 +6,7 @@ using Cloud.Shared.Telemetry;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
+using StackExchange.Redis;
 
 namespace Cloud.Shared.Hubs;
 
@@ -16,7 +17,8 @@ public class WebHub(
     IConnectedTeamsTracker teamsTracker,
     ITeamChannelSnapshotService snapshotService,
     IActiveAlarmsReader activeAlarmsReader,
-    IRaceStateReader raceStateReader) : Hub<IWebHubClient>
+    IRaceStateReader raceStateReader,
+    IConnectionMultiplexer redis) : Hub<IWebHubClient>
 {
     public const string TeamGroupPrefix = "team-";
     private const string TeamIdItemKey = "teamId";
@@ -95,6 +97,13 @@ public class WebHub(
             // the client should render blanks rather than fall back to local clocks.
             var raceState = await raceStateReader.GetAsync(teamId, Context.ConnectionAborted);
             await Clients.Caller.RaceStateChanged(raceState);
+
+            // Seed the car-status connection indicator with the current set of carKeys
+            // connected to CarHub, so the UI doesn't have to wait for the first connect/
+            // disconnect pub/sub event.
+            var teamSetKey = string.Format(Consts.TEAM_CONNECTED_CARS, teamId);
+            var connectedCarKeys = await redis.GetDatabase().SetMembersAsync(teamSetKey);
+            await Clients.Caller.CarConnectionSnapshot(connectedCarKeys.Select(v => (string)v!).Where(v => v is not null).ToArray());
         }
         catch (OperationCanceledException) { /* client disconnected before we could send */ }
         catch (Exception ex)

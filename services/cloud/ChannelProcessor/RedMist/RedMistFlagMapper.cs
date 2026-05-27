@@ -33,4 +33,14 @@ internal static class RedMistFlagMapper
         Flags.Unknown => Green,
         _ => null,
     };
+
+    /// <summary>
+    /// Lenient variant for the UI race-header. Falls back to the enum's string name (or
+    /// numeric value for enum values our package version doesn't know about) instead of
+    /// <c>null</c>, so the header tile always shows something rather than blanking out
+    /// when RedMist sends a flag we don't recognize. Use for display-only paths; the
+    /// strict <see cref="Map"/> stays the right call for the channel pipeline where
+    /// downstream consumers compare on specific known values.
+    /// </summary>
+    public static string MapForDisplay(Flags flag) => Map(flag) ?? flag.ToString();
 }

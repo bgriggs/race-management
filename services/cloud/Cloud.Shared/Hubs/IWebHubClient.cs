@@ -27,4 +27,17 @@ public interface IWebHubClient
     /// blanks rather than fall back to local clocks.
     /// </summary>
     Task RaceStateChanged(RaceStateDto? state);
+
+    /// <summary>
+    /// A single car-hub connection transitioned (connected or disconnected). The UI uses
+    /// this to colour the per-car status indicator independently from telemetry recency.
+    /// </summary>
+    Task CarConnectionChanged(CarConnectionChangeNotification change);
+
+    /// <summary>
+    /// Snapshot of every carKey currently connected to CarHub for the subscribed team,
+    /// sent on SubscribeToTeam so the UI can seed its connection state without waiting
+    /// for the first per-car change event.
+    /// </summary>
+    Task CarConnectionSnapshot(string[] connectedCarKeys);
 }

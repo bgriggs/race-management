@@ -7,6 +7,7 @@ import { decode, encode } from "@msgpack/msgpack";
 import { CarChannelSnapshot } from "./car-channel-snapshot";
 import { ChannelValueSnapshot } from "./channel-value-snapshot";
 import { ChannelChangeNotification } from "./channel-change-notification";
+import { CarConnectionChangeNotification } from "./car-connection-change-notification";
 import { AlarmChangeNotification } from "./alarm-change-notification";
 import { RaceStateDto } from "./race-state-dto";
 import { AlarmEventType } from "./alarm-event-type";
@@ -66,6 +67,18 @@ export function channelChangeNotificationFromMessagePack(arr: unknown[]): Channe
 
 export function decodeChannelChangeNotificationMessagePack(bytes: Uint8Array): ChannelChangeNotification {
     return channelChangeNotificationFromMessagePack(decode(bytes) as unknown[]);
+}
+
+export function carConnectionChangeNotificationFromMessagePack(arr: unknown[]): CarConnectionChangeNotification {
+    return {
+        carKey: arr[0] as string,
+        isConnected: arr[1] as boolean,
+        timestamp: new Date(arr[2] as string | number | Date),
+    };
+}
+
+export function decodeCarConnectionChangeNotificationMessagePack(bytes: Uint8Array): CarConnectionChangeNotification {
+    return carConnectionChangeNotificationFromMessagePack(decode(bytes) as unknown[]);
 }
 
 export function alarmChangeNotificationFromMessagePack(arr: unknown[]): AlarmChangeNotification {

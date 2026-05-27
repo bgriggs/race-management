@@ -243,11 +243,17 @@ export class CarStatusTable {
   }
 
   protected statusColor(car: Car): string {
+    // Red — not connected to CarHub at all.
+    if (!this.telemetry.isCarConnected(car.number)) return 'rgb(220, 38, 38)';
+
+    // Connected, but no telemetry yet — yellow (waiting for first channel value).
     const last = this.telemetry.lastTelemetryFor(car.number);
-    if (!last) return 'rgb(220, 38, 38)';
+    if (!last) return 'rgb(234, 179, 8)';
+
+    // Connected + telemetry: green when fresh, fading to yellow as it ages.
     const ageSec = (this.now() - last.getTime()) / 1000;
     if (ageSec <= 0) return 'rgb(34, 197, 94)';
-    if (ageSec >= 5) return 'rgb(220, 38, 38)';
+    if (ageSec >= 5) return 'rgb(234, 179, 8)';
     const t = ageSec / 5;
     const r = Math.round(34 + (234 - 34) * t);
     const g = Math.round(197 + (179 - 197) * t);
@@ -256,8 +262,9 @@ export class CarStatusTable {
   }
 
   protected statusTitle(car: Car): string {
+    if (!this.telemetry.isCarConnected(car.number)) return 'Not connected to CarHub';
     const last = this.telemetry.lastTelemetryFor(car.number);
-    if (!last) return 'Disconnected';
+    if (!last) return 'Connected — awaiting first telemetry';
     return `Last update: ${last.toLocaleString()}`;
   }
 

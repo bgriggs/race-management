@@ -1,6 +1,7 @@
 ﻿using Channels;
 using Cloud.Shared.Database;
 using Cloud.Shared.Models;
+using Cloud.Shared.Telemetry;
 using MessagePack;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
@@ -62,6 +63,7 @@ public class CarHub(IConnectionMultiplexer cacheMux, ILogger<CarHub> logger, IDb
                 {
                     var teamSetKey = string.Format(Consts.TEAM_CONNECTED_CARS, connState.TeamId);
                     await cache.SetRemoveAsync(teamSetKey, connState.CarKey);
+                    await PublishConnectionChangeAsync(cache, connState.TeamId, connState.CarKey, isConnected: false);
                 }
             }
         }
@@ -96,8 +98,22 @@ public class CarHub(IConnectionMultiplexer cacheMux, ILogger<CarHub> logger, IDb
             var teamSetKey = string.Format(Consts.TEAM_CONNECTED_CARS, teamId);
             await cache.SetAddAsync(teamSetKey, carKey);
 
+            await PublishConnectionChangeAsync(cache, teamId, carKey, isConnected: true);
+
             Context.Items[carKey] = true;
         }
+    }
+
+    private static async Task PublishConnectionChangeAsync(IDatabase cache, int teamId, string carKey, bool isConnected)
+    {
+        var notification = new CarConnectionChangeNotification
+        {
+            CarKey = carKey,
+            IsConnected = isConnected,
+            Timestamp = DateTime.UtcNow,
+        };
+        var channel = new RedisChannel(string.Format(Consts.CAR_CONNECTION_CHANGES_CHANNEL, teamId), RedisChannel.PatternMode.Literal);
+        await cache.Multiplexer.GetSubscriber().PublishAsync(channel, MessagePackSerializer.Serialize(notification));
     }
 
     private Task<int> GetTeamIdAsync(string clientId)

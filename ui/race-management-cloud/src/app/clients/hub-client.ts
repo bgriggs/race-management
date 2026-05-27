@@ -5,10 +5,12 @@ import { MessagePackHubProtocol } from '@microsoft/signalr-protocol-msgpack';
 import Keycloak from 'keycloak-js';
 import { APP_CONFIG } from '../config/app-config';
 import { CarChannelSnapshot } from '../../../../shared-ui/src/cloud-api/car-channel-snapshot';
+import { CarConnectionChangeNotification } from '../../../../shared-ui/src/cloud-api/car-connection-change-notification';
 import { ChannelChangeNotification } from '../../../../shared-ui/src/cloud-api/channel-change-notification';
 import { RaceStateDto } from '../../../../shared-ui/src/cloud-api/race-state-dto';
 import {
   carChannelSnapshotFromMessagePack,
+  carConnectionChangeNotificationFromMessagePack,
   channelChangeNotificationFromMessagePack,
   raceStateDtoFromMessagePack,
 } from '../../../../shared-ui/src/cloud-api/message-pack-converter';
@@ -35,6 +37,10 @@ export class HubClient implements OnDestroy {
   readonly channelValueChanged$ = new Subject<ChannelValueChange>();
   /** Most recent RaceStateDto, or null when the server signaled "no data flowing". */
   readonly raceStateChanged$ = new Subject<RaceStateDto | null>();
+  /** Snapshot of carKeys connected to CarHub for the subscribed team — sent once on SubscribeToTeam. */
+  readonly carConnectionSnapshot$ = new Subject<string[]>();
+  /** Delta on CarHub connect/disconnect for a single car. */
+  readonly carConnectionChanged$ = new Subject<CarConnectionChangeNotification>();
 
   async connect(): Promise<void> {
     if (this.connection) return;
@@ -89,6 +95,10 @@ export class HubClient implements OnDestroy {
         : state as Record<string, unknown>;
       this.raceStateChanged$.next(raceStateDtoFromMessagePack(obj));
     });
+    this.connection.on('CarConnectionSnapshot', (carKeys: string[]) =>
+      this.carConnectionSnapshot$.next(carKeys ?? []));
+    this.connection.on('CarConnectionChanged', (change: unknown[]) =>
+      this.carConnectionChanged$.next(carConnectionChangeNotificationFromMessagePack(change)));
   }
 
   private async startWithRetry(): Promise<void> {

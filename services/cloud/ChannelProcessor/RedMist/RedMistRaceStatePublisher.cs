@@ -48,13 +48,15 @@ public sealed class RedMistRaceStatePublisher
     {
         var leaderLap = ComputeLeaderLap(snapshot.CarPositions);
         var acc = state.GetOrAdd(teamId, _ => new Accumulator());
+        // MapForDisplay: never null on the UI path so the header tile shows something even
+        // if RedMist sends a flag value our package version doesn't recognize.
         acc.SetAll(
             eventId: snapshot.EventId,
             localTimeOfDay: snapshot.LocalTimeOfDay,
             runningRaceTime: snapshot.RunningRaceTime,
             timeToGo: snapshot.TimeToGo,
             leaderLap: leaderLap,
-            flag: RedMistFlagMapper.Map(snapshot.CurrentFlag));
+            flag: RedMistFlagMapper.MapForDisplay(snapshot.CurrentFlag));
         return FlushAsync(teamId, acc, ct);
     }
 
@@ -64,7 +66,7 @@ public sealed class RedMistRaceStatePublisher
     /// </summary>
     public Task ApplySessionPatchAsync(int teamId, SessionStatePatch patch, CancellationToken ct)
     {
-        var mappedFlag = patch.CurrentFlag is Flags f ? RedMistFlagMapper.Map(f) : null;
+        var mappedFlag = patch.CurrentFlag is Flags f ? RedMistFlagMapper.MapForDisplay(f) : null;
         var acc = state.GetOrAdd(teamId, _ => new Accumulator());
         var changed = acc.PatchSession(
             eventId: patch.EventId,

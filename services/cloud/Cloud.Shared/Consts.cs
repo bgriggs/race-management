@@ -34,6 +34,13 @@ public static class Consts
     // values to every active car in the team without scanning the global CAR_CONNECTIONS hash.
     public const string TEAM_CONNECTED_CARS = "team-connected-cars:{0}";
 
+    // Per-team car-hub connection state pub/sub. Published by CarHub on first
+    // SendChannelValuesAsync (connect, with carKey known) and on disconnect. Consumed
+    // by WebApi's ChannelPropagatorService to fan out to the team's WebHub group so the
+    // UI's car-status indicator can distinguish "not connected to CarHub" from "connected
+    // but no recent telemetry". Payload is CarConnectionChangeNotification.
+    public const string CAR_CONNECTION_CHANGES_CHANNEL = "car-connection-changes:{0}";
+
     // Fuel Analysis — independent consumer group on the car-channel-values stream so the
     // reconciler sees every message (it does not share work with the state-cache consumer
     // in CHANNEL_PROC_CONSUMER_GROUP).
