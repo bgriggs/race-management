@@ -22,8 +22,12 @@ public static class KeycloakExtensions
         });
 
         var authServerUrl = configuration["Keycloak:AuthServerUrl"] ?? throw new ArgumentNullException("Keycloak:AuthServerUrl");
+        var realm = configuration["Keycloak:Realm"] ?? throw new ArgumentNullException("Keycloak:Realm");
+        // Keycloak's OIDC discovery endpoint is realm-scoped; the health check appends
+        // /.well-known/openid-configuration, so the URI must include /realms/{realm}.
+        var discoveryUri = new Uri($"{authServerUrl.TrimEnd('/')}/realms/{realm}");
         services.AddHealthChecks()
-            .AddOpenIdConnectServer(new Uri(authServerUrl), name: "keycloak", tags: ["auth", "keycloak"]);
+            .AddOpenIdConnectServer(discoveryUri, name: "keycloak", tags: ["auth", "keycloak"]);
 
         return services;
     }
