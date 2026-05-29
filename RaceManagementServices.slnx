@@ -15,6 +15,7 @@
   <Folder Name="/onprem/">
     <Project Path="services/onprem/RaceManagementService.Tests/RaceManagementService.Tests.csproj" />
     <Project Path="services/onprem/RaceManagementService/RaceManagementService.csproj" />
+    <Project Path="services/onprem/RaceManagementUi/RaceManagementUi.csproj" />
   </Folder>
   <Folder Name="/shared/">
     <Project Path="services/Channels/Channels.csproj" />

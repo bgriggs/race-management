@@ -1,0 +1,5 @@
+# The Angular build output is copied here only at deploy time (see Install-RaceManagementUi.ps1).
+# Keep the folder in source control but never commit the published SPA assets.
+*
+!.gitignore
+!.gitkeep
