@@ -1,0 +1,53 @@
+{{- if index .Values "redis-operator" "enabled" }}
+apiVersion: databases.spotahome.com/v1
+kind: RedisFailover
+metadata:
+  name: {{ .Values.redis.name | default "redis" }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  # Sentinel coordinates failover. With a single Redis replica this provides no real
+  # HA, but the operator still requires at least one sentinel to own the topology.
+  sentinel:
+    replicas: {{ .Values.redis.sentinel.replicas | default 1 }}
+    resources:
+      requests:
+        cpu: {{ .Values.redis.sentinel.resources.requests.cpu | default "50m" | quote }}
+        memory: {{ .Values.redis.sentinel.resources.requests.memory | default "64Mi" | quote }}
+      limits:
+        cpu: {{ .Values.redis.sentinel.resources.limits.cpu | default "100m" | quote }}
+        memory: {{ .Values.redis.sentinel.resources.limits.memory | default "128Mi" | quote }}
+    {{- if .Values.redis.sentinel.customConfig }}
+    customConfig:
+{{ toYaml .Values.redis.sentinel.customConfig | nindent 6 }}
+    {{- end }}
+
+  redis:
+    replicas: {{ .Values.redis.replicas | default 1 }}
+    resources:
+      requests:
+        cpu: {{ .Values.redis.resources.requests.cpu | default "100m" | quote }}
+        memory: {{ .Values.redis.resources.requests.memory | default "256Mi" | quote }}
+      limits:
+        cpu: {{ .Values.redis.resources.limits.cpu | default "500m" | quote }}
+        memory: {{ .Values.redis.resources.limits.memory | default "512Mi" | quote }}
+
+    # Ephemeral storage — the services treat Redis as a cache/backplane, not a system
+    # of record (Postgres is). See the on-demand/no-local-storage convention.
+    storage:
+      emptyDir: {}
+
+    {{- if .Values.redis.customConfig }}
+    customConfig:
+{{ toYaml .Values.redis.customConfig | nindent 6 }}
+    {{- end }}
+
+  {{- if .Values.redis.auth.secretName }}
+  # The operator reads the "password" key from this secret and applies requirepass.
+  auth:
+    secretPath: {{ .Values.redis.auth.secretName }}
+  {{- end }}
+{{- end }}

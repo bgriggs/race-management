@@ -1,0 +1,5 @@
+apiVersion: v2
+name: race-management-car-gateway
+description: SignalR car-status gateway hub for in-car telemetry
+type: application
+version: 0.1.0

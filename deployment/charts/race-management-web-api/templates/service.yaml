@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "race-management-web-api.fullname" . }}
+  labels:
+    {{- include "race-management-web-api.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  # Session affinity keeps a client's SignalR negotiate + WebSocket upgrade on the
+  # same pod, preventing 404s when more than one replica is running.
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "race-management-web-api.selectorLabels" . | nindent 4 }}

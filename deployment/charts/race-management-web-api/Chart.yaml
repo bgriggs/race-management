@@ -1,0 +1,5 @@
+apiVersion: v2
+name: race-management-web-api
+description: HTTP API and SignalR web-status hub for Race Management
+type: application
+version: 0.1.0

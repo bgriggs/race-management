@@ -1,0 +1,23 @@
+{{- if index .Values "redis-operator" "enabled" }}
+# Stable ClusterIP for the current Redis master. The operator labels the active
+# master pod with "redisfailovers-role: master", so this service always points at it
+# even after a failover. Services connect via "redis-master:6379".
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-master
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: redis
+      port: 6379
+      protocol: TCP
+      targetPort: 6379
+  selector:
+    redisfailovers-role: master
+{{- end }}

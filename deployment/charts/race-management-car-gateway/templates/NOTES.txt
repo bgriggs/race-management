@@ -1,0 +1,9 @@
+{{ .Chart.Name }} deployed.
+
+{{- if .Values.ingress.enabled }}
+{{- $host := ternary (printf "%s.%s" .Values.ingress.subdomain .Values.ingress.domain) (printf "%s-%s.%s" .Values.ingress.subdomain .Values.ingress.environment .Values.ingress.domain) (eq .Values.ingress.environment "prod") }}
+
+SignalR:    https://{{ $host }}/{{ .Values.ingress.pathPrefix }}/car-status
+{{- end }}
+
+Health:     kubectl exec deploy/{{ include "race-management-car-gateway.fullname" . }} -- wget -qO- localhost:{{ .Values.service.port }}/healthz/ready

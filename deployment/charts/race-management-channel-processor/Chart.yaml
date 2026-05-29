@@ -1,0 +1,5 @@
+apiVersion: v2
+name: race-management-channel-processor
+description: Background worker — channel pipeline, fuel analysis, alarms, RedMist integration
+type: application
+version: 0.1.0

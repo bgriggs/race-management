@@ -1,0 +1,15 @@
+dependencies:
+- name: redis-operator
+  repository: https://spotahome.github.io/redis-operator
+  version: 3.2.9
+- name: race-management-web-api
+  repository: ""
+  version: 0.1.0
+- name: race-management-car-gateway
+  repository: ""
+  version: 0.1.0
+- name: race-management-channel-processor
+  repository: ""
+  version: 0.1.0
+digest: sha256:a60572b4e1cc12defa6aee24398b35ccce0ef71bf61500bb97cc21e9935fb2db
+generated: "2026-05-29T11:15:08.7697229-06:00"

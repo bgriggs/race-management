@@ -90,3 +90,4 @@ services/car/Racecar/config-versions/
 /ui/.angular/cache/21.2.12/race-management-cloud/angular-compiler.db-lock
 /ui/.angular/cache/21.2.12/shared-ui
 /.playwright-mcp
+/deployment/charts/redis-operator-3.2.9.tgz

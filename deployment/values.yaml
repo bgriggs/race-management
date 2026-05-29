@@ -1,0 +1,95 @@
+# Values shared across every cloud service subchart. Helm automatically merges the
+# `global` block into each subchart, so env vars and secrets are declared once here
+# and consumed by every service's deployment template.
+global:
+  env:
+    "ASPNETCORE_ENVIRONMENT": "Production"
+    "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true"
+    "ASPNETCORE_URLS": "http://+:8080"
+    "Keycloak__Realm": "race-management"
+    "Keycloak__AuthServerUrl": "https://auth.redmist.racing"
+
+  # Injected as secretKeyRef env vars. Create the referenced secret before deploying:
+  #   kubectl create secret generic race-management-secrets -n <ns> \
+  #     --from-literal=db='Host=...;Database=...;Username=...;Password=...' \
+  #     --from-literal=redis='redis-master:6379,abortConnect=false'
+  secrets:
+    - env: "ConnectionStrings__Default"
+      name: "race-management-secrets"
+      key: "db"
+    # Whole StackExchange.Redis connection string. The redis-master ClusterIP
+    # (templates/redis-master-service.yaml) fronts the single-replica instance;
+    # append ",password=..." here if operator auth is enabled (see README).
+    - env: "ConnectionStrings__Redis"
+      name: "race-management-secrets"
+      key: "redis"
+
+# Redis Operator (Spotahome). Installs the operator that reconciles the RedisFailover
+# custom resource defined in templates/redis.yaml.
+redis-operator:
+  enabled: true
+
+# Redis instance configuration (RedisFailover via the operator). Single replica as
+# requested — one Redis server and a single sentinel. This is NOT highly available;
+# bump redis.replicas / sentinel.replicas to scale out (sentinel should be odd).
+redis:
+  name: "redis"
+  replicas: 1
+
+  sentinel:
+    replicas: 1
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "64Mi"
+      limits:
+        cpu: "100m"
+        memory: "128Mi"
+
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+  # Authentication. The redis-operator reads the literal "password" key from this
+  # secret and sets requirepass on the Redis server and sentinels. The same password
+  # must appear inside ConnectionStrings__Redis (global.secrets, key "redis") so the
+  # apps can connect. Set secretName to "" to disable auth.
+  auth:
+    secretName: "race-management-secrets"
+
+  customConfig:
+    - "maxmemory-policy allkeys-lru"
+    - "appendonly no"
+
+# ---------------------------------------------------------------------------
+# Per-service overrides. Keys match each subchart directory name under charts/.
+# ---------------------------------------------------------------------------
+
+race-management-web-api:
+  image:
+    repository: bigmission/race-management-web-api
+    tag: latest
+  ingress:
+    enabled: true
+    # https://api.redmist.racing/race-management/...  ->  rewritten to /...
+    # Matches the UI's api.baseUrl (ui/race-management-cloud/public/config.json).
+    pathPrefix: race-management
+
+race-management-car-gateway:
+  image:
+    repository: bigmission/race-management-car-gateway
+    tag: latest
+  ingress:
+    enabled: true
+    # https://api.redmist.racing/car-gateway/car-status  ->  rewritten to /car-status
+    # Matches services/car/Racecar/appsettings.json StatusHub.
+    pathPrefix: car-gateway
+
+race-management-channel-processor:
+  image:
+    repository: bigmission/race-management-channel-processor
+    tag: latest

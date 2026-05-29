@@ -32,12 +32,12 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
           cache: 'npm'
           cache-dependency-path: ui/package-lock.json
 
       - name: Pin npm
-        run: npm install -g npm@11.6.2
+        run: npm install -g npm@11.16.0
 
       - name: Install
         run: npm ci

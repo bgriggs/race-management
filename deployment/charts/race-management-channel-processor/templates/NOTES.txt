@@ -1,0 +1,4 @@
+{{ .Chart.Name }} deployed (single-replica background worker, no public endpoint).
+
+Logs:    kubectl logs -n {{ .Release.Namespace }} deploy/{{ include "race-management-channel-processor.fullname" . }} -f
+Health:  kubectl exec -n {{ .Release.Namespace }} deploy/{{ include "race-management-channel-processor.fullname" . }} -- wget -qO- localhost:{{ .Values.containerPort }}/healthz/ready

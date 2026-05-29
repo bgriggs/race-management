@@ -1,0 +1,16 @@
+apiVersion: v2
+name: race-management
+description: Deploy the Race Management cloud services (WebApi, ChannelProcessor, CarGateway) and Redis
+type: application
+version: 0.1.0
+dependencies:
+  - name: redis-operator
+    version: "3.2.9"
+    repository: https://spotahome.github.io/redis-operator
+    condition: redis-operator.enabled
+  - name: race-management-web-api
+    version: "0.1.0"
+  - name: race-management-car-gateway
+    version: "0.1.0"
+  - name: race-management-channel-processor
+    version: "0.1.0"

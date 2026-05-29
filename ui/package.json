@@ -2,7 +2,7 @@
   "name": "race-management-ui-workspace",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "npm@11.6.2",
+  "packageManager": "npm@11.16.0",
   "scripts": {
     "ng": "ng",
     "generate:version": "node scripts/generate-version.mjs",

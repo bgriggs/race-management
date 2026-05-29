@@ -1,0 +1,40 @@
+# Single replica by design. This worker owns per-team RedMist subscription leases and
+# the fuel/alarm processing pipeline; run exactly one instance (no autoscaling, no
+# ingress). It still serves /healthz/* on the container port for k8s probes.
+replicaCount: 1
+
+image:
+  repository: bigmission/race-management-channel-processor
+  tag: latest
+  pullPolicy: Always
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+podAnnotations: {}
+podSecurityContext: {}
+securityContext: {}
+
+# Port the app listens on (ASPNETCORE_URLS in global.env) — used only for probes.
+containerPort: 8080
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "320Mi"
+  limits:
+    cpu: "750m"
+    memory: "768Mi"
+
+serviceAccount:
+  create: false
+  name: ""
+  annotations: {}
+
+nodeSelector: {}
+affinity: {}
+tolerations: []
+
+# Service-specific env (merged over global.env). Nothing extra required today.
+env: {}
