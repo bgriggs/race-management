@@ -122,7 +122,10 @@ public static class StintEditor
         // shouldn't show speculative bars for every planned stint. Lazy creation kicks
         // in via EnsureLatestStintFollowOnIfEndedAsync (called from LoadStintsAsync) once
         // the current stint's expected EndAt actually elapses in real time.
-        if (endAt is DateTime endTime && await IsOnlyStintAsync(db, teamId, carNumber, raceId, stint.Id, ct))
+        // An Auto stint is itself a placeholder follow-on, so we never chain another Auto
+        // after it — only an engineer-placed (Manual) stint earns a follow-on.
+        if (endAt is DateTime endTime && originType != StintOriginType.Auto
+            && await IsOnlyStintAsync(db, teamId, carNumber, raceId, stint.Id, ct))
         {
             await EnsureFollowOnAutoStintAsync(db, teamId, carNumber, raceId, stint, window.Id, endTime, ct);
         }
@@ -270,19 +273,24 @@ public static class StintEditor
         db.RefuelEvents.Add(newRefuel);
         await db.SaveChangesAsync(ct);
 
-        // Close whatever window is currently open for this car+race (not just the prior
-        // stint's window — it may already be closed by an earlier cascade). The partial
-        // unique index forbids two open FuelWindows per (team, car, race), so persist
-        // the close in its own SaveChanges before inserting the new open window —
-        // otherwise EF Core may emit the INSERT before the UPDATE inside one batch and
-        // trip the constraint mid-transaction.
-        var openWindow = await db.FuelWindows
-            .FirstOrDefaultAsync(w => w.TeamId == teamId && w.CarNumber == carNumber
-                                    && w.RaceId == raceId && w.ClosedAt == null, ct);
-        if (openWindow is not null)
+        // Close every open window for this car+race. The partial unique index forbids two
+        // open FuelWindows per (team, car, race), but corrupted data can have multiples;
+        // closing them all defensively here is what lets the next INSERT succeed. Persist
+        // the closes in their own SaveChanges before the INSERT — otherwise EF Core may
+        // emit the new-window INSERT before the close UPDATEs inside one batch and trip
+        // the constraint mid-transaction (Postgres evaluates partial unique indexes
+        // per-row at INSERT time, against the pre-update state).
+        var openWindows = await db.FuelWindows
+            .Where(w => w.TeamId == teamId && w.CarNumber == carNumber
+                     && w.RaceId == raceId && w.ClosedAt == null)
+            .ToListAsync(ct);
+        foreach (var openWindow in openWindows)
         {
             openWindow.ClosedAt = startAt;
             openWindow.EndRefuelEventId = newRefuel.Id;
+        }
+        if (openWindows.Count > 0)
+        {
             await db.SaveChangesAsync(ct);
         }
 
@@ -437,8 +445,10 @@ public static class StintEditor
 
         // Same first-stint rule as CreateAsync. The eager follow-on only attaches to the
         // very first stint of the race; everything else relies on the lazy creator at
-        // read time (see EnsureLatestStintFollowOnIfEndedAsync).
-        if (endAt is DateTime endTime && await IsOnlyStintAsync(db, teamId, stint.CarNumber, stint.RaceId, stint.Id, ct))
+        // read time (see EnsureLatestStintFollowOnIfEndedAsync). An Auto stint is itself a
+        // placeholder follow-on, so editing one never spawns another Auto after it.
+        if (endAt is DateTime endTime && originType != StintOriginType.Auto
+            && await IsOnlyStintAsync(db, teamId, stint.CarNumber, stint.RaceId, stint.Id, ct))
         {
             await EnsureFollowOnAutoStintAsync(db, teamId, stint.CarNumber, stint.RaceId, stint, stint.FuelWindowId, endTime, ct);
         }

@@ -17,7 +17,7 @@ public static class PostgresExtensions
     /// <param name="minPoolSize">Minimum number of connections in the pool. Defaults to 1.</param>
     /// <param name="maxPoolSize">Maximum number of connections in the pool. Defaults to 5.</param>
     public static IServiceCollection AddPostgres(this IServiceCollection services, IConfiguration configuration,
-        int minPoolSize = 1, int maxPoolSize = 5)
+        int minPoolSize = 2, int maxPoolSize = 10)
     {
         AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
         string sqlConn = configuration["ConnectionStrings:Default"] ?? throw new ArgumentNullException("SQL Connection");
