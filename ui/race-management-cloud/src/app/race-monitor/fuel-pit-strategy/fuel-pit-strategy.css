@@ -7,6 +7,11 @@
   border-radius: 4px;
   overflow: hidden;
   color: var(--text-primary, #e5e7eb);
+  /* Grid template shared by fuel-car-row and gantt-time-axis. Keeping the action-button
+     column at a fixed width (rather than `auto`) ensures the time-axis row's 1fr canvas
+     column matches the car-row's 1fr canvas column to the pixel — without this the
+     time-axis scrollbar can extend past where the car-row canvas ends. */
+  --gantt-actions-col: 68px;
 }
 
 .header {

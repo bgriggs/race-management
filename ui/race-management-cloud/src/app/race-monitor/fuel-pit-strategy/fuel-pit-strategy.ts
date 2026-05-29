@@ -38,6 +38,18 @@ export class FuelPitStrategy {
     this.cars().find(c => c.number === this.selectedCarNumber()) ?? null,
   );
 
+  /**
+   * Latest canvas content width emitted by each `<app-fuel-car-row>`. The gantt-container
+   * passes the max into the shared time-axis so its scrollable width matches the row's
+   * scope-aware extent (no time-axis overhang past the row's content).
+   */
+  protected readonly rowCanvasWidths = signal<Map<string, number>>(new Map());
+  protected readonly maxCanvasWidthPx = computed(() => {
+    let max = 0;
+    for (const w of this.rowCanvasWidths().values()) if (w > max) max = w;
+    return max > 0 ? max : null;
+  });
+
   protected readonly activeRace = this.raceSelection.activeRace;
   protected readonly hasActiveRace = computed(() => this.activeRace() !== null);
 
@@ -104,6 +116,12 @@ export class FuelPitStrategy {
   /** Closing the detail modal clears selection (spec §7). */
   protected onDetailClosed(): void {
     this.selectedCarNumber.set(null);
+  }
+
+  protected onCanvasWidthPxChange(carNumber: string, widthPx: number): void {
+    const next = new Map(this.rowCanvasWidths());
+    next.set(carNumber, widthPx);
+    this.rowCanvasWidths.set(next);
   }
 
   private async loadCars(teamId: number): Promise<void> {

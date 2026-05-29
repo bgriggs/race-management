@@ -7,8 +7,11 @@
 
 .axis-row {
   display: grid;
-  /* Mirrors the fuel-car-row grid so axis ticks align under the gantt canvas column. */
-  grid-template-columns: 56px minmax(0, 1fr) 110px auto;
+  /* Mirrors the fuel-car-row grid so axis ticks align under the gantt canvas column. The
+     final column uses the shared --gantt-actions-col custom property (defined on
+     .fuel-pit-strategy) so this row reserves the same space as the car-row's action
+     buttons — keeps the scrollbar's right edge aligned with the canvas's right edge. */
+  grid-template-columns: 56px minmax(0, 1fr) 110px var(--gantt-actions-col, 68px);
   gap: 12px;
   padding: 8px 14px 4px 14px;
 }

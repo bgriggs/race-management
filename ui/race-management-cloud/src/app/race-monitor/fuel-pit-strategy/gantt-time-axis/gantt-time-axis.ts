@@ -40,13 +40,19 @@ export class GanttTimeAxis {
   readonly pxPerMinute = input.required<number>();
   readonly now = input.required<Date>();
   readonly scrollLeft = input.required<number>();
+  /**
+   * Active canvas width supplied by the gantt-container (which in turn collects it from
+   * the row's scope-aware computation). When omitted, falls back to the full-session
+   * width so the axis still renders on its own.
+   */
+  readonly canvasWidthPx = input<number | null>(null);
 
   readonly scrollLeftChange = output<number>();
 
   private readonly wrap = viewChild<ElementRef<HTMLDivElement>>('wrap');
 
-  protected readonly canvasWidthPx = computed(() =>
-    ((this.sessionEndMs() - this.sessionStartMs()) / MS_PER_MINUTE) * this.pxPerMinute(),
+  protected readonly resolvedCanvasWidthPx = computed(() =>
+    this.canvasWidthPx() ?? ((this.sessionEndMs() - this.sessionStartMs()) / MS_PER_MINUTE) * this.pxPerMinute(),
   );
 
   protected readonly ticks = computed<HourTick[]>(() => {

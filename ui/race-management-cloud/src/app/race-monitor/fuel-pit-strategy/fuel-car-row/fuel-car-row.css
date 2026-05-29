@@ -6,7 +6,7 @@
 
 .row {
   display: grid;
-  grid-template-columns: 56px minmax(0, 1fr) 110px auto;
+  grid-template-columns: 56px minmax(0, 1fr) 110px var(--gantt-actions-col, 68px);
   align-items: center;
   gap: 12px;
   padding: 14px;

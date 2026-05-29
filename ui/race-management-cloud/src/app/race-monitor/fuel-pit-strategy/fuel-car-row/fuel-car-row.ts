@@ -97,6 +97,12 @@ export class FuelCarRow {
   readonly settingsClick = output<string>();
   /** Emits when the user scrolls this row's canvas; the parent fans out via the shared signal. */
   readonly scrollLeftChange = output<number>();
+  /**
+   * Emits this row's canvas content width (scope-aware) so the time-axis at the bottom
+   * of the gantt can render ticks across the same width — keeps the scrollbar end aligned
+   * with the row's content end and prevents a wider time-axis from creating dead space.
+   */
+  readonly canvasWidthPxChange = output<number>();
 
   private readonly canvasWrap = viewChild<ElementRef<HTMLDivElement>>('canvasWrap');
 
@@ -359,8 +365,18 @@ export class FuelCarRow {
     const pxPerMin = this.pxPerMinute();
     const nowMs = Math.max(this.now().getTime(), sessionStartMs);
 
-    const out: FutureStint[] = [];
+    // Chain future projections from the END of the last existing stint, not from "now".
+    // Starting at now would render a partial bar whose left half is covered by the
+    // currently-running (or last-recorded) real stint — visually appearing as a stub
+    // duration. The full-tank stintDurationMs is the right duration; the cursor just
+    // needs to start past the existing timeline.
     let cursor = nowMs;
+    for (const s of this.stints()) {
+      const sEndMs = s.endAt ? new Date(s.endAt).getTime() : new Date(s.startAt).getTime();
+      if (sEndMs > cursor) cursor = sEndMs;
+    }
+
+    const out: FutureStint[] = [];
     let idx = 0;
     // Safety: cap iteration count regardless of math edge cases.
     const MAX_STINTS = 100;
@@ -396,10 +412,35 @@ export class FuelCarRow {
     return { leftPx };
   });
 
-  /** Total pixel width of the gantt canvas content (drives horizontal scroll). */
-  protected readonly canvasWidthPx = computed(() =>
-    ((this.sessionEndMs() - this.sessionStartMs()) / 60_000) * this.pxPerMinute(),
-  );
+  /**
+   * Total pixel width of the gantt canvas content. In `end` scope (Project-to-end) the
+   * canvas extends to `sessionEnd` so future-stint projections and the end-line have
+   * room to render. In `current` scope it truncates to the rightmost rendered element
+   * — last stint EndAt, or now-line, or projection-overlay end — whichever extends
+   * furthest. Without this trim, the canvas inner would always be sessionEnd-wide and
+   * the wrap would show empty space past the last bar when content doesn't cover the
+   * full session.
+   */
+  protected readonly canvasWidthPx = computed(() => {
+    const startMs = this.sessionStartMs();
+    const pxPerMin = this.pxPerMinute();
+    if (this.scope() === 'end') {
+      return ((this.sessionEndMs() - startMs) / 60_000) * pxPerMin;
+    }
+    let lastMs = startMs;
+    for (const s of this.stints()) {
+      const e = s.endAt ? new Date(s.endAt).getTime() : new Date(s.startAt).getTime();
+      if (e > lastMs) lastMs = e;
+    }
+    const nowMs = this.now().getTime();
+    if (nowMs > lastMs) lastMs = nowMs;
+    const overlay = this.projectionOverlay();
+    if (overlay) {
+      const overlayRightMs = startMs + ((overlay.leftPx + overlay.widthPx) / pxPerMin) * 60_000;
+      if (overlayRightMs > lastMs) lastMs = overlayRightMs;
+    }
+    return Math.max(0, ((lastMs - startMs) / 60_000) * pxPerMin);
+  });
 
   constructor() {
     const destroyRef = inject(DestroyRef);
@@ -421,6 +462,11 @@ export class FuelCarRow {
       void this.refreshCarFuelConfig(teamId, carNumber);
       void this.refreshAll(teamId, carNumber, raceId);
       interval = setInterval(() => void this.refreshAll(teamId, carNumber, raceId), POLL_INTERVAL_MS);
+    });
+
+    // Surface canvas width to the parent so the time-axis can match it.
+    effect(() => {
+      this.canvasWidthPxChange.emit(this.canvasWidthPx());
     });
 
     // Sync inbound scroll position from the parent's shared signal into this

@@ -43,7 +43,7 @@
   } @else if (cars().length === 0) {
     <div class="placeholder">No cars configured for this team.</div>
   } @else {
-    <app-gantt-container [race]="activeRace()!" #container>
+    <app-gantt-container [race]="activeRace()!" [canvasWidthPx]="maxCanvasWidthPx()" #container>
       @for (car of cars(); track car.number) {
         <app-fuel-car-row
           [teamId]="teamSelection.selectedTeamId()!"
@@ -58,6 +58,7 @@
           [sessionEndMs]="container.sessionEndMs()"
           [scrollLeft]="container.scrollLeft()"
           (scrollLeftChange)="container.setScrollLeft($event)"
+          (canvasWidthPxChange)="onCanvasWidthPxChange(car.number, $event)"
           (rowClick)="onRowClick($event)"
           (addStintClick)="onAddStintClick($event)"
           (settingsClick)="onSettingsClick($event)"

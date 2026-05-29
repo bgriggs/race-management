@@ -164,7 +164,7 @@ public static class StintEditor
         // Stint still active (no EndAt set, or EndAt in the future) — too early.
         if (latest.EndAt is not DateTime end || end >= nowInRaceTz) return;
 
-        await CreateAutoFollowOnAsync(db, teamId, carNumber, raceId, latest.FuelWindowId, end, ct);
+        await CreateAutoFollowOnAsync(db, teamId, carNumber, raceId, end, ct);
     }
 
     /// <summary>
@@ -199,7 +199,7 @@ public static class StintEditor
 
         if (nextStint is null)
         {
-            await CreateAutoFollowOnAsync(db, teamId, carNumber, raceId, priorWindowId, endTime, ct);
+            await CreateAutoFollowOnAsync(db, teamId, carNumber, raceId, endTime, ct);
             return;
         }
 
@@ -245,7 +245,6 @@ public static class StintEditor
     private static async Task CreateAutoFollowOnAsync(
         RaceManagementContext db,
         int teamId, string carNumber, int raceId,
-        int priorWindowId,
         DateTime startAt,
         CancellationToken ct)
     {
@@ -271,11 +270,20 @@ public static class StintEditor
         db.RefuelEvents.Add(newRefuel);
         await db.SaveChangesAsync(ct);
 
-        var priorWindow = await db.FuelWindows.FirstOrDefaultAsync(w => w.Id == priorWindowId, ct);
-        if (priorWindow is not null && priorWindow.ClosedAt is null)
+        // Close whatever window is currently open for this car+race (not just the prior
+        // stint's window — it may already be closed by an earlier cascade). The partial
+        // unique index forbids two open FuelWindows per (team, car, race), so persist
+        // the close in its own SaveChanges before inserting the new open window —
+        // otherwise EF Core may emit the INSERT before the UPDATE inside one batch and
+        // trip the constraint mid-transaction.
+        var openWindow = await db.FuelWindows
+            .FirstOrDefaultAsync(w => w.TeamId == teamId && w.CarNumber == carNumber
+                                    && w.RaceId == raceId && w.ClosedAt == null, ct);
+        if (openWindow is not null)
         {
-            priorWindow.ClosedAt = startAt;
-            priorWindow.EndRefuelEventId = newRefuel.Id;
+            openWindow.ClosedAt = startAt;
+            openWindow.EndRefuelEventId = newRefuel.Id;
+            await db.SaveChangesAsync(ct);
         }
 
         var newWindow = new FuelWindow

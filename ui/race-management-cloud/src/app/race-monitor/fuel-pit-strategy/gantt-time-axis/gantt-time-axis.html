@@ -1,7 +1,7 @@
 <div class="axis-row">
   <div class="left-spacer"></div>
   <div class="canvas-wrap" #wrap (scroll)="onScroll($event)">
-    <div class="ticks" [style.width.px]="canvasWidthPx()">
+    <div class="ticks" [style.width.px]="resolvedCanvasWidthPx()">
       @for (tick of ticks(); track tick.ms) {
         <span class="tick" [style.left.px]="tick.leftPx">{{ tick.label }}</span>
       }

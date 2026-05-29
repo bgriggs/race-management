@@ -71,6 +71,17 @@ export class GanttContainer {
   /** Total pixel width of the scaled timeline. */
   readonly totalWidthPx = computed(() => this.sessionDurationMin() * this.pxPerMinute());
 
+  /**
+   * Active canvas width for the time-axis. Provided by rows (their scope-aware
+   * content extent) so the time-axis renders ticks across exactly the same span as
+   * the row canvases — otherwise the time-axis scrollbar would extend past where the
+   * rows' content ends, recreating the dead-space issue.
+   */
+  readonly canvasWidthPx = input<number | null>(null);
+  readonly resolvedCanvasWidthPx = computed(() =>
+    this.canvasWidthPx() ?? this.totalWidthPx(),
+  );
+
   /** Shared 1Hz wall-clock signal — sourced from {@link RaceSelectionService.now}. */
   readonly now = this.raceSelection.now;
 
