@@ -5,6 +5,6 @@
     "clientId": "race-management-ui"
   },
   "api": {
-    "baseUrl": "https://api.redmist.racing"
+    "baseUrl": "https://api.redmist.racing/race-management"
   }
 }

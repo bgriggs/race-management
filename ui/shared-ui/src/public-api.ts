@@ -1,4 +1,5 @@
 export * from './lib/shared-banner/shared-banner.component';
+export * from './lib/version-footer/version-footer.component';
 export * from './lib/pill-toggle/pill-toggle';
 export * from './lib/configuration/navigation-tree/navigation-tree.component';
 export * from './lib/configuration/error-list/error-list.component';

@@ -27,13 +27,13 @@ jobs:
         service:
           - name: "Car Gateway"
             dockerfile: "./services/cloud/CarGateway/Dockerfile"
-            image: "bigmission/race-management-cargateway"
+            image: "bigmission/race-management-car-gateway"
           - name: "Channel Processor"
             dockerfile: "./services/cloud/ChannelProcessor/Dockerfile"
-            image: "bigmission/race-management-channelprocessor"
+            image: "bigmission/race-management-channel-processor"
           - name: "Web API"
             dockerfile: "./services/cloud/WebApi/Dockerfile"
-            image: "bigmission/race-management-webapi"
+            image: "bigmission/race-management-web-api"
 
     steps:
       - name: Checkout code

@@ -7,6 +7,8 @@ export interface KeycloakConfig {
 }
 
 export interface ApiConfig {
+  // Reverse-proxy base URL for the WebApi service (path: race-management). Fronts
+  // every controller (/v1/{controller}/...) and the SignalR hub (/web-status).
   baseUrl: string;
 }
 

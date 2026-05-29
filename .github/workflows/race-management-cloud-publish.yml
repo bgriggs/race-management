@@ -1,0 +1,49 @@
+name: Publish Race Management Cloud to Production
+
+on:
+  workflow_dispatch:
+  # release:
+  #   types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: ui
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: ui/package-lock.json
+
+      - name: Pin npm
+        run: npm install -g npm@11.6.2
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Angular app for production
+        run: npm run build:cloud
+
+      - name: Upload files to Bunny CDN via copy utility
+        shell: pwsh
+        run: ${{ github.workspace }}\bunnycdn-copy\BunnyCdnCopy.exe race-management-app ${{ secrets.BUNNY_STORAGE_KEY }} ny "${{ github.workspace }}\ui\dist\race-management-cloud\browser" / true 5
+
+      - name: Purge BunnyCDN Cache
+        shell: pwsh
+        run: |
+          $headers = @{
+            "AccessKey" = "${{ secrets.BUNNY_API_KEY }}"
+            "Content-Type" = "application/json"
+          }
+          Invoke-RestMethod -Uri https://api.bunny.net/pullzone/5933068/purgeCache -Method Post -Headers $headers

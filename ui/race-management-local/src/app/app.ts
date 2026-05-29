@@ -2,10 +2,11 @@ import { Component, HostListener, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from './auth.service';
 import { TeamSelectionService } from './teams/team-selection.service';
+import { VersionFooterComponent } from '../../../shared-ui/src/lib/version-footer/version-footer.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, VersionFooterComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

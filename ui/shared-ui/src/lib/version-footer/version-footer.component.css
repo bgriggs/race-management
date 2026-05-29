@@ -1,0 +1,11 @@
+.rm-version-footer {
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  color: color-mix(in srgb, currentColor 55%, transparent);
+}
+
+.rm-version-footer__version {
+  letter-spacing: 0.02em;
+}

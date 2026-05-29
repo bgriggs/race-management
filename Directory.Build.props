@@ -1,6 +1,8 @@
 <Project>
   <PropertyGroup>
 	<NoWarn>$(NoWarn);CS1591</NoWarn>
-	<Version>0.1.0</Version>
+	<!-- Single source of truth: /version.json (also consumed by the Angular UI build). -->
+	<Version Condition="Exists('$(MSBuildThisFileDirectory)version.json')">$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText('$(MSBuildThisFileDirectory)version.json')), '"version"\s*:\s*"([^"]*)"').Groups[1].Value)</Version>
+	<Version Condition="!Exists('$(MSBuildThisFileDirectory)version.json')">0.1.0</Version>
   </PropertyGroup>
 </Project>
