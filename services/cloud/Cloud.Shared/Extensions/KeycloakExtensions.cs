@@ -23,9 +23,11 @@ public static class KeycloakExtensions
 
         var authServerUrl = configuration["Keycloak:AuthServerUrl"] ?? throw new ArgumentNullException("Keycloak:AuthServerUrl");
         var realm = configuration["Keycloak:Realm"] ?? throw new ArgumentNullException("Keycloak:Realm");
-        // Keycloak's OIDC discovery endpoint is realm-scoped; the health check appends
-        // /.well-known/openid-configuration, so the URI must include /realms/{realm}.
-        var discoveryUri = new Uri($"{authServerUrl.TrimEnd('/')}/realms/{realm}");
+        // Keycloak's OIDC discovery endpoint is realm-scoped; the health check resolves
+        // ".well-known/openid-configuration" relative to this URI. The trailing slash is
+        // required so the relative path appends to /realms/{realm} instead of replacing
+        // the realm segment (Uri relative resolution drops the last unslashed segment).
+        var discoveryUri = new Uri($"{authServerUrl.TrimEnd('/')}/realms/{realm}/");
         services.AddHealthChecks()
             .AddOpenIdConnectServer(discoveryUri, name: "keycloak", tags: ["auth", "keycloak"]);
 
