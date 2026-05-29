@@ -1,12 +1,16 @@
 using System.Globalization;
+using System.Text.Json;
 using Cloud.Shared;
 using Cloud.Shared.Auth;
 using Cloud.Shared.Database;
 using Cloud.Shared.Database.Models.FuelAnalysis;
 using Cloud.Shared.FuelAnalysis;
 using Cloud.Shared.Streaming;
+using Common;
+using Common.FuelAnalysis;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using WebApi.FuelAnalysis;
 
 namespace WebApi.Controllers;
 
@@ -44,13 +48,26 @@ public class FuelController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<FuelRangeSnapshot>> LoadFuelSnapshotAsync(int teamId, string carNumber, CancellationToken ct)
+    public async Task<ActionResult<FuelRangeSnapshot>> LoadFuelSnapshotAsync(int teamId, string carNumber, int raceId, CancellationToken ct)
     {
         if (!await teamRoleContext.IsUserInTeamAsync(teamId, ct)) { return Forbid(); }
 
+        // Prefer ChannelProcessor's telemetry-backed snapshot when it matches the requested
+        // race. The Redis key is team+car, so a snapshot can survive a UI race switch and
+        // still describe the *previous* race — serving that as-is is the "3,021 min ago"
+        // bug. When it doesn't match, fall through to an offline PitFill build from DB so
+        // engineer-managed flows (manual stints + entered fuel volumes) still produce a
+        // useful range without live telemetry.
         var carKey = string.Format(Consts.CAR_STREAM_FIELD, teamId, carNumber);
-        var snapshot = await snapshotStore.GetAsync(carKey, ct);
-        return snapshot is null ? NotFound() : snapshot;
+        var cached = await snapshotStore.GetAsync(carKey, ct);
+        if (cached is not null && cached.RaceId == raceId)
+        {
+            return cached;
+        }
+
+        await using var db = await dbFactory.CreateDbContextAsync(ct);
+        var synthetic = await OfflineSnapshotBuilder.BuildAsync(db, teamId, carNumber, raceId, DateTime.UtcNow, ct);
+        return synthetic is null ? NotFound() : synthetic;
     }
 
     #endregion
@@ -117,15 +134,21 @@ public class FuelController(
 
         await using var db = await dbFactory.CreateDbContextAsync(ct);
         var existing = await db.RefuelEvents
-            .AsNoTracking()
             .FirstOrDefaultAsync(r => r.Id == refuelEventId && r.TeamId == teamId, ct);
         if (existing is null) { return NotFound(); }
 
-        // Publish at the event's original DetectedAt so ManualEntryHandler matches into it.
+        // Preferred path: publish through the telemetry stream so ManualEntryHandler does the
+        // DB write and refreshes CarFuelState. When the car has no live CarGateway connection
+        // (e.g. manually-created stints in an offline race), publish returns 0 — fall back to
+        // writing the volume directly on the existing RefuelEvent row, mirroring
+        // ManualEntryHandler.UpdateVolumeOnExistingAsync.
         var published = await PublishManualFuelAsync(teamId, existing.CarNumber, request.Gallons, existing.DetectedAt, ct);
         if (published == 0)
         {
-            return NotFound("Car has no active configuration or is not connected; cannot publish manual fuel entry.");
+            existing.EnteredFuelGallons = request.Gallons;
+            existing.EnteredAt = existing.DetectedAt;
+            existing.Status = "Confirmed";
+            await db.SaveChangesAsync(ct);
         }
 
         return Accepted(new RefuelEventPublishResult(existing.DetectedAt, request.Gallons));
@@ -283,6 +306,39 @@ public class FuelController(
     }
 
     [HttpGet]
+    [ProducesResponseType<CarFuelConfig>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<CarFuelConfig>> LoadCarFuelConfigAsync(int teamId, string carNumber, CancellationToken ct)
+    {
+        if (!await teamRoleContext.IsUserInTeamAsync(teamId, ct)) { return Forbid(); }
+
+        // Read just the active CarConfiguration's fuel-slice. Returning the entire
+        // CarConfiguration here would be wasteful — the Fuel & Pit Strategy UI only
+        // needs TankCapacityGallons / DefaultConsumptionGalPerMin to project future stints.
+        await using var db = await dbFactory.CreateDbContextAsync(ct);
+        var json = await db.CarConfigurations
+            .AsNoTracking()
+            .Where(c => c.TeamId == teamId && c.Car == carNumber)
+            .OrderByDescending(c => c.LastUpdated)
+            .Select(c => c.ConfigurationJson)
+            .FirstOrDefaultAsync(ct);
+
+        if (json is null) return NotFound();
+        try
+        {
+            var config = JsonSerializer.Deserialize<CarConfiguration>(json);
+            if (config?.FuelConfig is null) return NotFound();
+            return config.FuelConfig;
+        }
+        catch (JsonException)
+        {
+            return NotFound();
+        }
+    }
+
+    [HttpGet]
     [ProducesResponseType<List<Stint>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -291,11 +347,112 @@ public class FuelController(
         if (!await teamRoleContext.IsUserInTeamAsync(teamId, ct)) { return Forbid(); }
 
         await using var db = await dbFactory.CreateDbContextAsync(ct);
+
+        // Lazy-create the next Auto placeholder if the latest stint's expected EndAt has
+        // elapsed in real time. Stint times are naive race-TZ wall-clock in the DB, so
+        // "now" must be in the same frame before comparing.
+        var raceTz = await db.Races.AsNoTracking()
+            .Where(r => r.Id == raceId && r.TeamId == teamId)
+            .Select(r => r.TimeZone)
+            .FirstOrDefaultAsync(ct);
+        var nowInRaceTz = OfflineSnapshotBuilder.ConvertUtcToNaiveRaceTz(DateTime.UtcNow, raceTz);
+        await StintEditor.EnsureLatestStintFollowOnIfEndedAsync(db, teamId, carNumber, raceId, nowInRaceTz, ct);
+
         return await db.Stints
             .AsNoTracking()
             .Where(s => s.TeamId == teamId && s.CarNumber == carNumber && s.RaceId == raceId)
             .OrderBy(s => s.StartAt)
             .ToListAsync(ct);
+    }
+
+    #endregion
+
+    #region Stint editor (Add/Edit/Delete from Fuel & Pit Strategy UI)
+
+    [HttpPost]
+    [ProducesResponseType<Stint>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<Stint>> SaveStintAsync(int teamId, [FromBody] CreateStintRequest request, CancellationToken ct)
+    {
+        if (!await teamRoleContext.IsUserInTeamAsync(teamId, ct)) { return Forbid(); }
+
+        var startUtc = request.StartAt.ToUniversalTime();
+        var endUtc = request.EndAt?.ToUniversalTime();
+
+        await using var db = await dbFactory.CreateDbContextAsync(ct);
+        var outcome = await StintEditor.CreateAsync(db, teamId, request.CarNumber, request.RaceId,
+            startUtc, endUtc, request.OriginType, ct);
+
+        if (outcome.Error is StintEditor.CreateError err)
+        {
+            return err switch
+            {
+                StintEditor.CreateError.CarNotFound => NotFound("Car not found for this team."),
+                StintEditor.CreateError.RaceNotFound => NotFound("Race not found for this team."),
+                StintEditor.CreateError.EndBeforeStart => ValidationProblem("End time must be after start time."),
+                _ => StatusCode(StatusCodes.Status500InternalServerError),
+            };
+        }
+        return outcome.Success!.Stint;
+    }
+
+    [HttpPost]
+    [ProducesResponseType<Stint>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<Stint>> UpdateStintAsync(int teamId, int stintId, [FromBody] UpdateStintRequest request, CancellationToken ct)
+    {
+        if (!await teamRoleContext.IsUserInTeamAsync(teamId, ct)) { return Forbid(); }
+
+        var startUtc = request.StartAt.ToUniversalTime();
+        var endUtc = request.EndAt?.ToUniversalTime();
+
+        await using var db = await dbFactory.CreateDbContextAsync(ct);
+        var outcome = await StintEditor.UpdateAsync(db, teamId, stintId,
+            startUtc, endUtc, request.OriginType, request.NoFuelOnPit, ct);
+
+        if (outcome.Error is StintEditor.UpdateError err)
+        {
+            return err switch
+            {
+                StintEditor.UpdateError.StintNotFound => NotFound(),
+                StintEditor.UpdateError.EndBeforeStart => ValidationProblem("End time must be after start time."),
+                StintEditor.UpdateError.NoPriorWindowToMerge => ValidationProblem("Cannot mark as 'No fuel on pit' — this is the first stint and there is no prior fuel window to merge into."),
+                StintEditor.UpdateError.NoFollowingWindowToSplitFrom => ValidationProblem("Cannot split a stint that is not currently inside another fuel window."),
+                _ => StatusCode(StatusCodes.Status500InternalServerError),
+            };
+        }
+        return outcome.Success!;
+    }
+
+    [HttpPost]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteStintAsync(int teamId, int stintId, CancellationToken ct)
+    {
+        if (!await teamRoleContext.IsUserInTeamAsync(teamId, ct)) { return Forbid(); }
+
+        await using var db = await dbFactory.CreateDbContextAsync(ct);
+        var outcome = await StintEditor.DeleteAsync(db, teamId, stintId, ct);
+
+        if (outcome.Error is StintEditor.DeleteError err)
+        {
+            return err switch
+            {
+                StintEditor.DeleteError.StintNotFound => NotFound(),
+                StintEditor.DeleteError.OwnsFirstWindowAndHasFollowers => ValidationProblem("Cannot delete the first stint of the race when later stints exist in the same fuel window — delete the followers first."),
+                _ => StatusCode(StatusCodes.Status500InternalServerError),
+            };
+        }
+        return NoContent();
     }
 
     #endregion
@@ -331,3 +488,5 @@ public record ManualRefuelRequest(double Gallons, DateTime? AtUtc);
 public record EnterVolumeRequest(double Gallons);
 public record RefuelEventPublishResult(DateTime AtUtc, double Gallons);
 public record CalibrationOverrideRequest(double Factor);
+public record CreateStintRequest(string CarNumber, int RaceId, DateTime StartAt, DateTime? EndAt, StintOriginType OriginType);
+public record UpdateStintRequest(DateTime StartAt, DateTime? EndAt, StintOriginType OriginType, bool NoFuelOnPit);

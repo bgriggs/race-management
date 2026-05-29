@@ -24,6 +24,7 @@ describe.skip('FuelDetailPanel', () => {
     notes: '',
     redMistEventId: null,
     redMistOrganizationId: null,
+    redMistAccessCode: null,
   };
 
   beforeEach(async () => {

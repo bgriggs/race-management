@@ -25,4 +25,20 @@ public class Stint
     /// <summary>Driver identity. Null for v1 — see Fuel Analysis "Non-Goals" in design.md.</summary>
     [StringLength(64)]
     public string? DriverId { get; set; }
+
+    /// <summary>
+    /// Whether <see cref="EndAt"/> was set automatically (by telemetry-driven Stint closure
+    /// or by the system creating a session-start Stint) or manually by an engineer through
+    /// the Fuel &amp; Pit Strategy UI. Drives bar coloring in the gantt (green for Auto,
+    /// purple for Manual). Defaults to <see cref="StintOriginType.Auto"/>.
+    /// </summary>
+    public StintOriginType OriginType { get; set; } = StintOriginType.Auto;
+}
+
+public enum StintOriginType
+{
+    /// <summary>End time was set automatically — either by telemetry-driven Stint closure (StintLifecycle / SessionLifecycleHandler) or by the system projecting forward.</summary>
+    Auto,
+    /// <summary>End time was explicitly set by an engineer via the Add/Edit Stint UI.</summary>
+    Manual,
 }

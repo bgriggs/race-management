@@ -3,11 +3,15 @@ import { Car } from '../../../../../shared-ui/src/cloud-api/car';
 import { ConfigurationClient } from '../../clients/configuration-client';
 import { TeamSelectionService } from '../../teams/team-selection.service';
 import { RaceSelectionService } from '../race-selection.service';
-import { FuelRow } from './fuel-row/fuel-row';
+import { FuelCarRow } from './fuel-car-row/fuel-car-row';
+import { ConfidenceTier, FuelConfidenceToggle } from './fuel-confidence-toggle/fuel-confidence-toggle';
+import { FuelDetailPanel } from './fuel-detail-panel/fuel-detail-panel';
+import { FuelScopeToggle, GanttScope } from './fuel-scope-toggle/fuel-scope-toggle';
+import { GanttContainer } from './gantt-container/gantt-container';
 
 @Component({
   selector: 'app-fuel-pit-strategy',
-  imports: [FuelRow],
+  imports: [FuelCarRow, FuelConfidenceToggle, FuelScopeToggle, FuelDetailPanel, GanttContainer],
   templateUrl: './fuel-pit-strategy.html',
   styleUrl: './fuel-pit-strategy.css',
 })
@@ -19,6 +23,20 @@ export class FuelPitStrategy {
   protected readonly cars = signal<Car[]>([]);
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
+
+  /** Session-only view state. Resets on reload (spec §3, §4). */
+  protected readonly confidenceTier = signal<ConfidenceTier>('regular');
+  protected readonly scope = signal<GanttScope>('current');
+
+  /**
+   * Per-spec §7, the panel holds at-most-one selected car. The detail modal
+   * is rendered once at panel level (rather than per-row) so selection
+   * state is the single source of truth.
+   */
+  protected readonly selectedCarNumber = signal<string | null>(null);
+  protected readonly selectedCar = computed(() =>
+    this.cars().find(c => c.number === this.selectedCarNumber()) ?? null,
+  );
 
   protected readonly activeRace = this.raceSelection.activeRace;
   protected readonly hasActiveRace = computed(() => this.activeRace() !== null);
@@ -58,6 +76,34 @@ export class FuelPitStrategy {
       }
       void this.loadCars(teamId);
     });
+  }
+
+  /**
+   * Toggle behavior per spec §7: clicking the currently-selected row deselects;
+   * any other click selects.
+   */
+  protected onRowClick(carNumber: string): void {
+    this.selectedCarNumber.update(current => current === carNumber ? null : carNumber);
+  }
+
+  /**
+   * Settings always opens — never closes — per spec §19.
+   */
+  protected onSettingsClick(carNumber: string): void {
+    this.selectedCarNumber.set(carNumber);
+  }
+
+  /**
+   * Add Stint button. Phase 5 wires this to the fuel-add-stint modal; for
+   * now the click is captured so the row-level handler runs but no UI opens.
+   */
+  protected onAddStintClick(carNumber: string): void {
+    void carNumber;
+  }
+
+  /** Closing the detail modal clears selection (spec §7). */
+  protected onDetailClosed(): void {
+    this.selectedCarNumber.set(null);
   }
 
   private async loadCars(teamId: number): Promise<void> {

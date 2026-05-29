@@ -1,0 +1,67 @@
+:host {
+  display: block;
+  border-top: 0.5px solid #1a2028;
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.axis-row {
+  display: grid;
+  /* Mirrors the fuel-car-row grid so axis ticks align under the gantt canvas column. */
+  grid-template-columns: 56px minmax(0, 1fr) 110px auto;
+  gap: 12px;
+  padding: 8px 14px 4px 14px;
+}
+
+.canvas-wrap {
+  grid-column: 2;
+  overflow-x: auto;
+  /* Show a thin, dark-themed scrollbar here — the time-axis row spans the same width
+     as every car's gantt canvas, so one visible scrollbar at the bottom drives them
+     all via the shared scrollLeft signal. Car-row canvases keep theirs hidden. */
+  scrollbar-width: thin;
+  scrollbar-color: #2a3340 transparent;
+}
+
+.canvas-wrap::-webkit-scrollbar {
+  height: 8px;
+}
+
+.canvas-wrap::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.canvas-wrap::-webkit-scrollbar-thumb {
+  background: #2a3340;
+  border-radius: 4px;
+}
+
+.canvas-wrap::-webkit-scrollbar-thumb:hover {
+  background: #3a4452;
+}
+
+.ticks {
+  position: relative;
+  height: 12px;
+}
+
+.tick {
+  position: absolute;
+  top: 0;
+  /* Pull half a typical-label-width left so the tick label centers on the hour boundary. */
+  transform: translateX(-50%);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 10px;
+  color: #5f6b77;
+  white-space: nowrap;
+}
+
+.now-label {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 10px;
+  color: #E24B4A;
+  white-space: nowrap;
+}

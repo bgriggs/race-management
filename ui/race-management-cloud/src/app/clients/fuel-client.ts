@@ -4,6 +4,8 @@ import { firstValueFrom } from 'rxjs';
 import { APP_CONFIG } from '../config/app-config';
 import { CalibrationFactor } from '../../../../shared-ui/src/cloud-api/calibration-factor';
 import { CalibrationOverrideRequest } from '../../../../shared-ui/src/cloud-api/calibration-override-request';
+import { CarFuelConfig } from '../../../../shared-ui/src/models/car-fuel-config';
+import { CreateStintRequest } from '../../../../shared-ui/src/cloud-api/create-stint-request';
 import { EnterVolumeRequest } from '../../../../shared-ui/src/cloud-api/enter-volume-request';
 import { FuelRangeSnapshot } from '../../../../shared-ui/src/cloud-api/fuel-range-snapshot';
 import { FuelWindow } from '../../../../shared-ui/src/cloud-api/fuel-window';
@@ -11,6 +13,7 @@ import { ManualRefuelRequest } from '../../../../shared-ui/src/cloud-api/manual-
 import { RefuelEvent } from '../../../../shared-ui/src/cloud-api/refuel-event';
 import { RefuelEventPublishResult } from '../../../../shared-ui/src/cloud-api/refuel-event-publish-result';
 import { Stint } from '../../../../shared-ui/src/cloud-api/stint';
+import { UpdateStintRequest } from '../../../../shared-ui/src/cloud-api/update-stint-request';
 
 const API_PREFIX = 'v1';
 const CONTROLLER = 'fuel';
@@ -20,11 +23,11 @@ export class FuelClient {
   private readonly http = inject(HttpClient);
   private readonly config = inject(APP_CONFIG);
 
-  async loadFuelSnapshot(teamId: number, carNumber: string): Promise<FuelRangeSnapshot | null> {
+  async loadFuelSnapshot(teamId: number, carNumber: string, raceId: number): Promise<FuelRangeSnapshot | null> {
     try {
       return await firstValueFrom(
         this.http.get<FuelRangeSnapshot>(this.url('load-fuel-snapshot'), {
-          params: { teamId, carNumber },
+          params: { teamId, carNumber, raceId },
         }),
       );
     } catch (err) {
@@ -52,14 +55,6 @@ export class FuelClient {
   ): Promise<RefuelEventPublishResult> {
     return firstValueFrom(
       this.http.post<RefuelEventPublishResult>(this.url('enter-refuel-volume'), request, {
-        params: { teamId, refuelEventId },
-      }),
-    );
-  }
-
-  dismissRefuelEvent(teamId: number, refuelEventId: number): Promise<RefuelEvent> {
-    return firstValueFrom(
-      this.http.post<RefuelEvent>(this.url('dismiss-refuel-event'), null, {
         params: { teamId, refuelEventId },
       }),
     );
@@ -127,6 +122,37 @@ export class FuelClient {
       this.http.get<Stint[]>(this.url('load-stints'), {
         params: { teamId, carNumber, raceId },
       }),
+    );
+  }
+
+  async loadCarFuelConfig(teamId: number, carNumber: string): Promise<CarFuelConfig | null> {
+    try {
+      return await firstValueFrom(
+        this.http.get<CarFuelConfig>(this.url('load-car-fuel-config'), {
+          params: { teamId, carNumber },
+        }),
+      );
+    } catch (err) {
+      if (err instanceof HttpErrorResponse && err.status === 404) return null;
+      throw err;
+    }
+  }
+
+  saveStint(teamId: number, request: CreateStintRequest): Promise<Stint> {
+    return firstValueFrom(
+      this.http.post<Stint>(this.url('save-stint'), request, { params: { teamId } }),
+    );
+  }
+
+  updateStint(teamId: number, stintId: number, request: UpdateStintRequest): Promise<Stint> {
+    return firstValueFrom(
+      this.http.post<Stint>(this.url('update-stint'), request, { params: { teamId, stintId } }),
+    );
+  }
+
+  deleteStint(teamId: number, stintId: number): Promise<void> {
+    return firstValueFrom(
+      this.http.post<void>(this.url('delete-stint'), null, { params: { teamId, stintId } }),
     );
   }
 

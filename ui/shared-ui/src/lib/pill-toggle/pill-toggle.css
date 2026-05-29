@@ -1,0 +1,61 @@
+:host {
+  display: inline-flex;
+}
+
+.track {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  padding: 2px 4px;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  border-radius: 999px;
+}
+
+.track:focus-visible {
+  outline: 2px solid #378ADD;
+  outline-offset: 2px;
+}
+
+.label {
+  font-size: 11px;
+  color: #9aa5b1;
+  user-select: none;
+  transition: color 0.12s ease-out;
+  cursor: pointer;
+}
+
+.label.active {
+  color: #e6edf3;
+}
+
+.knob {
+  width: 28px;
+  height: 14px;
+  background: #1a2028;
+  border: 1px solid #2a323d;
+  border-radius: 999px;
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.12s ease-out;
+}
+
+.knob::after {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #6b7682;
+  transition: transform 0.12s ease-out, background 0.12s ease-out;
+}
+
+.knob.right::after {
+  transform: translateX(14px);
+  background: #cdd5de;
+}

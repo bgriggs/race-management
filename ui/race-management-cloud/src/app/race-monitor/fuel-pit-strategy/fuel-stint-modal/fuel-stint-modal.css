@@ -14,7 +14,7 @@
   background: var(--surface, #1f1f1f);
   border: 1px solid var(--border, #333);
   border-radius: 6px;
-  width: min(440px, 90vw);
+  width: min(460px, 90vw);
   display: flex;
   flex-direction: column;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
@@ -33,7 +33,6 @@
   margin: 0;
   font-size: 15px;
   font-weight: 600;
-  color: var(--text-primary, #f3f4f6);
 }
 
 .close-btn {
@@ -70,7 +69,8 @@
   color: var(--text-muted, #aaa);
 }
 
-.field input {
+.field input,
+.radio-group {
   background: var(--input-bg, #111);
   border: 1px solid var(--border, #333);
   color: var(--text-primary, #fff);
@@ -79,22 +79,80 @@
   font-size: 14px;
 }
 
+.radio-group {
+  display: flex;
+  gap: 12px;
+  padding: 6px 8px;
+}
+
+.radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
 .field input:focus {
-  outline: 2px solid rgb(96, 165, 250);
+  outline: 2px solid #378ADD;
   outline-offset: -1px;
 }
 
+.checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.checkbox input {
+  margin-top: 2px;
+}
+
+.checkbox .hint {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted, #888);
+}
+
 .error {
-  color: rgb(220, 38, 38);
+  color: #F09595;
   font-size: 12px;
 }
 
 .dialog-footer {
   display: flex;
+  align-items: center;
   gap: 8px;
-  justify-content: flex-end;
+  justify-content: space-between;
   padding: 12px 16px;
   border-top: 1px solid var(--border, #333);
+  flex-wrap: wrap;
+}
+
+.delete-area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.delete-area .warn {
+  font-size: 11px;
+  color: #cdd5de;
+  opacity: 0.8;
+  flex-basis: 100%;
+}
+
+.delete-area .confirm-text {
+  font-size: 12px;
+  color: #F09595;
+}
+
+.primary-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
 }
 
 .btn {
@@ -105,21 +163,29 @@
   font-size: 13px;
 }
 
-.btn.primary {
-  background: rgb(34, 197, 94);
-  color: black;
-  border-color: rgb(34, 197, 94);
-  font-weight: 600;
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
-.btn.primary:disabled {
-  background: var(--surface-2, #2a2a2a);
-  color: var(--text-muted, #777);
-  border-color: var(--border, #333);
-  cursor: not-allowed;
+.btn.primary {
+  background: #5DCAA5;
+  color: #04342C;
+  border-color: #5DCAA5;
+  font-weight: 600;
 }
 
 .btn.secondary {
   background: var(--surface-2, #2a2a2a);
   color: var(--text-primary, #ddd);
+}
+
+.btn.danger {
+  background: transparent;
+  color: #F09595;
+  border-color: #5a2e2e;
+}
+
+.btn.danger:hover:not(:disabled) {
+  background: rgba(226, 75, 74, 0.12);
 }

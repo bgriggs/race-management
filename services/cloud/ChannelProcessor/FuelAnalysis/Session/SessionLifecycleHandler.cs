@@ -117,6 +117,7 @@ public sealed class SessionLifecycleHandler(ILogger<SessionLifecycleHandler> log
                 RaceId = raceId,
                 FuelWindowId = window.Id,
                 StartAt = firstMessageTimestampUtc,
+                OriginType = StintOriginType.Auto,
             };
             db.Stints.Add(stint);
             await db.SaveChangesAsync(ct);

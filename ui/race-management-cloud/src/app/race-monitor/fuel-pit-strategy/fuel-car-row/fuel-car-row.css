@@ -1,0 +1,292 @@
+:host {
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  display: block;
+  font-variant-numeric: tabular-nums;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) 110px auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-bottom: 0.5px solid #1a2028;
+  cursor: pointer;
+  transition: background 0.08s ease-out;
+}
+
+.row:hover { background: #151b22; }
+
+.row.selected {
+  background: #121a25;
+  border-left: 2px solid #378ADD;
+  padding-left: 12px;
+}
+
+.car-num {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.car-num .number {
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 500;
+  color: #e6edf3;
+  line-height: 1;
+}
+
+.car-num .sub {
+  font-size: 10px;
+  color: #5f6b77;
+  line-height: 1;
+}
+
+.gantt-canvas-wrap {
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.gantt-canvas-wrap::-webkit-scrollbar { display: none; }
+
+.gantt-canvas {
+  position: relative;
+  height: 36px;
+  background: #0d1116;
+  border: 0.5px solid #1a2028;
+  border-radius: 4px;
+  overflow-y: visible;
+}
+
+.flag-stripes {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.stint-bar {
+  position: absolute;
+  top: 5px;
+  height: 26px;
+  border-radius: 3px;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  overflow: hidden;
+  white-space: nowrap;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  z-index: 1;
+}
+
+.stint-bar.tier-auto   { background: #5DCAA5; color: #04342C; }
+.stint-bar.tier-manual { background: #AFA9EC; color: #26215C; }
+.stint-bar.past        { filter: saturate(0.6); }
+
+.stint-bar .time-left,
+.stint-bar .time-right,
+.stint-future .time-left,
+.stint-future .time-right {
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.stint-future {
+  position: absolute;
+  top: 5px;
+  height: 26px;
+  border-radius: 3px;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  overflow: hidden;
+  white-space: nowrap;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  background: transparent;
+  border: 1.5px dashed #5DCAA5;
+  color: #5DCAA5;
+  z-index: 2;
+}
+
+.gas-can {
+  flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.18);
+  border: none;
+  border-radius: 4px;
+  padding: 0 4px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: inherit;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.gas-can:hover { background: rgba(0, 0, 0, 0.32); }
+
+.gas-can:focus-visible,
+.icon-btn:focus-visible {
+  outline: 2px solid #378ADD;
+  outline-offset: 1px;
+}
+
+.projection {
+  position: absolute;
+  top: 5px;
+  height: 26px;
+  border-radius: 3px;
+  /* Inert overlay — clicks pass through to the stint bar beneath so the engineer can
+     reach Edit/Delete on a stint that lives under the projection band. */
+  pointer-events: none;
+  z-index: 2;
+}
+
+.projection.surplus {
+  border: 1.5px dashed #5DCAA5;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(93, 202, 165, 0.06),
+    rgba(93, 202, 165, 0.06) 4px,
+    transparent 4px,
+    transparent 8px
+  );
+}
+
+.projection.shortfall {
+  border: 1.5px dashed #E24B4A;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(226, 75, 74, 0.10),
+    rgba(226, 75, 74, 0.10) 4px,
+    transparent 4px,
+    transparent 8px
+  );
+}
+
+.shortfall-wedge {
+  position: absolute;
+  top: 5px;
+  height: 26px;
+  background: rgba(226, 75, 74, 0.18);
+  border-top: 1px solid #E24B4A;
+  border-bottom: 1px solid #E24B4A;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.ref-line {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 1px;
+  background: #cdd5de;
+  opacity: 0.4;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.ref-line .ref-label {
+  position: absolute;
+  top: -12px;
+  left: -9px;
+  font-family: var(--mono);
+  font-size: 9px;
+  color: #cdd5de;
+  opacity: 0.6;
+}
+
+.now-line {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 1px;
+  background: #E24B4A;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.now-line .now-dot {
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #E24B4A;
+}
+
+.right-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  width: 110px;
+}
+
+.right-stat .range {
+  font-family: var(--mono);
+  display: flex;
+  align-items: baseline;
+}
+
+.right-stat .range .value { font-size: 14px; font-weight: 500; }
+.right-stat .range .unit  { font-size: 12px; color: #7b8794; }
+
+.right-stat .delta {
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.right-stat.tone-surplus .range .value,
+.right-stat.tone-surplus .delta { color: #5DCAA5; }
+
+.right-stat.tone-shortfall .range .value,
+.right-stat.tone-shortfall .delta { color: #F09595; }
+
+.right-stat.tone-onplan .range .value,
+.right-stat.tone-none .range .value { color: #e6edf3; }
+
+.right-stat.tone-onplan .delta,
+.right-stat.tone-none .delta { color: #7b8794; }
+
+.actions {
+  display: flex;
+  gap: 4px;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 6px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.icon-btn:hover { background: #3a434d; }
+
+.icon-btn svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}

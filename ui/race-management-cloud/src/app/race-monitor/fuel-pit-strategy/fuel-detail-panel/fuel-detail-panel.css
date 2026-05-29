@@ -204,6 +204,26 @@ h3 {
   font-variant-numeric: tabular-nums;
 }
 
+.refuel-confidence {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-muted, #888);
+}
+
+.conf-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+.conf-badge[data-tone='high']    { background: rgba(93, 202, 165, 0.22); color: #5DCAA5; }
+.conf-badge[data-tone='medium']  { background: rgba(234, 179, 8, 0.20);  color: #e5b73c; }
+.conf-badge[data-tone='low']     { background: rgba(226, 75, 74, 0.20);  color: #F09595; }
+.conf-badge[data-tone='manual']  { background: rgba(175, 169, 236, 0.22); color: #AFA9EC; }
+
 .calibration-line {
   display: flex;
   align-items: center;

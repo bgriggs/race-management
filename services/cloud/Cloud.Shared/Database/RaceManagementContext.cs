@@ -135,6 +135,7 @@ public class RaceManagementContext(DbContextOptions<RaceManagementContext> optio
             e.HasOne<FuelWindow>().WithMany().HasForeignKey(s => s.FuelWindowId).OnDelete(DeleteBehavior.Cascade);
             e.HasIndex(s => new { s.TeamId, s.CarNumber, s.RaceId, s.StartAt });
             e.HasIndex(s => s.FuelWindowId);
+            e.Property(s => s.OriginType).HasConversion<string>().HasMaxLength(16);
         });
 
         modelBuilder.Entity<CalibrationFactor>(e =>

@@ -89,3 +89,4 @@ services/car/Racecar/config-versions/
 /services/onprem/RaceManagementService
 /ui/.angular/cache/21.2.12/race-management-cloud/angular-compiler.db-lock
 /ui/.angular/cache/21.2.12/shared-ui
+/.playwright-mcp

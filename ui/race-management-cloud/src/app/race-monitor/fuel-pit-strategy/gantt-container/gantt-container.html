@@ -1,0 +1,13 @@
+<div class="viewport" #viewport>
+  <div class="rows">
+    <ng-content />
+  </div>
+  <app-gantt-time-axis
+    [sessionStartMs]="sessionStartMs()"
+    [sessionEndMs]="sessionEndMs()"
+    [pxPerMinute]="pxPerMinute()"
+    [now]="now()"
+    [scrollLeft]="scrollLeft()"
+    (scrollLeftChange)="setScrollLeft($event)"
+  />
+</div>

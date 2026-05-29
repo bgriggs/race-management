@@ -7,6 +7,8 @@ import { EstimatorReadout } from '../../../../../../shared-ui/src/cloud-api/esti
 import { FuelRangeSnapshot } from '../../../../../../shared-ui/src/cloud-api/fuel-range-snapshot';
 import { FuelWindow } from '../../../../../../shared-ui/src/cloud-api/fuel-window';
 import { Race } from '../../../../../../shared-ui/src/cloud-api/race';
+import { RefuelConfidenceTier } from '../../../../../../shared-ui/src/cloud-api/refuel-confidence-tier';
+import { RefuelEvent } from '../../../../../../shared-ui/src/cloud-api/refuel-event';
 import { FuelClient } from '../../../clients/fuel-client';
 
 const POLL_INTERVAL_MS = 5000;
@@ -44,6 +46,7 @@ export class FuelDetailPanel {
 
   protected readonly snapshot = signal<FuelRangeSnapshot | null>(null);
   protected readonly fuelWindows = signal<FuelWindow[]>([]);
+  protected readonly refuelEvents = signal<RefuelEvent[]>([]);
   protected readonly calibration = signal<CalibrationFactor | null>(null);
 
   protected readonly overrideInput = signal('');
@@ -55,6 +58,43 @@ export class FuelDetailPanel {
   protected readonly highConfidence = computed(() => this.snapshot()?.highConfidence ?? null);
   protected readonly reconciler = computed(() => this.snapshot()?.reconciler ?? null);
   protected readonly fuelWindowDetails = computed(() => this.snapshot()?.fuelWindow ?? null);
+
+  /**
+   * RefuelEvent that opened the current FuelWindow — drives the "Refuel confidence"
+   * line below the FuelWindow details. Replaces the bar coloring that the previous
+   * gantt used to communicate this signal.
+   */
+  protected readonly currentRefuel = computed<RefuelEvent | null>(() => {
+    const fwId = this.fuelWindowDetails()?.id;
+    if (fwId == null) return null;
+    const window = this.fuelWindows().find(w => w.id === fwId);
+    if (!window) return null;
+    return this.refuelEvents().find(r => r.id === window.startRefuelEventId) ?? null;
+  });
+
+  protected readonly refuelConfidenceLabel = computed<string | null>(() => {
+    const r = this.currentRefuel();
+    if (!r) return null;
+    switch (r.confidenceTier) {
+      case RefuelConfidenceTier.High:    return 'High';
+      case RefuelConfidenceTier.Medium:  return 'Medium';
+      case RefuelConfidenceTier.Low:     return 'Low';
+      case RefuelConfidenceTier.Manual:  return 'Manual';
+      default:                           return null;
+    }
+  });
+
+  protected readonly refuelConfidenceTone = computed<'high' | 'medium' | 'low' | 'manual' | null>(() => {
+    const r = this.currentRefuel();
+    if (!r) return null;
+    switch (r.confidenceTier) {
+      case RefuelConfidenceTier.High:    return 'high';
+      case RefuelConfidenceTier.Medium:  return 'medium';
+      case RefuelConfidenceTier.Low:     return 'low';
+      case RefuelConfidenceTier.Manual:  return 'manual';
+      default:                           return null;
+    }
+  });
 
   protected readonly estimatorRows = computed<EstimatorRow[]>(() => {
     const snap = this.snapshot();
@@ -206,13 +246,15 @@ export class FuelDetailPanel {
 
   private async refresh(teamId: number, carNumber: string, raceId: number): Promise<void> {
     try {
-      const [snapshot, windows, calibration] = await Promise.all([
-        this.fuel.loadFuelSnapshot(teamId, carNumber),
+      const [snapshot, windows, refuels, calibration] = await Promise.all([
+        this.fuel.loadFuelSnapshot(teamId, carNumber, raceId),
         this.fuel.loadFuelWindows(teamId, carNumber, raceId),
+        this.fuel.loadRefuelEvents(teamId, carNumber, raceId),
         this.fuel.loadCalibrationFactor(teamId, carNumber),
       ]);
       this.snapshot.set(snapshot);
       this.fuelWindows.set(windows);
+      this.refuelEvents.set(refuels);
       this.calibration.set(calibration);
     } catch (err) {
       console.error('Failed to refresh fuel detail data', err);

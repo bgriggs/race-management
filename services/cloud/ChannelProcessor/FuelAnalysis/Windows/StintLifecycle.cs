@@ -68,6 +68,7 @@ public sealed class StintLifecycle(ILogger<StintLifecycle> logger)
                 RaceId = raceId,
                 FuelWindowId = currentWindowId,
                 StartAt = incoming.TimestampUtc,
+                OriginType = StintOriginType.Auto,
             };
             db.Stints.Add(stint);
             await db.SaveChangesAsync(ct);

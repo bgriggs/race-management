@@ -49,6 +49,8 @@ public class ModelGenerationSpec : GenerationSpec
         typeof(EnterVolumeRequest),
         typeof(RefuelEventPublishResult),
         typeof(CalibrationOverrideRequest),
+        typeof(CreateStintRequest),
+        typeof(UpdateStintRequest),
         // Alarm Processor
         typeof(AlarmDefinitionDto),
         typeof(ActiveAlarmDto),
@@ -67,6 +69,7 @@ public class ModelGenerationSpec : GenerationSpec
         typeof(EcuResetState),
         typeof(RefuelAnchor),
         typeof(CalibrationFactorSource),
+        typeof(StintOriginType),
         typeof(AlarmEventType),
         typeof(LogicType),
     ];

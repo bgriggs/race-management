@@ -107,6 +107,11 @@
               }
             }
           </div>
+          @if (refuelConfidenceLabel(); as label) {
+            <div class="window-line refuel-confidence">
+              Refuel: <span class="conf-badge" [attr.data-tone]="refuelConfidenceTone()">{{ label }}</span>
+            </div>
+          }
         </section>
       }
 

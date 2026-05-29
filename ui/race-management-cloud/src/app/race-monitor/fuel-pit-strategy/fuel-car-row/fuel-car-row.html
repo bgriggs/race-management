@@ -1,0 +1,144 @@
+<div class="row" [class.selected]="selected()" (click)="onRowClick($event)">
+  <div class="car-num">
+    <div class="number">#{{ carNumber() }}</div>
+    @if (fuelWindowAgeMin() !== null) {
+      <div class="sub">FW open · {{ fuelWindowAgeMin() }}m</div>
+    }
+  </div>
+
+  <div class="gantt-canvas-wrap" #canvasWrap (scroll)="onCanvasScroll($event)">
+    <div class="gantt-canvas" [style.width.px]="canvasWidthPx()">
+      <!-- Z-index back-to-front: flag stripes < bars < projection < wedge < ref lines < now-line. -->
+
+      <!-- Flag stripes (Phase later: wire to RaceFlagState history). -->
+      <div class="flag-stripes" aria-hidden="true"></div>
+
+      <!-- Planned stint bars (spec §10). -->
+      @for (s of renderedStints(); track s.id) {
+        <!--
+          Stint bar handles click but is not given role="button" / tabindex because
+          it nests the gas-can button (ARIA forbids nested interactive controls).
+          Keyboard editing is reachable via the row's Add Stint / Settings buttons.
+        -->
+        <div
+          class="stint-bar"
+          [class.tier-manual]="s.tierManual"
+          [class.tier-auto]="!s.tierManual"
+          [class.past]="s.isPast"
+          [style.left.px]="s.leftPx"
+          [style.width.px]="s.widthPx"
+          [attr.title]="s.endLabel ? s.startLabel + ' – ' + s.endLabel : s.startLabel"
+          (click)="onStintBarClick(s.id, $event)"
+        >
+          <span class="time-left">{{ s.startLabel }}</span>
+          @if (s.needsVolumeEntry) {
+            <button
+              type="button"
+              class="gas-can"
+              title="Enter fuel volume"
+              [attr.aria-label]="'Enter fuel volume for stint starting ' + s.startLabel"
+              (click)="onGasCanClick(s.id, $event)"
+            >⛽</button>
+          }
+          <span class="time-right">{{ s.endLabel }}</span>
+        </div>
+      }
+
+      <!-- Projection overlay — surplus or shortfall — scope=current only (spec §11/§12). -->
+      @if (projectionOverlay(); as p) {
+        <div
+          class="projection"
+          [class.surplus]="p.kind === 'surplus'"
+          [class.shortfall]="p.kind === 'shortfall'"
+          [style.left.px]="p.leftPx"
+          [style.width.px]="p.widthPx"
+          [attr.title]="p.tooltip"
+        ></div>
+      }
+
+      <!-- Shortfall wedge — paired with shortfall overlay (spec §13). -->
+      @if (shortfallWedge(); as w) {
+        <div class="shortfall-wedge" [style.left.px]="w.leftPx" [style.width.px]="w.widthPx" aria-hidden="true"></div>
+      }
+
+      <!-- Future projected stints — scope=end only (spec §14). -->
+      @for (f of futureStints(); track f.index) {
+        <div
+          class="stint-future"
+          [style.left.px]="f.leftPx"
+          [style.width.px]="f.widthPx"
+          [attr.title]="f.startLabel + ' – ' + f.endLabel"
+        >
+          <span class="time-left">{{ f.startLabel }}</span>
+          <span class="time-right">{{ f.endLabel }}</span>
+        </div>
+      }
+
+      <!-- Start / End reference lines — scope=end only (spec §16). -->
+      @if (startLine(); as l) {
+        <div class="ref-line start" [style.left.px]="l.leftPx" aria-hidden="true">
+          <span class="ref-label">start</span>
+        </div>
+      }
+      @if (endLine(); as l) {
+        <div class="ref-line end" [style.left.px]="l.leftPx" aria-hidden="true">
+          <span class="ref-label">end</span>
+        </div>
+      }
+
+      <!-- Now-line — always on top (spec §15). -->
+      @if (nowPx() !== null) {
+        <div class="now-line" [style.left.px]="nowPx()!" aria-hidden="true">
+          <span class="now-dot"></span>
+        </div>
+      }
+    </div>
+  </div>
+
+  <div class="right-stat" [class]="'tone-' + deltaTone()">
+    <div class="range">
+      <span class="value">{{ rangeMinutesText() }}</span><span class="unit">&nbsp;min</span>
+    </div>
+    <div class="delta">{{ deltaText() }}</div>
+  </div>
+
+  <div class="actions">
+    <button
+      type="button"
+      class="icon-btn"
+      title="Add stint"
+      [attr.aria-label]="'Add stint for Car ' + carNumber()"
+      (click)="onAddStint($event)"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none" />
+      </svg>
+    </button>
+    <button
+      type="button"
+      class="icon-btn"
+      title="Settings"
+      [attr.aria-label]="'Open fuel analysis details for Car ' + carNumber()"
+      (click)="onSettings($event)"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 0 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 0 1 0-4h.09A1.7 1.7 0 0 0 4.65 8.7a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.01a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 0 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.01a1.7 1.7 0 0 0 1.56 1.03H21a2 2 0 0 1 0 4h-.09a1.7 1.7 0 0 0-1.56 1.03Z"
+          stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"
+        />
+        <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5" fill="none" />
+      </svg>
+    </button>
+  </div>
+</div>
+
+@if (modalMode(); as mode) {
+  <app-fuel-stint-modal
+    [teamId]="teamId()"
+    [car]="car()"
+    [race]="race()"
+    [mode]="mode"
+    (closed)="closeModal()"
+    (saved)="onModalSaved()"
+  />
+}

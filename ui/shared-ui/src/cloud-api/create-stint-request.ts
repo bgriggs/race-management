@@ -5,14 +5,10 @@
 
 import { StintOriginType } from "./stint-origin-type";
 
-export interface Stint {
-    id: number;
-    teamId: number;
+export interface CreateStintRequest {
     carNumber: string;
     raceId: number;
-    fuelWindowId: number;
     startAt: Date;
     endAt: Date | null;
-    driverId: string | null;
     originType: StintOriginType;
 }

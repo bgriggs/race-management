@@ -3,6 +3,24 @@
     <h2 class="title">Fuel &amp; Pit Strategy</h2>
   </header>
 
+  <div class="legend">
+    <span class="swatch swatch-auto" aria-hidden="true"></span><span class="legend-label">Auto stint</span>
+    <span class="swatch swatch-manual" aria-hidden="true"></span><span class="legend-label">Manual stint</span>
+    <span class="swatch swatch-surplus" aria-hidden="true"></span><span class="legend-label">Projected — surplus</span>
+    <span class="swatch swatch-shortfall" aria-hidden="true"></span><span class="legend-label">Projected — shortfall</span>
+
+    <div class="toggles">
+      <app-fuel-confidence-toggle
+        [value]="confidenceTier()"
+        (valueChange)="confidenceTier.set($event)"
+      />
+      <app-fuel-scope-toggle
+        [value]="scope()"
+        (valueChange)="scope.set($event)"
+      />
+    </div>
+  </div>
+
   @if (!hasActiveRace()) {
     <div class="placeholder">
       <div>No active race session.</div>
@@ -25,16 +43,35 @@
   } @else if (cars().length === 0) {
     <div class="placeholder">No cars configured for this team.</div>
   } @else {
-    <ul class="car-rows">
+    <app-gantt-container [race]="activeRace()!" #container>
       @for (car of cars(); track car.number) {
-        <li class="car-row-wrap">
-          <app-fuel-row
-            [teamId]="teamSelection.selectedTeamId()!"
-            [car]="car"
-            [race]="activeRace()!"
-          />
-        </li>
+        <app-fuel-car-row
+          [teamId]="teamSelection.selectedTeamId()!"
+          [car]="car"
+          [race]="activeRace()!"
+          [selected]="selectedCarNumber() === car.number"
+          [confidenceTier]="confidenceTier()"
+          [scope]="scope()"
+          [now]="container.now()"
+          [pxPerMinute]="container.pxPerMinute()"
+          [sessionStartMs]="container.sessionStartMs()"
+          [sessionEndMs]="container.sessionEndMs()"
+          [scrollLeft]="container.scrollLeft()"
+          (scrollLeftChange)="container.setScrollLeft($event)"
+          (rowClick)="onRowClick($event)"
+          (addStintClick)="onAddStintClick($event)"
+          (settingsClick)="onSettingsClick($event)"
+        />
       }
-    </ul>
+    </app-gantt-container>
+  }
+
+  @if (selectedCar(); as car) {
+    <app-fuel-detail-panel
+      [teamId]="teamSelection.selectedTeamId()!"
+      [car]="car"
+      [race]="activeRace()!"
+      (closed)="onDetailClosed()"
+    />
   }
 </section>

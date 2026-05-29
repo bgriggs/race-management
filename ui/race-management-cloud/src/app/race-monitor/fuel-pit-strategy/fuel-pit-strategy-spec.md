@@ -372,7 +372,9 @@ If projected end exceeds `Race.EndTime`, the overlay continues past the session-
 
 ## 12. Projection overlay (shortfall)
 
-Red dashed rectangle covering the entire shortened stint.
+Red dashed rectangle covering the shortfall deficit — symmetric with the surplus
+overlay (item 11), anchored at the planned end of the current stint and
+extending left by the shortfall delta.
 
 **Visual treatment.**
 - Absolutely positioned. `top: 5px`, `height: 26px`.
@@ -381,11 +383,11 @@ Red dashed rectangle covering the entire shortened stint.
 - Border-radius: 3px.
 - Empty (no inline text).
 - `cursor: help`.
-- **Z-order:** sits on top of the planned-stint solid bar, overlapping it.
+- **Z-order:** sits on top of the shortfall wedge, both inside the planned-stint bar's span.
 
 **Position.**
-- Starts at the current stint's `Stint.StartTime`.
-- Ends at the projected fuel-out time.
+- Starts at the projected fuel-out time.
+- Ends at the planned end of the current stint.
 
 **Visibility rule.** Renders only when **all** of:
 - Scope toggle is "Current".
