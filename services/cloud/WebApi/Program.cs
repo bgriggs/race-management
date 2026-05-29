@@ -26,11 +26,15 @@ public class Program
         // Add services to the container.
         builder.Services.AddControllers(options =>
             options.Conventions.Add(new RouteTokenTransformerConvention(new KebabCaseParameterTransformer())));
+        // Allowed browser origins for the SPA. Defaults to the local dev UI; production
+        // origins are supplied via config (Cors:AllowedOrigins, e.g. Cors__AllowedOrigins__0).
+        var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+            ?? ["http://localhost:4200"];
         builder.Services.AddCors(options =>
         {
-            options.AddPolicy("LocalUi", policy =>
+            options.AddPolicy("Ui", policy =>
             {
-                policy.WithOrigins("http://localhost:4200")
+                policy.WithOrigins(allowedOrigins)
                     .AllowAnyHeader()
                     .AllowAnyMethod();
             });
@@ -100,8 +104,10 @@ public class Program
         {
             app.MapOpenApi();
             Console.Title = "WebAPI";
-            app.UseCors("LocalUi");
         }
+
+        // Must run before authorization so preflight (OPTIONS) requests get CORS headers.
+        app.UseCors("Ui");
 
         app.UseAuthorization();
         app.MapControllers();

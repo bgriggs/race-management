@@ -8,6 +8,9 @@ global:
     "ASPNETCORE_URLS": "http://+:8080"
     "Keycloak__Realm": "race-management"
     "Keycloak__AuthServerUrl": "https://auth.redmist.racing"
+    # Browser origin(s) allowed to call the API cross-origin (WebApi CORS policy "Ui").
+    # This is the UI's own origin, not the API host.
+    "Cors__AllowedOrigins__0": "https://app.redmist.racing"
 
   # Injected as secretKeyRef env vars. Create the referenced secret before deploying:
   #   kubectl create secret generic race-management-secrets -n <ns> \
