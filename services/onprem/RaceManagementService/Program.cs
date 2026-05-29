@@ -18,6 +18,11 @@ public class Program
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            // Enables running under the Windows Service Control Manager (SCM): sets the
+            // content root to the executable's directory and reports lifecycle to the SCM.
+            // No-op when not launched as a service, so dotnet run / F5 are unaffected.
+            builder.Host.UseWindowsService(options => options.ServiceName = "Redmist Race Management");
+
             builder.Logging.ClearProviders();
             builder.Host.UseNLog();
 
