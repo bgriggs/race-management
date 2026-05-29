@@ -18,12 +18,12 @@ COPY ["services/Channels/Channels.csproj", "services/Channels/"]
 RUN dotnet restore "./services/cloud/CarGateway/CarGateway.csproj"
 COPY . .
 WORKDIR "/src/services/cloud/CarGateway"
-RUN dotnet build "./CarGateway.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet build "./CarGateway.csproj" -c $BUILD_CONFIGURATION -o /app/build -p:SkipTypeScriptGen=true
 
 # This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./CarGateway.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./CarGateway.csproj" -c $BUILD_CONFIGURATION -o /app/publish -p:SkipTypeScriptGen=true /p:UseAppHost=false
 
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final

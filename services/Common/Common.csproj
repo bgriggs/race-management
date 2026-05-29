@@ -16,11 +16,13 @@
 	</ItemGroup>
 
 	<!-- Dev-time codegen: regenerates the UI's TypeScript DTOs (tgconfig.json -> ../../ui/...)
-	     from these C# models. Skipped when the UI tree isn't present, e.g. container/publish
-	     builds whose Docker context only copies services/ — otherwise typegen has nowhere to
-	     write and fails the image build. Forward slashes so the path resolves on Linux too. -->
+	     from these C# models. Never run it in container/publish image builds: the Docker
+	     context copies ui/ but typegen still fails there, and the generated TS is consumed
+	     only by the Angular UI, not the C# compile. Skipped when SkipTypeScriptGen=true
+	     (passed by the Dockerfiles) or inside a .NET container (DOTNET_RUNNING_IN_CONTAINER,
+	     set by the SDK base image). Forward slashes so paths resolve on Linux too. -->
 	<Target Name="GenerateTypeScriptModels" AfterTargets="Build"
-			Condition="Exists('$(MSBuildProjectDirectory)/../../ui/shared-ui/src/models')">
+			Condition="'$(SkipTypeScriptGen)' != 'true' and '$(DOTNET_RUNNING_IN_CONTAINER)' != 'true'">
 		<Exec Command="dotnet tool restore" WorkingDirectory="$(MSBuildProjectDirectory)/../.." />
 		<Exec Command="dotnet tool run dotnet-typegen generate" WorkingDirectory="$(MSBuildProjectDirectory)" />
 	</Target>
