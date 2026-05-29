@@ -106,3 +106,21 @@
   border-color: #9bb4e0;
   cursor: progress;
 }
+
+.secondary {
+  background: #f6f8fb;
+  color: #112033;
+  border: 1px solid #d6dde7;
+  border-radius: 6px;
+  padding: 0.55rem 1.1rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.secondary:hover,
+.secondary:focus-visible {
+  background: #e7eef8;
+  border-color: #98b3d6;
+  outline: none;
+}

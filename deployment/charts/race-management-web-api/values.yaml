@@ -41,13 +41,13 @@ ingress:
 autoscaling:
   enabled: true
   minReplicas: 1
-  maxReplicas: 4
+  maxReplicas: 1
   targetCPUUtilizationPercentage: 80
   targetMemoryUtilizationPercentage: 80
 
 resources:
   requests:
-    cpu: "75m"
+    cpu: "175m"
     memory: "256Mi"
   limits:
     cpu: "500m"

@@ -1,4 +1,5 @@
 import { Component, inject } from '@angular/core';
+import { AuthService } from '../auth.service';
 import { TeamSelectionService } from './team-selection.service';
 
 @Component({
@@ -8,6 +9,7 @@ import { TeamSelectionService } from './team-selection.service';
 })
 export class TeamSelectorDialog {
   protected readonly teamSelection = inject(TeamSelectionService);
+  private readonly auth = inject(AuthService);
 
   protected select(teamId: number): void {
     this.teamSelection.selectTeam(teamId);
@@ -15,5 +17,9 @@ export class TeamSelectorDialog {
 
   protected retry(): void {
     this.teamSelection.retry();
+  }
+
+  protected logout(): void {
+    this.auth.logout();
   }
 }
