@@ -23,6 +23,10 @@ public sealed class ChangeFilter(ChannelStatusState state)
         for (var read = 0; read < buffer.Length; read++)
         {
             var value = buffer[read];
+            // Liveness: a sample arrived for this channel now, whether or not it changed the
+            // value. The timeout monitor keys off this so a constant-but-live channel that the
+            // deadband drops below is not mistaken for a silent source and reset to default.
+            state.MarkSeen(value.ChannelId, value.WallTime);
             if (PassesFilter(config, in value))
             {
                 state.Set(in value);
@@ -35,6 +39,7 @@ public sealed class ChangeFilter(ChannelStatusState state)
     /// <summary>Single-value variant for derived results.</summary>
     public bool TryAccept(ActiveConfiguration config, in InternalChannelValue value)
     {
+        state.MarkSeen(value.ChannelId, value.WallTime);
         if (!PassesFilter(config, in value))
         {
             return false;

@@ -51,7 +51,11 @@ internal sealed class ChannelTimeoutMonitor
         }
     }
 
-    private void CheckTimeouts()
+    /// <summary>
+    /// One pass of the timeout sweep. Exposed (internal) so tests can drive it deterministically
+    /// without racing the <see cref="RunAsync"/> delay loop.
+    /// </summary>
+    internal void CheckTimeouts()
     {
         var config = _configAccessor();
         if (config.Channels.Count == 0) return;
@@ -66,27 +70,34 @@ internal sealed class ChannelTimeoutMonitor
         {
             if (def.TimeoutMs <= 0) continue;
 
-            if (!_state.TryGet(channelId, out var current))
+            // Liveness drives the timeout, not the published value's WallTime: the change
+            // filter only refreshes the published value when it changes, so a constant-but-live
+            // channel would otherwise look silent. _lastSeen advances on every received sample.
+            if (!_state.TryGetLastSeen(channelId, out var lastSeen))
             {
-                // No value seen yet; seed with DefaultValue so the timeout clock starts.
-                var seed = new InternalChannelValue(channelId, def.DefaultValue,
-                    _time.GetTimestamp(), now);
-                _state.Set(in seed);
+                // No sample ever received; ensure the published value reads as DefaultValue.
+                if (!_state.TryGet(channelId, out _))
+                {
+                    var seed = new InternalChannelValue(channelId, def.DefaultValue,
+                        _time.GetTimestamp(), now);
+                    _state.Set(in seed);
+                }
                 continue;
             }
 
-            var elapsedMs = (now - current.WallTime).TotalMilliseconds;
+            var elapsedMs = (now - lastSeen).TotalMilliseconds;
             if (elapsedMs < def.TimeoutMs) continue;
+
+            // Source has gone silent. Only reset/notify if the published value isn't already
+            // the default — the value==default guard below also stops this re-firing each tick.
+            if (_state.TryGet(channelId, out var current) && current.Value == def.DefaultValue)
+            {
+                continue;
+            }
 
             var reset = new InternalChannelValue(channelId, def.DefaultValue,
                 _time.GetTimestamp(), now);
-
-            // Always advance WallTime so the timeout does not re-fire on every tick
-            // once the channel is already at DefaultValue.
             _state.Set(in reset);
-
-            // Only notify consumers when the value actually changes.
-            if (current.Value == def.DefaultValue) continue;
 
             _logger.LogDebug(
                 "Channel {ChannelId} ({Name}) timed out after {Elapsed:F0} ms; resetting to default {Default}.",
