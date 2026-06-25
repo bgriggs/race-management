@@ -56,20 +56,44 @@ public class CarHub(IConnectionMultiplexer cacheMux, ILogger<CarHub> logger, IDb
             if (!string.IsNullOrEmpty(connState.CarKey))
             {
                 var connByCarKey = string.Format(Consts.CAR_CONNECTION_BY_CAR, connState.CarKey);
-                await cache.KeyDeleteAsync(connByCarKey);
-                var activeConfigKey = string.Format(Consts.CAR_ACTIVE_CONFIG_KEY, connState.CarKey);
-                await cache.KeyDeleteAsync(activeConfigKey);
-                if (connState.TeamId > 0)
+                // Only tear down if THIS connection is still the active one for the car.
+                // Guards against a reconnect race where a new connection has already
+                // re-registered this car before the old connection's disconnect fires.
+                var current = await cache.StringGetAsync(connByCarKey);
+                if (current.HasValue && current.ToString() == Context.ConnectionId)
                 {
-                    var teamSetKey = string.Format(Consts.TEAM_CONNECTED_CARS, connState.TeamId);
-                    await cache.SetRemoveAsync(teamSetKey, connState.CarKey);
-                    await PublishConnectionChangeAsync(cache, connState.TeamId, connState.CarKey, isConnected: false);
+                    await cache.KeyDeleteAsync(connByCarKey);
+                    var activeConfigKey = string.Format(Consts.CAR_ACTIVE_CONFIG_KEY, connState.CarKey);
+                    await cache.KeyDeleteAsync(activeConfigKey);
+                    if (connState.TeamId > 0)
+                    {
+                        var teamSetKey = string.Format(Consts.TEAM_CONNECTED_CARS, connState.TeamId);
+                        await cache.SetRemoveAsync(teamSetKey, connState.CarKey);
+                        await PublishConnectionChangeAsync(cache, connState.TeamId, connState.CarKey, isConnected: false);
+                    }
                 }
             }
         }
         await cache.HashDeleteAsync(hashKey, fieldKey);
         CarConnectionsCount.Record(Interlocked.Decrement(ref _connectionCount));
         logger.LogInformation("Client {id} disconnected: {ConnectionId}", clientId, Context.ConnectionId);
+    }
+
+    /// <summary>
+    /// Announces this car's identity to the hub so it is marked online immediately on
+    /// connect, independent of whether any channel values are flowing yet. The car client
+    /// invokes this on every transition into the Connected state (initial connect and
+    /// after a reconnect). Idempotent for the lifetime of a single connection.
+    /// </summary>
+    public async Task RegisterCarAsync(string car, Guid configurationId)
+    {
+        var clientId = Helpers.GetClientId(this);
+        if (clientId == null) return;
+        var teamId = await GetTeamIdAsync(clientId);
+        if (teamId <= 0) return;
+        var cache = cacheMux.GetDatabase();
+        var carKey = string.Format(Consts.CAR_STREAM_FIELD, teamId, car);
+        await EnsureCarRegisteredAsync(cache, clientId, teamId, carKey, configurationId);
     }
 
     public async Task SendChannelValuesAsync(ChannelValue[] channelValues, string car, Guid configurationId)
@@ -85,23 +109,36 @@ public class CarHub(IConnectionMultiplexer cacheMux, ILogger<CarHub> logger, IDb
         var activeConfigKey = string.Format(Consts.CAR_ACTIVE_CONFIG_KEY, carKey);
         await cache.StringSetAsync(activeConfigKey, configurationId.ToString());
 
-        if (!Context.Items.ContainsKey(carKey))
-        {
-            var connByCarKey = string.Format(Consts.CAR_CONNECTION_BY_CAR, carKey);
-            await cache.StringSetAsync(connByCarKey, Context.ConnectionId);
-            // Update stored connection state with the carKey so disconnect can clean it up
-            var hashKey = new RedisKey(Consts.CAR_CONNECTIONS);
-            var fieldKey = string.Format(Consts.CAR_CONNECTION, Context.ConnectionId);
-            var connEntry = new CarHubConnectionState { ClientId = clientId, ConnectionId = Context.ConnectionId, ConnectedTimestamp = DateTime.UtcNow, CarKey = carKey, TeamId = teamId };
-            await cache.HashSetAsync(hashKey, fieldKey, MessagePackSerializer.Serialize(connEntry));
+        await EnsureCarRegisteredAsync(cache, clientId, teamId, carKey, configurationId);
+    }
 
-            var teamSetKey = string.Format(Consts.TEAM_CONNECTED_CARS, teamId);
-            await cache.SetAddAsync(teamSetKey, carKey);
+    /// <summary>
+    /// Registers the car's online state in Redis (connection-by-car pointer, connection
+    /// state hash, team connected-cars set) and publishes a connect notification. Runs
+    /// once per connection — guarded by <see cref="HubCallerContext.Items"/>.
+    /// </summary>
+    private async Task EnsureCarRegisteredAsync(IDatabase cache, string clientId, int teamId, string carKey, Guid configurationId)
+    {
+        if (Context.Items.ContainsKey(carKey)) return;
 
-            await PublishConnectionChangeAsync(cache, teamId, carKey, isConnected: true);
+        var activeConfigKey = string.Format(Consts.CAR_ACTIVE_CONFIG_KEY, carKey);
+        await cache.StringSetAsync(activeConfigKey, configurationId.ToString());
 
-            Context.Items[carKey] = true;
-        }
+        var connByCarKey = string.Format(Consts.CAR_CONNECTION_BY_CAR, carKey);
+        await cache.StringSetAsync(connByCarKey, Context.ConnectionId);
+
+        // Update stored connection state with the carKey so disconnect can clean it up.
+        var hashKey = new RedisKey(Consts.CAR_CONNECTIONS);
+        var fieldKey = string.Format(Consts.CAR_CONNECTION, Context.ConnectionId);
+        var connEntry = new CarHubConnectionState { ClientId = clientId, ConnectionId = Context.ConnectionId, ConnectedTimestamp = DateTime.UtcNow, CarKey = carKey, TeamId = teamId };
+        await cache.HashSetAsync(hashKey, fieldKey, MessagePackSerializer.Serialize(connEntry));
+
+        var teamSetKey = string.Format(Consts.TEAM_CONNECTED_CARS, teamId);
+        await cache.SetAddAsync(teamSetKey, carKey);
+
+        await PublishConnectionChangeAsync(cache, teamId, carKey, isConnected: true);
+
+        Context.Items[carKey] = true;
     }
 
     private static async Task PublishConnectionChangeAsync(IDatabase cache, int teamId, string carKey, bool isConnected)

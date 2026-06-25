@@ -35,6 +35,7 @@ public class CloudClient : HubClientBase, ICloudClient
     private CarConfiguration carConfiguration;
     private readonly IDisposable? configChangeListener;
     private readonly IConfiguration configuration;
+    private HubConnectionState lastRegisteredState = HubConnectionState.Disconnected;
 
     public event Action<ChannelValue[]>? ChannelValuesReceived;
 
@@ -73,6 +74,7 @@ public class CloudClient : HubClientBase, ICloudClient
             if (h != null)
             {
                 FireStatusUpdate(h);
+                await EnsureRegisteredAsync(h);
             }
             await CheckConnectionHealthAsync();
             await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
@@ -198,6 +200,33 @@ public class CloudClient : HubClientBase, ICloudClient
     }
 
     #region Cloud Calls
+
+    /// <summary>
+    /// Announces this car's identity to the hub as soon as the connection reaches the
+    /// Connected state (initial connect and after each reconnect), so the cloud marks the
+    /// car online immediately rather than waiting for the first changed channel value.
+    /// </summary>
+    private async Task EnsureRegisteredAsync(HubConnection h)
+    {
+        var state = h.State;
+        if (state != HubConnectionState.Connected)
+        {
+            // Remember we left the Connected state so we re-register on the next connect.
+            lastRegisteredState = state;
+            return;
+        }
+        if (lastRegisteredState == HubConnectionState.Connected) return; // already registered
+
+        try
+        {
+            await h.InvokeAsync("RegisterCarAsync", carConfiguration.Car, carConfiguration.ConfigurationId, stoppingToken);
+            lastRegisteredState = HubConnectionState.Connected;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to register car {Car} with cloud hub; will retry.", carConfiguration.Car);
+        }
+    }
 
     public async Task SendChannelValuesAsync(ChannelValue[] channelValues)
     {

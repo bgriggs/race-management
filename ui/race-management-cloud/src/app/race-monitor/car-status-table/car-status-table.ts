@@ -242,30 +242,30 @@ export class CarStatusTable {
     return column.channelDefinitionId.slice(0, 8);
   }
 
+  /** Seconds a car stays yellow after a CarHub disconnect before settling to red. */
+  private static readonly DISCONNECT_GRACE_SEC = 3;
+
   protected statusColor(car: Car): string {
-    // Red — not connected to CarHub at all.
-    if (!this.telemetry.isCarConnected(car.number)) return 'rgb(220, 38, 38)';
+    // Connected to CarHub — green, regardless of whether telemetry is flowing.
+    if (this.telemetry.isCarConnected(car.number)) return 'rgb(34, 197, 94)';
 
-    // Connected, but no telemetry yet — yellow (waiting for first channel value).
-    const last = this.telemetry.lastTelemetryFor(car.number);
-    if (!last) return 'rgb(234, 179, 8)';
+    // Recently disconnected — yellow during the grace window in case it reconnects.
+    if (this.withinDisconnectGrace(car)) return 'rgb(234, 179, 8)';
 
-    // Connected + telemetry: green when fresh, fading to yellow as it ages.
-    const ageSec = (this.now() - last.getTime()) / 1000;
-    if (ageSec <= 0) return 'rgb(34, 197, 94)';
-    if (ageSec >= 5) return 'rgb(234, 179, 8)';
-    const t = ageSec / 5;
-    const r = Math.round(34 + (234 - 34) * t);
-    const g = Math.round(197 + (179 - 197) * t);
-    const b = Math.round(94 + (8 - 94) * t);
-    return `rgb(${r}, ${g}, ${b})`;
+    // Disconnected — red.
+    return 'rgb(220, 38, 38)';
   }
 
   protected statusTitle(car: Car): string {
-    if (!this.telemetry.isCarConnected(car.number)) return 'Not connected to CarHub';
-    const last = this.telemetry.lastTelemetryFor(car.number);
-    if (!last) return 'Connected — awaiting first telemetry';
-    return `Last update: ${last.toLocaleString()}`;
+    if (this.telemetry.isCarConnected(car.number)) return 'Connected to CarHub';
+    if (this.withinDisconnectGrace(car)) return 'Recently disconnected — confirming…';
+    return 'Not connected to CarHub';
+  }
+
+  private withinDisconnectGrace(car: Car): boolean {
+    const disconnectedAt = this.telemetry.disconnectedAtFor(car.number);
+    if (disconnectedAt === null) return false;
+    return (this.now() - disconnectedAt) / 1000 < CarStatusTable.DISCONNECT_GRACE_SEC;
   }
 
   protected channelCellValue(car: Car, column: ChannelStatusTableColumnConfiguration): string {

@@ -14,6 +14,9 @@ export class TelemetryStore {
   private readonly _carsByKey = signal<ReadonlyMap<string, CarChannelSnapshot>>(new Map());
   private readonly _connectionStatus = signal<HubConnectionStatus>('Disconnected');
   private readonly _connectedCarKeys = signal<ReadonlySet<string>>(new Set());
+  // carKey -> epoch ms when CarHub reported the car disconnected. Lets the UI show a
+  // brief "recently disconnected" (yellow) grace state before settling to red.
+  private readonly _disconnectedAt = signal<ReadonlyMap<string, number>>(new Map());
 
   readonly carsByKey = computed(() => this._carsByKey());
   readonly connectionStatus = computed(() => this._connectionStatus());
@@ -36,12 +39,20 @@ export class TelemetryStore {
     });
     this.hub.carConnectionSnapshot$.subscribe(carKeys => {
       this._connectedCarKeys.set(new Set(carKeys));
+      this._disconnectedAt.set(new Map());
     });
     this.hub.carConnectionChanged$.subscribe(change => {
       const next = new Set(this._connectedCarKeys());
-      if (change.isConnected) next.add(change.carKey);
-      else next.delete(change.carKey);
+      const disconnectedAt = new Map(this._disconnectedAt());
+      if (change.isConnected) {
+        next.add(change.carKey);
+        disconnectedAt.delete(change.carKey);
+      } else {
+        next.delete(change.carKey);
+        disconnectedAt.set(change.carKey, Date.now());
+      }
       this._connectedCarKeys.set(next);
+      this._disconnectedAt.set(disconnectedAt);
     });
 
     effect(() => {
@@ -51,6 +62,7 @@ export class TelemetryStore {
         void this.hub.disconnect();
         this._carsByKey.set(new Map());
         this._connectedCarKeys.set(new Set());
+        this._disconnectedAt.set(new Map());
       }
     });
 
@@ -61,15 +73,31 @@ export class TelemetryStore {
       if (teamId === null) return;
       this._carsByKey.set(new Map());
       this._connectedCarKeys.set(new Set());
+      this._disconnectedAt.set(new Map());
       void this.subscribeIfNeeded();
     });
   }
 
+  private carKeyFor(carNumber: string): string | null {
+    const teamId = this.teamSelection.selectedTeamId();
+    if (teamId === null) return null;
+    return `team-${teamId}-car-${carNumber}`;
+  }
+
   /** True if the car is currently connected to CarHub for the selected team. */
   isCarConnected(carNumber: string): boolean {
-    const teamId = this.teamSelection.selectedTeamId();
-    if (teamId === null) return false;
-    return this._connectedCarKeys().has(`team-${teamId}-car-${carNumber}`);
+    const carKey = this.carKeyFor(carNumber);
+    return carKey !== null && this._connectedCarKeys().has(carKey);
+  }
+
+  /**
+   * Epoch ms of the most recent CarHub disconnect for this car, or null if it has not
+   * disconnected since the last snapshot. Used to render the brief yellow grace state.
+   */
+  disconnectedAtFor(carNumber: string): number | null {
+    const carKey = this.carKeyFor(carNumber);
+    if (carKey === null) return null;
+    return this._disconnectedAt().get(carKey) ?? null;
   }
 
   private async subscribeIfNeeded(): Promise<void> {
